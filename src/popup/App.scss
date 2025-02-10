@@ -1,0 +1,22 @@
+@import url('~@/styles/reset.scss');
+
+.app {
+    width: 480px;
+    height: 240px;
+
+    h1 {
+        margin-top: 20px;
+        font-size: 24px;
+        color: #007aff;
+        text-align: center;
+    }
+
+    .key-tip {
+        margin-top: 5px;
+    }
+
+    .form {
+        padding: 20px;
+        // border: 1px solid #007aff;
+    }
+}
