@@ -7,13 +7,13 @@
     "private": true,
     "author": "wangjunsheng",
     "license": "MIT",
-    "homepage": "https://github.com/tjx666/awesome-chrome-extension-boilerplate#readme",
+    "homepage": "https://github.com/wjszxli/DeepSeekAllSupports#readme",
     "repository": {
         "type": "git",
-        "url": "git+ssh://git@github.com/tjx666/awesome-chrome-extension-boilerplate.git"
+        "url": "git+ssh://git@github.com/wjszxli/DeepSeekAllSupports.git"
     },
     "bugs": {
-        "url": "https://github.com/tjx666/awesome-chrome-extension-boilerplate/issues"
+        "url": "https://github.com/wjszxli/DeepSeekAllSupports/issues"
     },
     "engines": {
         "node": "^18.12.1"
