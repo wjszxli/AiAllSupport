@@ -73,3 +73,12 @@ pnpm run build
 - 点击 加载已解压的扩展程序...；
 - 选择之前解压的目录（如 D:\PT-Plugin-Plus ）；
 - 开始使用；
+
+## 📮 联系我
+
+- 项目问题: [GitHub Issues](https://github.com/wjszxli/DeepSeekAllSupports/issues)
+- 邮件联系: wjszxli@gmail.com
+---
+<div align="center">
+如果这个项目对您有帮助，请考虑给它一个 ⭐️
+</div> 
