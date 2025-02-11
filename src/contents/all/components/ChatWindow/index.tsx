@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Bubble, BubbleProps, Sender, Suggestion, XProvider } from '@ant-design/x';
-import { UserOutlined } from '@ant-design/icons';
-import { Flex, Typography, message } from 'antd';
+import { CloseCircleTwoTone, UserOutlined } from '@ant-design/icons';
+import { Alert, Flex, Typography, message } from 'antd';
 import markdownit from 'markdown-it';
 import { chatAIStream } from '@/service';
 import storage from '@/utils/storage';
 import { PROVIDERS_DATA } from '@/utils/constant';
 import { IMessage } from '@/typings';
 import Think from '../Think';
+import { removeChatBox, removeChatButton } from '@/utils';
 
 const md = markdownit({ html: true, breaks: true });
 const renderMarkdown: BubbleProps['messageRender'] = (content: string) => (
@@ -35,6 +36,7 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
     const [loading, setLoading] = useState(false);
 
     const [bubbleList, setBubbleList] = useState<IBubbleListProps[]>([]);
+    const [isSelectProvider, setIsSelectProvider] = useState(false);
 
     const initData = async () => {
         try {
@@ -44,6 +46,8 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
 
             const provider = PROVIDERS_DATA[config.selectedProvider];
             if (!provider) return;
+
+            setIsSelectProvider(true);
 
             const bubble: IBubbleListProps = {
                 key: Date.now(),
@@ -159,42 +163,65 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
                 width: 500,
             }}
         >
+            {!isSelectProvider && (
+                <Alert
+                    type="error"
+                    message="请先点击插件的图标选择一个服务商"
+                    style={{
+                        margin: 10,
+                    }}
+                />
+            )}
+            <div
+                style={{
+                    position: 'absolute',
+                    right: 0,
+                    padding: 10,
+                    cursor: 'pointer',
+                }}
+                onClick={() => {
+                    setIsSelectProvider(false);
+                    removeChatButton();
+                    removeChatBox();
+                }}
+            >
+                <CloseCircleTwoTone twoToneColor="#eb2f96" style={{ fontSize: 20 }} />
+            </div>
             <XProvider direction="ltr">
                 <Flex style={{ margin: 30, height: 450 }} vertical>
                     <Bubble.List style={{ flex: 1 }} items={bubbleList} />
-                    <Suggestion
-                        style={{ marginTop: 20 }}
-                        items={[]}
-                    >
-                        {({
-                            onTrigger,
-                            onKeyDown,
-                        }: {
-                            onTrigger: (state?: boolean) => void;
-                            onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => void;
-                        }) => {
-                            return (
-                                <Sender
-                                    loading={loading}
-                                    disabled={loading}
-                                    value={messages}
-                                    onChange={(nextVal: string) => {
-                                        if (nextVal === '/') {
-                                            onTrigger();
-                                        } else if (!nextVal) {
-                                            onTrigger(false);
-                                        }
-                                        setMessages(nextVal);
-                                    }}
-                                    onKeyDown={onKeyDown}
-                                    onSubmit={() => {
-                                        sendChat();
-                                    }}
-                                    placeholder="请输入你想要问的问题"
-                                />
-                            );
-                        }}
-                    </Suggestion>
+                    {isSelectProvider && (
+                        <Suggestion style={{ marginTop: 20 }} items={[]}>
+                            {({
+                                onTrigger,
+                                onKeyDown,
+                            }: {
+                                onTrigger: (state?: boolean) => void;
+                                onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => void;
+                            }) => {
+                                return (
+                                    <Sender
+                                        loading={loading}
+                                        disabled={loading}
+                                        value={messages}
+                                        onChange={(nextVal: string) => {
+                                            if (nextVal === '/') {
+                                                onTrigger();
+                                            } else if (!nextVal) {
+                                                onTrigger(false);
+                                            }
+                                            setMessages(nextVal);
+                                        }}
+                                        onKeyDown={onKeyDown}
+                                        onSubmit={() => {
+                                            sendChat();
+                                        }}
+                                        placeholder="请输入你想要问的问题"
+                                    />
+                                );
+                            }}
+                        </Suggestion>
+                    )}
                 </Flex>
             </XProvider>
         </div>
