@@ -21,6 +21,18 @@ document.addEventListener(
     { passive: true },
 );
 
+document.addEventListener('mousedown', async (event) => {
+    const target = event.target as HTMLElement;
+    const isClickInside =
+        target?.closest(`#${CHAT_BOX_ID}`) || target?.closest(`#${CHAT_BUTTON_ID}`);
+
+    // 如果点击在弹窗内部或相关元素上，不关闭
+    if (isClickInside) return;
+
+    removeChatBox();
+    removeChatButton();
+});
+
 // 在选中文字后插入按钮
 const injectChatButton = (x: number, y: number, text: string) => {
     let chatButton = document.getElementById(CHAT_BUTTON_ID) as HTMLImageElement;
