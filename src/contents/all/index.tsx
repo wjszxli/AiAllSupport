@@ -1,13 +1,7 @@
-import storage from '@/utils/storage';
 import ChatWindow from './components/ChatWindow';
 import { createRoot } from 'react-dom/client';
 import { CHAT_BOX_ID, CHAT_BUTTON_ID } from '@/utils/constant';
-
-// 移除按钮
-const removeChatButton = () => {
-    const chatButton = document.getElementById(CHAT_BUTTON_ID);
-    if (chatButton) chatButton.remove();
-};
+import { removeChatBox, removeChatButton } from '@/utils';
 
 // 监听选中文字
 document.addEventListener(
@@ -75,9 +69,7 @@ const injectChatBox = (x: number, y: number, text: string) => {
 // 监听 ESC 关闭聊天窗口
 document.addEventListener('keydown', async (event) => {
     if (event.key === 'Escape') {
-        const chatContainer = document.getElementById(CHAT_BOX_ID);
-        if (chatContainer) chatContainer.remove();
+        removeChatBox();
         removeChatButton();
-        await storage.remove('chatHistory');
     }
 });

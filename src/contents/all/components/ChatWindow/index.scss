@@ -1,0 +1,13 @@
+.container {
+    position: 'absolute';
+    z-index: 99999;
+    width: 500;
+    height: 500;
+    background: 'white';
+    border-radius: '8px';
+    box-shadow: '0 0 10px rgba(0,0,0,0.1)';
+
+    .tip {
+        border: 1px solid red;
+    }
+}

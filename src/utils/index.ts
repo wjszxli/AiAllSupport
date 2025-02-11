@@ -1,6 +1,6 @@
 import { RequestMethod } from '@/typings';
 import storage from './storage';
-import { URL_MAP } from './constant';
+import { CHAT_BOX_ID, CHAT_BUTTON_ID, URL_MAP } from './constant';
 
 // 通用 Fetch 封装，支持流式响应
 export const fetchData = async ({
@@ -132,3 +132,15 @@ export const requestApi = (url: string, method: RequestMethod = 'GET', requestBo
         );
     });
 };
+
+// 移除按钮
+export const removeChatButton = async () => {
+    const chatButton = document.getElementById(CHAT_BUTTON_ID);
+    if (chatButton) chatButton.remove();
+};
+
+export const removeChatBox = async () => {
+    const chatBox = document.getElementById(CHAT_BOX_ID);
+    if (chatBox) chatBox.remove();
+    await storage.remove('chatHistory');
+}
