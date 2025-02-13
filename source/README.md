@@ -1,14 +1,10 @@
-# DeepSeekAllSupports - DeepSeek 网页助手
+## 前言
 
-<div align="center">
+自 DeepSeek 推出以来，其回答质量备受好评。然而，许多用户在连续提问时经常遇到“服务器繁忙，请稍后再试”的提示。随着各大云服务商陆续部署 DeepSeek 的完整模型，我们其实可以通过这些厂商的 API，享受更加流畅和高效的 DeepSeek 体验，不仅响应速度更快，还能大幅减少因服务器负载导致的访问受限问题。
 
-<img src="public/icons/icon128.png" alt="DeepSeekAllSupports" width="128" />
+不过，直接调用各大厂商的 API 需要一定的开发能力，涉及接口调用、API Key 管理等操作，使用门槛较高。因此，我们开源了一款 DeepSeek 全平台支持插件 —— 一款免费、开源的浏览器扩展。它支持 DeepSeek 及多个云服务提供商（包括 DeepSeek 官方、硅基流动、腾讯云、百度云、阿里云等），让用户无需编写代码，即可一键集成 DeepSeek AI，轻松体验强大 AI 能力。
 
-</div>
-
-## 📖 简介
-DeepSeekAllSupports 是一款免费开源的浏览器扩展，支持 [DeepSeek](https://deepseek.com) 及其多平台服务，包括 DeepSeek 官方、硅基流动、腾讯云、百度云、阿里云 等。无论您使用哪家服务商，DeepSeekAllSupports 都能帮助您 无缝集成，轻松调用 DeepSeek 强大的 AI 能力，为您的工作和研究提供高效支持。
-
+**📌 GitHub 项目地址：[DeepSeekAllSupports](https://github.com/wjszxli/DeepSeekAllSupports)**
 
 ## 开源插件支持服务商
 该插件兼容多个 DeepSeek API 提供商，包括：
@@ -49,9 +45,9 @@ DeepSeekAllSupports 是一款免费开源的浏览器扩展，支持 [DeepSeek](
 
 ## 安装指南
 
-## Chrome 商店
+## Chrome 商店（审核中）
 
-点击 [这里](https://chromewebstore.google.com/detail/deepseekallsupports/llogfbeeebfjkbmajodnjpljpfnaaplm?authuser=0&hl=zh-CN) 直接安装或者在 [Chrome 扩展商店](https://chromewebstore.google.com/?hl=zh-CN&authuser=0)搜索 “DeepSeekAllSupports” 进行安装。
+审核通过后，可直接在 Chrome 扩展商店搜索 “DeepSeekAllSupports” 进行安装。
 
 ## 手动安装（zip 包）
 
@@ -150,26 +146,4 @@ DeepSeekAllSupports 是一款高效、便捷的 AI 插件，支持多个 DeepSee
 
 **🚀 立即体验 DeepSeek 极速 AI，探索更多可能性！**
 
-## 贡献指南
-
-欢迎所有形式的贡献，无论是新功能、bug 修复还是文档改进。
-
-1. Fork 本仓库
-2. 创建您的特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交您的更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 开启一个 Pull Request
-
-## 许可证
-
-本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情
-
-## 联系我们
-
-- 项目问题: [GitHub Issues](https://github.com/wjszxli/DeepSeekAllSupports/issues)
-- 邮件联系: [wjszxli@gmail.com]
----
-
-<div align="center">
-如果这个项目对您有帮助，请考虑给它一个 ⭐️
-</div> 
+**📌 GitHub 项目地址：[DeepSeekAllSupports](https://github.com/wjszxli/DeepSeekAllSupports)**
