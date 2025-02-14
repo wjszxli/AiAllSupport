@@ -55,6 +55,7 @@
         "normalize.css": "8.0.1",
         "react": "18.2.0",
         "react-dom": "18.2.0",
+        "react-draggable": "4.4.6",
         "react-router-dom": "6.4.3",
         "webextension-polyfill": "0.10.0"
     },
