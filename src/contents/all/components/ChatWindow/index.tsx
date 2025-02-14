@@ -5,10 +5,10 @@ import { Alert, Flex, Typography, message } from 'antd';
 import markdownit from 'markdown-it';
 import { chatAIStream } from '@/service';
 import storage from '@/utils/storage';
-import { PROVIDERS_DATA } from '@/utils/constant';
+import { PROVIDERS_DATA, tags } from '@/utils/constant';
 import { IMessage } from '@/typings';
 import Think from '../Think';
-import { removeChatBox, removeChatButton } from '@/utils';
+import { isLocalhost, removeChatBox, removeChatButton } from '@/utils';
 
 const md = markdownit({ html: true, breaks: true });
 const renderMarkdown: BubbleProps['messageRender'] = (content: string) => (
@@ -102,9 +102,65 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
             let content = '';
             let reasoningContent = '';
             setMessages('AI 在思考中');
+
+            let isReasoning = false
+
             chatAIStream(sendMessage, async (chunk) => {
                 const { data, done } = chunk;
-                if (!data.startsWith('data: ')) return;
+                const { selectedProvider } = await storage.getConfig();
+                if (isLocalhost(selectedProvider)) {
+                    const tagPattern = new RegExp(`<(${tags.join("|")})>`, "i")
+                    const closeTagPattern = new RegExp(`</(${tags.join("|")})>`, "i")
+
+                    const openTagMatch = data.match(tagPattern)
+                    const closeTagMatch = data.match(closeTagPattern)
+
+                    if (!isReasoning && openTagMatch) {
+                        isReasoning = true
+                    } else if (isReasoning && !closeTagMatch) {
+                        reasoningContent += data;
+                    } else if (isReasoning && closeTagMatch) {
+                        isReasoning = false
+                    } else if (!isReasoning) {
+                        content += data;
+                    }
+
+                    // if (!isReasoning && openTagMatch) {
+                    //     const beforeText = text.slice(
+                    //       currentIndex,
+                    //       currentIndex + openTagMatch.index
+                    //     )
+                    //     if (beforeText.trim()) {
+                    //       result.push({ type: "text", content: beforeText.trim() })
+                    //     }
+                
+                    //     isReasoning = true
+                    //     currentIndex += openTagMatch.index! + openTagMatch[0].length
+                    //     continue
+                    //   }
+                    // }
+                    
+                    // console.log('isReasonContent', isReasonContent)
+                    // if (content === '\u003cthink\u003e') {
+                    //     isReasonContent = true;
+                    // } else if (isReasonContent && content !== '\u003c/think\u003e') {
+                    //     reasoningContent += data;
+                    // } else {
+                    //     isReasonContent = false;
+                    //     content += data;
+                    // }
+                } else {
+                    if (!data.startsWith('data: ')) return;
+
+                    const chunkStringData = data.slice(6);
+                    const chunkData = JSON.parse(chunkStringData);
+                    const { choices } = chunkData;
+                    if (choices?.[0]?.delta?.content) {
+                        content += chunkData.choices[0].delta.content;
+                    } else if (choices?.[0]?.delta?.reasoning_content) {
+                        reasoningContent += chunkData.choices[0].delta.reasoning_content;
+                    }
+                }
 
                 if (done) {
                     const updatedMessages = [
@@ -116,16 +172,6 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
                     setMessages(undefined);
                     setLoading(false);
                     return;
-                }
-
-                const chunkStringData = data.slice(6);
-                const chunkData = JSON.parse(chunkStringData);
-                const { choices } = chunkData;
-                // reasoning_content
-                if (choices?.[0]?.delta?.content) {
-                    content += chunkData.choices[0].delta.content;
-                } else if (choices?.[0]?.delta?.reasoning_content) {
-                    reasoningContent += chunkData.choices[0].delta.reasoning_content;
                 }
 
                 setBubbleList((prevBubbleList) =>

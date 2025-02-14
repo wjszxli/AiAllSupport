@@ -1,4 +1,6 @@
-import { fetchData } from '@/utils';
+import { OllamaResponse } from '@/typings';
+import { fetchData, handleMessage, isLocalhost } from '@/utils';
+import { MODIFY_HEADERS_RULE_ID, URL_MAP } from '@/utils/constant';
 import storage from '@/utils/storage';
 
 // chrome.runtime.onInstalled.addListener((details) => {
@@ -9,6 +11,40 @@ import storage from '@/utils/storage';
 //         });
 //     }
 // });
+
+console.log('chrome.declarativeNetRequest', chrome.runtime);
+chrome.declarativeNetRequest.updateDynamicRules(
+    {
+        addRules: [
+            {
+                id: MODIFY_HEADERS_RULE_ID, // 规则 ID
+                priority: 1,
+                action: {
+                    // @ts-ignore
+                    type: 'modifyHeaders',
+                    // @ts-ignore
+                    requestHeaders: [
+                        // @ts-ignore
+                        { header: 'Origin', operation: 'set', value: URL_MAP.Ollama },
+                    ],
+                },
+                condition: {
+                    urlFilter: `${URL_MAP.Ollama}/*`,
+                    // @ts-ignore
+                    resourceTypes: ['xmlhttprequest'],
+                },
+            },
+        ],
+        removeRuleIds: [MODIFY_HEADERS_RULE_ID], // 先删除旧规则，防止重复
+    },
+    () => {
+        if (chrome.runtime.lastError) {
+            console.error('更新规则失败:', chrome.runtime.lastError);
+        } else {
+            console.log('规则更新成功！');
+        }
+    },
+);
 
 const requestControllers = new Map();
 
@@ -30,41 +66,39 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             headers: request.headers,
             body: request.body,
             onStream: (chunk) => {
-                const lines = chunk.split('\n');
-
-                for (const line of lines) {
-                    if (line.trim() === '' || !line.startsWith('data: ')) continue;
-
-                    const data = line.slice(6);
-                    console.log('data', data)
-                    console.log('first', data === '[DONE]')
-                    if (data === '[DONE]') {
-                        console.log('sender?.tab?.id', sender?.tab?.id)
-                        if (sender?.tab?.id) {
+                console.log('chunk', chunk);
+                storage.getConfig().then((config) => {
+                    const { selectedProvider } = config;
+                    if (isLocalhost(selectedProvider)) {
+                        const data: OllamaResponse = JSON.parse(chunk);
+                        const {
+                            message: { content },
+                            done,
+                        } = data;
+                        if (done && sender?.tab?.id) {
                             chrome.tabs.sendMessage(sender.tab.id, {
                                 type: 'streamResponse',
                                 response: { data: 'data: [DONE]\n\n', ok: true, done: true },
                             });
+                        } else if (content && sender?.tab?.id) {
+                            chrome.tabs.sendMessage(sender.tab.id, {
+                                type: 'streamResponse',
+                                response: { data: content, ok: true, done: false },
+                            });
                         }
-                        break;
+                    } else if (sender?.tab?.id) {
+                        handleMessage(chunk, { tab: { id: sender.tab.id } });
                     }
-
-                    if (sender?.tab?.id) {
-                        chrome.tabs.sendMessage(sender.tab.id, {
-                            type: 'streamResponse',
-                            response: { data: line + '\n\n', ok: true, done: false },
-                        });
-                    }
-                }
+                });
             },
         })
             .then((response) => {
                 if (!request.body.includes('"stream":true')) {
-                    sendResponse({ status: response.status, ok: response.ok });
+                    sendResponse(response);
                 }
             })
             .catch((error) => {
-                console.log('error', error)
+                console.log('error', error);
                 sendResponse({ ok: false, error: error.message });
             })
             .finally(() => {
