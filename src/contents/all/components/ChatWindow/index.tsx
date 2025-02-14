@@ -43,6 +43,7 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
     const [isSelectProvider, setIsSelectProvider] = useState(false);
     const [isPinned, setIsPinned] = useState(false);
     const [position, setPosition] = useState({ x, y });
+    const [size, setSize] = useState({ width: 500, height: 500 });
     const chatBoxRef = useRef<HTMLDivElement | null>(null);
 
     const initData = async () => {
@@ -199,6 +200,26 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
         document.addEventListener('mouseup', handleMouseUp);
     };
 
+    const handleResizeMouseDown = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        const startX = e.clientX;
+        const startY = e.clientY;
+        const startSize = { ...size };
+
+        const handleMouseMove = (moveEvent: MouseEvent) => {
+            const newWidth = startSize.width + (moveEvent.clientX - startX);
+            const newHeight = startSize.height + (moveEvent.clientY - startY);
+            setSize({ width: newWidth, height: newHeight });
+        };
+
+        const handleMouseUp = () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        };
+
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+    };
     return (
         <div
             ref={chatBoxRef}
@@ -210,8 +231,8 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
                 background: 'white',
                 boxShadow: '0 0 10px rgba(0,0,0,0.1)',
                 borderRadius: '8px',
-                height: 500,
-                width: 500,
+                height: size.height,
+                width: size.width,
                 cursor: isPinned ? 'default' : 'move',
             }}
             onMouseDown={handleMouseDown}
@@ -265,7 +286,7 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
                 </div>
             </div>
             <XProvider direction="ltr">
-                <Flex style={{ margin: 30, height: 420 }} vertical>
+                <Flex style={{ margin: 30, height: size.height - 80 }} vertical>
                     <Bubble.List style={{ flex: 1 }} items={bubbleList} />
                     {isSelectProvider && (
                         <Suggestion style={{ marginTop: 20 }} items={[]}>
@@ -301,6 +322,18 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
                     )}
                 </Flex>
             </XProvider>
+            <div
+                style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    right: 0,
+                    width: 20,
+                    height: 20,
+                    cursor: 'nwse-resize',
+                    backgroundColor: 'transparent',
+                }}
+                onMouseDown={handleResizeMouseDown}
+            />
         </div>
     );
 };
