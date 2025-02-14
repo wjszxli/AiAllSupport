@@ -124,31 +124,6 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
                     } else if (!isReasoning) {
                         content += data;
                     }
-
-                    // if (!isReasoning && openTagMatch) {
-                    //     const beforeText = text.slice(
-                    //       currentIndex,
-                    //       currentIndex + openTagMatch.index
-                    //     )
-                    //     if (beforeText.trim()) {
-                    //       result.push({ type: "text", content: beforeText.trim() })
-                    //     }
-                
-                    //     isReasoning = true
-                    //     currentIndex += openTagMatch.index! + openTagMatch[0].length
-                    //     continue
-                    //   }
-                    // }
-                    
-                    // console.log('isReasonContent', isReasonContent)
-                    // if (content === '\u003cthink\u003e') {
-                    //     isReasonContent = true;
-                    // } else if (isReasonContent && content !== '\u003c/think\u003e') {
-                    //     reasoningContent += data;
-                    // } else {
-                    //     isReasonContent = false;
-                    //     content += data;
-                    // }
                 } else {
                     if (!data.startsWith('data: ')) return;
 
