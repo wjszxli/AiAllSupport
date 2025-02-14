@@ -2,6 +2,7 @@ import ChatWindow from './components/ChatWindow';
 import { createRoot } from 'react-dom/client';
 import { CHAT_BOX_ID, CHAT_BUTTON_ID } from '@/utils/constant';
 import { removeChatBox, removeChatButton } from '@/utils';
+import storage from '@/utils/storage';
 
 // 监听选中文字
 document.addEventListener(
@@ -22,6 +23,10 @@ document.addEventListener(
 );
 
 document.addEventListener('mousedown', async (event) => {
+    const pinned = await storage.get('pinned');
+    // 如果用户选择固定，就不关闭
+    if (pinned) return;
+
     const target = event.target as HTMLElement;
     const isClickInside =
         target?.closest(`#${CHAT_BOX_ID}`) || target?.closest(`#${CHAT_BUTTON_ID}`);

@@ -1,7 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Bubble, BubbleProps, Sender, Suggestion, XProvider } from '@ant-design/x';
-import { CloseCircleTwoTone, UserOutlined } from '@ant-design/icons';
-import { Alert, Flex, Typography, message } from 'antd';
+import {
+    CloseCircleTwoTone,
+    PushpinOutlined,
+    PushpinTwoTone,
+    UserOutlined,
+} from '@ant-design/icons';
+import { Alert, Flex, Tooltip, Typography, message } from 'antd';
 import markdownit from 'markdown-it';
 import { chatAIStream } from '@/service';
 import storage from '@/utils/storage';
@@ -34,9 +39,11 @@ interface IBubbleListProps extends BubbleProps {
 const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
     const [messages, setMessages] = useState<string | undefined>(text);
     const [loading, setLoading] = useState(false);
-
     const [bubbleList, setBubbleList] = useState<IBubbleListProps[]>([]);
     const [isSelectProvider, setIsSelectProvider] = useState(false);
+    const [isPinned, setIsPinned] = useState(false);
+    const [position, setPosition] = useState({ x, y });
+    const chatBoxRef = useRef<HTMLDivElement | null>(null);
 
     const initData = async () => {
         try {
@@ -103,24 +110,24 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
             let reasoningContent = '';
             setMessages('AI 在思考中');
 
-            let isReasoning = false
+            let isReasoning = false;
 
             chatAIStream(sendMessage, async (chunk) => {
                 const { data, done } = chunk;
                 const { selectedProvider } = await storage.getConfig();
                 if (isLocalhost(selectedProvider)) {
-                    const tagPattern = new RegExp(`<(${tags.join("|")})>`, "i")
-                    const closeTagPattern = new RegExp(`</(${tags.join("|")})>`, "i")
+                    const tagPattern = new RegExp(`<(${tags.join('|')})>`, 'i');
+                    const closeTagPattern = new RegExp(`</(${tags.join('|')})>`, 'i');
 
-                    const openTagMatch = data.match(tagPattern)
-                    const closeTagMatch = data.match(closeTagPattern)
+                    const openTagMatch = data.match(tagPattern);
+                    const closeTagMatch = data.match(closeTagPattern);
 
                     if (!isReasoning && openTagMatch) {
-                        isReasoning = true
+                        isReasoning = true;
                     } else if (isReasoning && !closeTagMatch) {
                         reasoningContent += data;
                     } else if (isReasoning && closeTagMatch) {
-                        isReasoning = false
+                        isReasoning = false;
                     } else if (!isReasoning) {
                         content += data;
                     }
@@ -170,19 +177,44 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
         }
     };
 
+    const handleMouseDown = (e: React.MouseEvent) => {
+        if (isPinned) return;
+
+        const startX = e.clientX;
+        const startY = e.clientY;
+        const startPos = { ...position };
+
+        const handleMouseMove = (moveEvent: MouseEvent) => {
+            const newX = startPos.x + (moveEvent.clientX - startX);
+            const newY = startPos.y + (moveEvent.clientY - startY);
+            setPosition({ x: newX, y: newY });
+        };
+
+        const handleMouseUp = () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        };
+
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+    };
+
     return (
         <div
+            ref={chatBoxRef}
             style={{
                 position: 'absolute',
-                top: y + 10 + 'px',
-                left: x + 'px',
+                top: position.y + 10 + 'px',
+                left: position.x + 'px',
                 zIndex: 99999,
                 background: 'white',
                 boxShadow: '0 0 10px rgba(0,0,0,0.1)',
                 borderRadius: '8px',
                 height: 500,
                 width: 500,
+                cursor: isPinned ? 'default' : 'move',
             }}
+            onMouseDown={handleMouseDown}
         >
             {!isSelectProvider && (
                 <Alert
@@ -193,23 +225,47 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
                     }}
                 />
             )}
-            <div
-                style={{
-                    position: 'absolute',
-                    right: 0,
-                    padding: 10,
-                    cursor: 'pointer',
-                }}
-                onClick={() => {
-                    setIsSelectProvider(false);
-                    removeChatButton();
-                    removeChatBox();
-                }}
-            >
-                <CloseCircleTwoTone twoToneColor="#eb2f96" style={{ fontSize: 20 }} />
+            <div style={{ height: 30 }}>
+                <div
+                    style={{
+                        position: 'absolute',
+                        right: 0,
+                        padding: 10,
+                        cursor: 'pointer',
+                    }}
+                    onClick={() => {
+                        setIsSelectProvider(false);
+                        removeChatButton();
+                        removeChatBox();
+                    }}
+                >
+                    <CloseCircleTwoTone twoToneColor="#eb2f96" style={{ fontSize: 20 }} />
+                </div>
+                <div
+                    style={{
+                        position: 'absolute',
+                        left: 0,
+                        padding: 10,
+                        cursor: 'pointer',
+                    }}
+                    onClick={async () => {
+                        await storage.set('pinned',!isPinned);
+                        setIsPinned(!isPinned);
+                    }}
+                >
+                    {isPinned ? (
+                        <Tooltip title="点我可以进行拖拽">
+                            <PushpinTwoTone style={{ fontSize: 20 }} />
+                        </Tooltip>
+                    ) : (
+                        <Tooltip title="点我固定位置">
+                            <PushpinOutlined style={{ fontSize: 20 }} />
+                        </Tooltip>
+                    )}
+                </div>
             </div>
             <XProvider direction="ltr">
-                <Flex style={{ margin: 30, height: 450 }} vertical>
+                <Flex style={{ margin: 30, height: 420 }} vertical>
                     <Bubble.List style={{ flex: 1 }} items={bubbleList} />
                     {isSelectProvider && (
                         <Suggestion style={{ marginTop: 20 }} items={[]}>

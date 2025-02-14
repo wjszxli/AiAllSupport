@@ -7,7 +7,7 @@
 </div>
 
 ## 📖 简介
-DeepSeekAllSupports 是一款免费开源的浏览器扩展，支持 [DeepSeek](https://deepseek.com) 及其多平台服务，包括 DeepSeek 官方、硅基流动、腾讯云、百度云、阿里云 等。无论您使用哪家服务商，DeepSeekAllSupports 都能帮助您 无缝集成，轻松调用 DeepSeek 强大的 AI 能力，为您的工作和研究提供高效支持。
+DeepSeekAllSupports 是一款免费开源的浏览器扩展，支持 [DeepSeek](https://deepseek.com) 及其多平台服务，包括 DeepSeek 官方、硅基流动、腾讯云、百度云、阿里云、本地大模型等。无论您使用哪家服务商，DeepSeekAllSupports 都能帮助您 无缝集成，轻松调用 DeepSeek 强大的 AI 能力，为您的工作和研究提供高效支持。
 
 
 ## 开源插件支持服务商
@@ -18,6 +18,7 @@ DeepSeekAllSupports 是一款免费开源的浏览器扩展，支持 [DeepSeek](
 > - [腾讯云](https://cloud.tencent.com/document/product/1772/115969) DeepSeek API
 > - [百度云](https://console.bce.baidu.com/iam/#/iam/apikey/list) DeepSeek API
 > - [阿里云](https://bailian.console.aliyun.com/?apiKey=1#/api-key) DeepSeek API
+> - [本地](https://ollama.com/) DeepSeek API
 
 🔜 未来计划支持更多服务商：科大讯飞、OpenRoute、字节跳动火山引擎等。
 
@@ -30,6 +31,7 @@ DeepSeekAllSupports 是一款免费开源的浏览器扩展，支持 [DeepSeek](
 - **流式响应**: AI 回复实时加载，提升交互流畅度。
 - **多模型支持**: 可选择 DeepSeek V3 和 DeepSeek R1，自由切换模型体验。
 - **多 API 提供商集成**: 兼容多家云服务 API，随心切换，稳定可靠。
+- **自由调整窗口**: 支持对话窗口自由拖拽、调整大小、固定位置。
 
 ### 内容展示
 
@@ -40,7 +42,6 @@ DeepSeekAllSupports 是一款免费开源的浏览器扩展，支持 [DeepSeek](
 ## 接下来还将支持
 
 - **快捷键操作**: 通过快捷键快速唤起插件，提高使用效率。
-- **自由调整窗口**: 支持对话窗口自由拖拽、调整大小、固定位置。
 - **一键复制 & 重新生成**: 支持 AI 回答一键复制，并提供重新生成功能。
 - **自定义快捷键**: 支持自定义快捷键功能
 - **支持本地部署模型**: 支持连接本地 Ollama 模型，避免网络依赖，畅享丝滑 AI 体验。
