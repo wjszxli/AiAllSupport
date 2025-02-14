@@ -17,7 +17,7 @@ export const fetchData = async ({
     headers?: Record<string, string>;
     timeout?: number;
     onStream?: (chunk: string) => void;
-}): Promise<Response> => {
+}): Promise<{ status: number; ok: boolean; data: any }> => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
@@ -27,15 +27,17 @@ export const fetchData = async ({
     }
 
     const apiKey = await storage.getApiKey(selectedProvider);
-    if (!apiKey) {
+    if (!apiKey && !isLocalhost(selectedProvider)) {
         throw new Error('请输入 API Key');
     }
 
     const base_url = URL_MAP[selectedProvider as keyof typeof URL_MAP];
-    console.log('body', body);
+    if (!base_url) {
+        throw new Error(`未找到 ${selectedProvider} 的基础 URL`);
+    }
 
     try {
-        const response = await fetch(base_url + url, {
+        const config: RequestInit = {
             method,
             body,
             headers: {
@@ -44,7 +46,19 @@ export const fetchData = async ({
                 ...headers,
             },
             signal: controller.signal,
-        });
+        };
+
+        if (isLocalhost(selectedProvider)) {
+            delete (config.headers as Record<string, string>).Authorization;
+            // (config.headers as Record<string, string>)['Origin'] = 'http://127.0.0.1';
+            // (config.headers as Record<string, string>)['Access-Control-Allow-Origin'] = '*';
+        }
+
+        if (method === 'GET' || method === 'HEAD') {
+            delete config.body;
+        }
+
+        const response = await fetch(base_url + url, config);
 
         clearTimeout(timeoutId);
 
@@ -62,8 +76,11 @@ export const fetchData = async ({
                 const chunk = decoder.decode(value);
                 onStream?.(chunk);
             }
+            return { status: response.status, ok: response.ok, data: {} };
+        } else {
+            const data = await response.json();
+            return { status: response.status, ok: response.ok, data };
         }
-        return response;
     } catch (error) {
         console.error('fetchData 错误:', error);
         throw error;
@@ -143,4 +160,35 @@ export const removeChatBox = async () => {
     const chatBox = document.getElementById(CHAT_BOX_ID);
     if (chatBox) chatBox.remove();
     await storage.remove('chatHistory');
-}
+};
+
+export const isLocalhost = (selectedProvider: string | null) => {
+    return selectedProvider === 'Ollama';
+};
+
+export const handleMessage = (message: string, sender: { tab: { id: number; }; }) => {
+    const lines = message.split('\n');
+
+    for (const line of lines) {
+        if (line.trim() === '' || !line.startsWith('data: ')) continue;
+
+        const data = line.slice(6);
+        if (data === '[DONE]') {
+            console.log('sender?.tab?.id', sender?.tab?.id);
+            if (sender?.tab?.id) {
+                chrome.tabs.sendMessage(sender.tab.id, {
+                    type: 'streamResponse',
+                    response: { data: 'data: [DONE]\n\n', ok: true, done: true },
+                });
+            }
+            break;
+        }
+
+        if (sender?.tab?.id) {
+            chrome.tabs.sendMessage(sender.tab.id, {
+                type: 'streamResponse',
+                response: { data: line + '\n\n', ok: true, done: false },
+            });
+        }
+    }
+};

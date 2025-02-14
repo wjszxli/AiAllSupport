@@ -31,9 +31,21 @@ export const chat = async (messages: IMessage[]) => {
         messages: [{ role: 'system', content: '你是一个 AI 助手，请回答用户的问题' }, ...messages],
         stream: true,
     };
-    console.log('data', data);
     return requestApi(url, 'POST', data);
 };
+
+export const modelList = async (selectedProvider:string) => {
+
+    if (!selectedProvider || !(selectedProvider in SERVICE_MAP)) {
+        throw new Error('请选择服务商');
+    }
+    const service = SERVICE_MAP[selectedProvider as keyof typeof SERVICE_MAP];
+    if (!('modelList' in service)) {
+        throw new Error('当前服务商不支持模型列表');
+    }
+    const url = service.modelList;
+    return requestApi(url);
+}
 
 export const chatAIStream = async (
     messages: IMessage[],

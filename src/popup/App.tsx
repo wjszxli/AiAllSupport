@@ -3,8 +3,9 @@ import React, { useEffect, useState } from 'react';
 
 import './App.scss';
 import storage from '@/utils/storage';
-import { validateApiKey } from '@/service';
-import { PROVIDERS_DATA } from '@/utils/constant';
+import { modelList, validateApiKey } from '@/service';
+import { GIT_URL, PROVIDERS_DATA } from '@/utils/constant';
+import { isLocalhost } from '@/utils';
 
 const layout = {
     labelCol: { span: 6 },
@@ -17,6 +18,7 @@ const App: React.FC = () => {
     const [form] = Form.useForm();
     const [loadings, setLoadings] = useState<string>('保存配置');
     const [selectedProvider, setSelectedProvider] = useState('DeepSeek');
+    const [models, setModels] = useState<Array<{ label: string; value: string }>>([]);
 
     useEffect(() => {
         initData();
@@ -38,6 +40,28 @@ const App: React.FC = () => {
         });
     };
 
+    const getModels = async (selectedProvider: string | null) => {
+        if (!selectedProvider) {
+            setModels([]);
+            return;
+        }
+
+        if (!isLocalhost(selectedProvider)) {
+            const models = PROVIDERS_DATA[selectedProvider].models;
+            setModels(models);
+        } else {
+            const res = await modelList(selectedProvider) as { models?: Array<{ name: string; model: string }> };
+
+            if (res?.models) {
+                const models = res.models.map((value) => ({
+                    label: value.name,
+                    value: value.model,
+                }));
+                setModels(models);
+            }
+        }
+    };
+
     const onFinish = async (values: any) => {
         setLoadings('保存配置中');
         const { provider, apiKey, model } = values;
@@ -48,11 +72,9 @@ const App: React.FC = () => {
         }
 
         providersData[provider] = { ...PROVIDERS_DATA[provider], apiKey };
-        console.log('providersData', providersData);
 
         await storage.setProviders(providersData);
         await storage.setSelectedProvider(provider);
-        console.log('model', model);
         await storage.setSelectedModel(model);
         await storage.updateApiKey(provider, apiKey);
         message.success('配置已保存');
@@ -63,9 +85,14 @@ const App: React.FC = () => {
     const onProviderChange = async (value: string) => {
         setSelectedProvider(value);
         const providers = await storage.getProviders();
-        const apiKey = providers[value]?.apiKey;
-        const model = providers[value]?.models[0];
-        form.setFieldsValue({ provider: value, apiKey, model: model?.value });
+        await storage.setSelectedProvider(value);
+        await getModels(value);
+        if (!isLocalhost(value)) {
+            const apiKey = providers[value]?.apiKey;
+            const model = providers[value]?.models[0].value;
+            const fieldsValue = { apiKey, model };
+            form.setFieldsValue(fieldsValue);
+        }
     };
 
     const onModelChange = (value: string) => {
@@ -110,25 +137,28 @@ const App: React.FC = () => {
                         )}
                     </Select>
                 </Form.Item>
-                <Form.Item label="API Key" name="ApiKey">
-                    <>
-                        <Form.Item
-                            name="apiKey"
-                            noStyle
-                            rules={[{ required: true, message: '请输入您的 API Key' }]}
-                        >
-                            <Input placeholder="ApiKey 将存储在您的本地" />
-                        </Form.Item>
-                        <Tooltip title="快速获取 API key">
-                            <Typography.Link
-                                href={PROVIDERS_DATA[selectedProvider].apiKeyUrl || ''}
-                                target="_blank"
+                {!isLocalhost(selectedProvider) && (
+                    <Form.Item label="API Key" name="ApiKey">
+                        <>
+                            <Form.Item
+                                name="apiKey"
+                                noStyle
+                                rules={[{ required: true, message: '请输入您的 API Key' }]}
                             >
-                                获取 API Key
-                            </Typography.Link>
-                        </Tooltip>
-                    </>
-                </Form.Item>
+                                <Input placeholder="ApiKey 将存储在您的本地" />
+                            </Form.Item>
+                            <Tooltip title="快速获取 API key">
+                                <Typography.Link
+                                    href={PROVIDERS_DATA[selectedProvider].apiKeyUrl || ''}
+                                    target="_blank"
+                                >
+                                    获取 API Key
+                                </Typography.Link>
+                            </Tooltip>
+                        </>
+                    </Form.Item>
+                )}
+
                 <Form.Item
                     label="模型选择"
                     name="model"
@@ -137,13 +167,15 @@ const App: React.FC = () => {
                     <Select
                         placeholder="请选择您要使用的模型"
                         onChange={(value) => onModelChange(value)}
+                        options={models}
                         allowClear
                     >
-                        {PROVIDERS_DATA[selectedProvider].models.map((model) => (
-                            <Option key={model.value} value={model.value}>
-                                {model.label}
-                            </Option>
-                        ))}
+                        {/* {models.length &&
+                            models.map((model) => (
+                                <Option key={model.value} value={model.value}>
+                                    {model.label}
+                                </Option>
+                            ))} */}
                     </Select>
                 </Form.Item>
                 <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
@@ -152,6 +184,9 @@ const App: React.FC = () => {
                     </Button>
                 </Form.Item>
             </Form>
+            <Typography.Link href={GIT_URL} target="_blank" style={{ padding: 20 }}>
+                给作者点赞 ｜ 联系作者
+            </Typography.Link>
         </div>
     );
 };
