@@ -2,7 +2,6 @@ import ChatWindow from './components/ChatWindow';
 import { createRoot } from 'react-dom/client';
 import { CHAT_BOX_ID, CHAT_BUTTON_ID } from '@/utils/constant';
 import { removeChatBox, removeChatButton } from '@/utils';
-import storage from '@/utils/storage';
 
 // 监听选中文字
 document.addEventListener(
@@ -21,22 +20,6 @@ document.addEventListener(
     },
     { passive: true },
 );
-
-document.addEventListener('mousedown', async (event) => {
-    const pinned = await storage.get('pinned');
-    // 如果用户选择固定，就不关闭
-    if (pinned) return;
-
-    const target = event.target as HTMLElement;
-    const isClickInside =
-        target?.closest(`#${CHAT_BOX_ID}`) || target?.closest(`#${CHAT_BUTTON_ID}`);
-
-    // 如果点击在弹窗内部或相关元素上，不关闭
-    if (isClickInside) return;
-
-    removeChatBox();
-    removeChatButton();
-});
 
 // 在选中文字后插入按钮
 const injectChatButton = (x: number, y: number, text: string) => {
@@ -59,6 +42,7 @@ const injectChatButton = (x: number, y: number, text: string) => {
     }
 
     chatButton.style.top = `${y + 5}px`;
+
     chatButton.style.left = `${x + 5}px`;
 
     chatButton.onclick = () => {
@@ -88,5 +72,14 @@ document.addEventListener('keydown', async (event) => {
     if (event.key === 'Escape') {
         removeChatBox();
         removeChatButton();
+    }
+});
+
+chrome.runtime.onMessage.addListener((message) => {
+    if (message.action === 'openChatWindow') {
+        const { selectedText } = message;
+        let windowWidth = (window.innerWidth - 500) / 2;
+        let windowHeight = (window.innerHeight - 500) / 2;
+        injectChatBox(windowWidth, windowHeight, selectedText);
     }
 });

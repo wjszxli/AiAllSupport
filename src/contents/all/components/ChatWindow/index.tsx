@@ -132,7 +132,7 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
                     } else if (!isReasoning) {
                         content += data;
                     }
-                } else {
+                } else if (!done) {
                     if (!data.startsWith('data: ')) return;
 
                     const chunkStringData = data.slice(6);
@@ -144,6 +144,7 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
                         reasoningContent += chunkData.choices[0].delta.reasoning_content;
                     }
                 }
+                console.log('done', done)
 
                 if (done) {
                     const updatedMessages = [
@@ -270,7 +271,6 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
                         cursor: 'pointer',
                     }}
                     onClick={async () => {
-                        await storage.set('pinned',!isPinned);
                         setIsPinned(!isPinned);
                     }}
                 >

@@ -50,7 +50,6 @@ const requestControllers = new Map();
 
 // 监听 `popup.ts` 或 `content.ts` 发送的消息，并代理 API 请求
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    console.log('request.action', request.action);
     if (request.action === 'fetchData') {
         const controller = new AbortController();
 
@@ -119,7 +118,25 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         storage.set(request.key, request.value).then(() => sendResponse({ success: true }));
         return true;
     }
+
     return false; // 没有匹配到任务
 });
 
-// 对 fetchData 进行修改，流数据通过
+chrome.runtime.onInstalled.addListener(() => {
+    chrome.contextMenus.create({
+        id: 'openChatWindow',
+        title: '打开 AI 窗口聊天',
+        contexts: ['page', 'selection', 'image', 'link'],
+    });
+});
+
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+    if (info.menuItemId === 'openChatWindow' && tab?.id !== undefined) {
+        console.log('info', info)
+        chrome.tabs.sendMessage(tab.id, {
+            action: 'openChatWindow',
+            selectedText: info.selectionText || '',
+        });
+    }
+});
+
