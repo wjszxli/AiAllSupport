@@ -9,7 +9,7 @@ const manifest: Manifest.WebExtensionManifest = {
     description: pkg.description,
     manifest_version: 3,
     minimum_chrome_version: pkg.browserslist.split(' ')[2],
-    permissions: ['storage', 'declarativeNetRequest', 'contextMenus'],
+    permissions: ['storage', 'declarativeNetRequest', 'contextMenus', 'commands'],
     host_permissions: ['https://*/*', 'http://*/*'],
     content_security_policy: {
         extension_pages: "script-src 'self' http://localhost; object-src 'self';",
@@ -49,6 +49,16 @@ const manifest: Manifest.WebExtensionManifest = {
         '32': 'icons/icon32.png',
         '48': 'icons/icon48.png',
         '128': 'icons/icon128.png',
+    },
+    commands: {
+        'open-chat': {
+            suggested_key: {
+                default: 'Ctrl+Shift+Y',
+                mac: 'Command+Shift+Y',
+                windows: 'Ctrl+Shift+Y',
+            },
+            description: '打开 AI 聊天窗口.',
+        },
     },
 };
 if (!__DEV__) {

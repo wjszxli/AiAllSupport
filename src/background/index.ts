@@ -12,7 +12,6 @@ import storage from '@/utils/storage';
 //     }
 // });
 
-console.log('chrome.declarativeNetRequest', chrome.runtime);
 chrome.declarativeNetRequest.updateDynamicRules(
     {
         addRules: [
@@ -132,7 +131,6 @@ chrome.runtime.onInstalled.addListener(() => {
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
     if (info.menuItemId === 'openChatWindow' && tab?.id !== undefined) {
-        console.log('info', info)
         chrome.tabs.sendMessage(tab.id, {
             action: 'openChatWindow',
             selectedText: info.selectionText || '',
@@ -140,3 +138,34 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
     }
 });
 
+chrome.commands.onCommand.addListener(async (command) => {
+    if (command === 'open-chat') {
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (!tab || !tab.url || tab.url.startsWith('chrome://') || tab.url.startsWith('edge://')) {
+            return;
+        }
+        try {
+            if (tab.id !== undefined) {
+                const [{ result }] = await chrome.scripting.executeScript({
+                    target: { tabId: tab.id },
+                    func: () => {
+                        const selection = window.getSelection();
+                        return selection ? selection.toString() : '';
+                    },
+                });
+
+                chrome.tabs.sendMessage(tab.id, {
+                    action: 'openChatWindow',
+                    selectedText: result || null,
+                });
+            }
+        } catch (error) {
+            if (tab.id !== undefined) {
+                chrome.tabs.sendMessage(tab.id, {
+                    action: 'openChatWindow',
+                    selectedText: null,
+                });
+            }
+        }
+    }
+});

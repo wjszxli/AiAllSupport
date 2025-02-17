@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import './App.scss';
 import storage from '@/utils/storage';
 import { modelList, validateApiKey } from '@/service';
-import { GIT_URL, PROVIDERS_DATA } from '@/utils/constant';
+import { GIT_URL, PROVIDERS_DATA, SHORTCUTS_URL } from '@/utils/constant';
 import { isLocalhost } from '@/utils';
 
 const layout = {
@@ -50,7 +50,9 @@ const App: React.FC = () => {
             const models = PROVIDERS_DATA[selectedProvider].models;
             setModels(models);
         } else {
-            const res = await modelList(selectedProvider) as { models?: Array<{ name: string; model: string }> };
+            const res = (await modelList(selectedProvider)) as {
+                models?: Array<{ name: string; model: string }>;
+            };
 
             if (res?.models) {
                 const models = res.models.map((value) => ({
@@ -112,6 +114,12 @@ const App: React.FC = () => {
                 message.error(error as string);
             }
         }
+    };
+
+    const onSetShortcuts = () => {
+        chrome.tabs.create({
+            url: SHORTCUTS_URL,
+        });
     };
 
     return (
@@ -184,6 +192,9 @@ const App: React.FC = () => {
                     </Button>
                 </Form.Item>
             </Form>
+            <Typography.Link onClick={onSetShortcuts} style={{ padding: 20 }}>
+                设置快捷键
+            </Typography.Link>
             <Typography.Link href={GIT_URL} target="_blank" style={{ padding: 20 }}>
                 给作者点赞 ｜ 联系作者
             </Typography.Link>
