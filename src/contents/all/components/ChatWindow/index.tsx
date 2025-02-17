@@ -2,20 +2,21 @@ import { useEffect, useState, useRef } from 'react';
 import { Bubble, BubbleProps, Sender, Suggestion, XProvider } from '@ant-design/x';
 import {
     CloseCircleTwoTone,
+    CopyOutlined,
     PushpinOutlined,
     PushpinTwoTone,
+    SyncOutlined,
     UserOutlined,
 } from '@ant-design/icons';
-import { Alert, Flex, Tooltip, Typography, message } from 'antd';
-import markdownit from 'markdown-it';
+import { Alert, Button, Flex, Space, Tooltip, Typography, message } from 'antd';
 import { chatAIStream } from '@/service';
 import storage from '@/utils/storage';
 import { PROVIDERS_DATA, tags } from '@/utils/constant';
 import { IMessage } from '@/typings';
 import Think from '../Think';
 import { isLocalhost, removeChatBox, removeChatButton } from '@/utils';
+import { md } from '@/utils/markdownRenderer';
 
-const md = markdownit({ html: true, breaks: true });
 const renderMarkdown: BubbleProps['messageRender'] = (content: string) => (
     <Typography>
         <div dangerouslySetInnerHTML={{ __html: md.render(content) }} />
@@ -129,7 +130,7 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
                         reasoningContent += data;
                     } else if (isReasoning && closeTagMatch) {
                         isReasoning = false;
-                    } else if (!isReasoning) {
+                    } else if (!isReasoning && !done) {
                         content += data;
                     }
                 } else if (!done) {
@@ -144,7 +145,6 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
                         reasoningContent += chunkData.choices[0].delta.reasoning_content;
                     }
                 }
-                console.log('done', done)
 
                 if (done) {
                     const updatedMessages = [
@@ -155,23 +155,50 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
 
                     setMessages(undefined);
                     setLoading(false);
+                    setBubbleList((prevBubbleList) =>
+                        prevBubbleList.map((bubble) =>
+                            bubble.key === loadingBubble.key
+                                ? {
+                                      ...bubble,
+                                      footer: (
+                                          <Space>
+                                              <Button
+                                                  color="default"
+                                                  variant="text"
+                                                  size="small"
+                                                  icon={<CopyOutlined />}
+                                                  onClick={() => copyToClipboard(content)}
+                                              />
+                                              <Button
+                                                  color="default"
+                                                  variant="text"
+                                                  size="small"
+                                                  icon={<SyncOutlined />}
+                                                  onClick={() => regenerateResponse(content)}
+                                              />
+                                          </Space>
+                                      ),
+                                  }
+                                : bubble,
+                        ),
+                    );
                     return;
+                } else {
+                    setBubbleList((prevBubbleList) =>
+                        prevBubbleList.map((bubble) =>
+                            bubble.key === loadingBubble.key
+                                ? {
+                                      ...bubble,
+                                      content: content,
+                                      loading: content ? false : true,
+                                      header: reasoningContent ? (
+                                          <Think context={reasoningContent} />
+                                      ) : null,
+                                  }
+                                : bubble,
+                        ),
+                    );
                 }
-
-                setBubbleList((prevBubbleList) =>
-                    prevBubbleList.map((bubble) =>
-                        bubble.key === loadingBubble.key
-                            ? {
-                                  ...bubble,
-                                  content: content,
-                                  loading: content ? false : true,
-                                  header: reasoningContent ? (
-                                      <Think context={reasoningContent} />
-                                  ) : null,
-                              }
-                            : bubble,
-                    ),
-                );
             });
         } catch (error) {
             message.error(error instanceof Error ? error.message : String(error));
@@ -221,6 +248,23 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
         document.addEventListener('mousemove', handleMouseMove);
         document.addEventListener('mouseup', handleMouseUp);
     };
+
+    const copyToClipboard = (content: string) => {
+        navigator.clipboard
+            .writeText(content)
+            .then(() => {
+                message.success('内容已复制到剪贴板');
+            })
+            .catch(() => {
+                message.error('复制失败');
+            });
+    };
+
+    const regenerateResponse = async (message: string) => {
+        setMessages(message);
+        await sendChat();
+    };
+
     return (
         <div
             ref={chatBoxRef}
@@ -238,15 +282,6 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
             }}
             onMouseDown={handleMouseDown}
         >
-            {!isSelectProvider && (
-                <Alert
-                    type="error"
-                    message="请先点击插件的图标选择一个服务商"
-                    style={{
-                        margin: 10,
-                    }}
-                />
-            )}
             <div style={{ height: 30 }}>
                 <div
                     style={{
@@ -285,6 +320,15 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
                     )}
                 </div>
             </div>
+            {!isSelectProvider && (
+                <Alert
+                    type="error"
+                    message="请先点击插件的图标选择一个服务商"
+                    style={{
+                        margin: 10,
+                    }}
+                />
+            )}
             <XProvider direction="ltr">
                 <Flex style={{ margin: 30, height: size.height - 80 }} vertical>
                     <Bubble.List style={{ flex: 1 }} items={bubbleList} />

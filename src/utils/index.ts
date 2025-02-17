@@ -166,29 +166,26 @@ export const isLocalhost = (selectedProvider: string | null) => {
     return selectedProvider === 'Ollama';
 };
 
-export const handleMessage = (message: string, sender: { tab: { id: number; }; }) => {
+export const handleMessage = (message: string, sender: { tab: { id: number } }) => {
     const lines = message.split('\n');
 
     for (const line of lines) {
         if (line.trim() === '' || !line.startsWith('data: ')) continue;
 
         const data = line.slice(6);
-        if (data === '[DONE]') {
-            console.log('sender?.tab?.id', sender?.tab?.id);
-            if (sender?.tab?.id) {
+        if (sender?.tab?.id) {
+            if (data === '[DONE]') {
                 chrome.tabs.sendMessage(sender.tab.id, {
                     type: 'streamResponse',
-                    response: { data: 'data: [DONE]\n\n', ok: true, done: true },
+                    response: { data: '', ok: true, done: true },
+                });
+                break;
+            } else {
+                chrome.tabs.sendMessage(sender.tab.id, {
+                    type: 'streamResponse',
+                    response: { data: line, ok: true, done: false },
                 });
             }
-            break;
-        }
-
-        if (sender?.tab?.id) {
-            chrome.tabs.sendMessage(sender.tab.id, {
-                type: 'streamResponse',
-                response: { data: line + '\n\n', ok: true, done: false },
-            });
         }
     }
 };
