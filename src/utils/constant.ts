@@ -1,4 +1,4 @@
-import { ProviderConfig } from '@/typings';
+import type { ProviderConfig } from '@/typings';
 
 export const SERVICE_MAP = {
     DeepSeek: {
@@ -87,13 +87,11 @@ export const URL_MAP = {
 
 export const CHAT_BOX_ID = 'custom-chat-box';
 export const CHAT_BUTTON_ID = 'custom-chat-button';
-export const CHAT_ICON_URL = 'https://cdn-icons-png.flaticon.com/512/847/847969.png'; // 你可以换成更好看的图标
 
 export const GIT_URL = 'https://github.com/wjszxli/DeepSeekAllSupports';
 
 export const MODIFY_HEADERS_RULE_ID = 1001;
 
+export const tags = ['think', 'reason', 'reasoning', 'thought'];
 
-export const tags = ["think", "reason", "reasoning", "thought"]
-
-export const SHORTCUTS_URL = 'chrome://extensions/shortcuts'
+export const SHORTCUTS_URL = 'chrome://extensions/shortcuts';
