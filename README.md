@@ -6,10 +6,6 @@
 
 </div>
 
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=wjszxli/DeepSeekAllSupports&type=Date)](https://star-history.com/#wjszxli/DeepSeekAllSupports&Date)
-
 ## 📖 简介
 
 DeepSeekAllSupports 是一款免费开源的浏览器扩展，支持 [DeepSeek](https://deepseek.com) 及其多平台服务，包括 DeepSeek 官方、硅基流动、腾讯云、百度云、阿里云、本地大模型等。无论您使用哪家服务商，DeepSeekAllSupports 都能帮助您 无缝集成，轻松调用 DeepSeek 强大的 AI 能力，为您的工作和研究提供高效支持。
@@ -170,10 +166,14 @@ DeepSeekAllSupports 是一款高效、便捷的 AI 插件，支持多个 DeepSee
 
 本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情
 
-## 联系我们
+## 联系我
 
 - 项目问题: [GitHub Issues](https://github.com/wjszxli/DeepSeekAllSupports/issues)
 - 邮件联系: [wjszxli@gmail.com]
+
+## Star 历史
+
+[![Star History Chart](https://api.star-history.com/svg?repos=wjszxli/DeepSeekAllSupports&type=Date)](https://star-history.com/#wjszxli/DeepSeekAllSupports&Date)
 
 ---
 
