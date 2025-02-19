@@ -6,6 +6,10 @@
 
 </div>
 
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=wjszxli/DeepSeekAllSupports&type=Date)](https://star-history.com/#wjszxli/DeepSeekAllSupports&Date)
+
 ## 📖 简介
 
 DeepSeekAllSupports 是一款免费开源的浏览器扩展，支持 [DeepSeek](https://deepseek.com) 及其多平台服务，包括 DeepSeek 官方、硅基流动、腾讯云、百度云、阿里云、本地大模型等。无论您使用哪家服务商，DeepSeekAllSupports 都能帮助您 无缝集成，轻松调用 DeepSeek 强大的 AI 能力，为您的工作和研究提供高效支持。
@@ -38,7 +42,6 @@ DeepSeekAllSupports 是一款免费开源的浏览器扩展，支持 [DeepSeek](
 - **自定义快捷键**: 支持自定义快捷键功能
 - **一键复制 & 重新生成**: 支持 AI 回答一键复制，并提供重新生成功能。
 
-
 ### 内容展示
 
 - **Markdown 渲染**: 支持代码块、列表、数学公式（MathJax）等格式，增强阅读体验。
@@ -46,6 +49,7 @@ DeepSeekAllSupports 是一款免费开源的浏览器扩展，支持 [DeepSeek](
 - **代码 & 公式复制**: 支持多种编程语言和公式的单独复制。
 
 ## 接下来还将支持
+
 - **本地模型联网**：支持本地 Ollama 模型联网能力，增强可用性。
 - **独立页面模式**：支持在浏览器单独打开 AI 对话界面，提升使用便捷性。
 
