@@ -1,7 +1,9 @@
-import ChatWindow from './components/ChatWindow';
 import { createRoot } from 'react-dom/client';
-import { CHAT_BOX_ID, CHAT_BUTTON_ID } from '@/utils/constant';
+
 import { removeChatBox, removeChatButton } from '@/utils';
+import { CHAT_BOX_ID, CHAT_BUTTON_ID } from '@/utils/constant';
+
+import ChatWindow from './components/ChatWindow';
 
 // 监听选中文字
 document.addEventListener(
@@ -38,16 +40,16 @@ const injectChatButton = (x: number, y: number, text: string) => {
         chatButton.style.boxShadow = '0 0 10px rgba(0,0,0,0.1)';
         chatButton.style.padding = '5px';
 
-        document.body.appendChild(chatButton);
+        document.body.append(chatButton);
     }
 
     chatButton.style.top = `${y + 5}px`;
 
     chatButton.style.left = `${x + 5}px`;
 
-    chatButton.onclick = () => {
+    chatButton.addEventListener('click', () => {
         injectChatBox(x, y, text);
-    };
+    });
 };
 
 // 在 DOM 中插入聊天框
@@ -59,7 +61,7 @@ const injectChatBox = (x: number, y: number, text: string) => {
     if (!chatContainer) {
         chatContainer = document.createElement('div');
         chatContainer.id = CHAT_BOX_ID;
-        document.body.appendChild(chatContainer);
+        document.body.append(chatContainer);
     }
 
     // 渲染 Chat 组件
@@ -78,8 +80,8 @@ document.addEventListener('keydown', async (event) => {
 chrome.runtime.onMessage.addListener((message) => {
     if (message.action === 'openChatWindow') {
         const { selectedText } = message;
-        let windowWidth = (window.innerWidth - 500) / 2;
-        let windowHeight = (window.innerHeight - 500) / 2;
+        const windowWidth = (window.innerWidth - 500) / 2;
+        const windowHeight = (window.innerHeight - 500) / 2;
         injectChatBox(windowWidth, windowHeight, selectedText);
     }
 });

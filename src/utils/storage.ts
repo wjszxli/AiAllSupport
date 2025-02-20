@@ -1,4 +1,5 @@
-import { ProviderConfig, StorageData } from '@/typings';
+import type { ProviderConfig, StorageData } from '@/typings';
+
 import { PROVIDERS_DATA } from './constant';
 
 // 封装存储 & 读取 & 监听变化的方法
@@ -73,6 +74,16 @@ const storage = {
     //  设置当前选中的模型
     setSelectedModel: async (model: string): Promise<void> => {
         await storage.set('selectedModel', model);
+    },
+
+    setChatBoxSize: async ({ width, height }: { width: number; height: number }): Promise<void> => {
+        await storage.set('height', height);
+        await storage.set('width', width);
+    },
+    getChatBoxSize: async () => {
+        const width = (await storage.get<number>('width')) || 500;
+        const height = (await storage.get<number>('height')) || 500;
+        return { width, height };
     },
 };
 

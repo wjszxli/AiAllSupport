@@ -1,4 +1,4 @@
-import { IMessage } from '@/typings';
+import type { IMessage } from '@/typings';
 import { requestAIStream, requestApi } from '@/utils';
 import { SERVICE_MAP } from '@/utils/constant';
 import storage from '@/utils/storage';
@@ -34,8 +34,7 @@ export const chat = async (messages: IMessage[]) => {
     return requestApi(url, 'POST', data);
 };
 
-export const modelList = async (selectedProvider:string) => {
-
+export const modelList = async (selectedProvider: string) => {
     if (!selectedProvider || !(selectedProvider in SERVICE_MAP)) {
         throw new Error('请选择服务商');
     }
@@ -45,7 +44,7 @@ export const modelList = async (selectedProvider:string) => {
     }
     const url = service.modelList;
     return requestApi(url);
-}
+};
 
 export const chatAIStream = async (
     messages: IMessage[],
@@ -62,6 +61,5 @@ export const chatAIStream = async (
         messages: [{ role: 'system', content: '你是一个 AI 助手，请回答用户的问题' }, ...messages],
         stream: true,
     };
-    console.log('data', data);
     return requestAIStream(url, 'POST', data, onData);
 };

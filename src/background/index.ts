@@ -1,4 +1,4 @@
-import { OllamaResponse } from '@/typings';
+import type { OllamaResponse } from '@/typings';
 import { fetchData, handleMessage, isLocalhost } from '@/utils';
 import { MODIFY_HEADERS_RULE_ID, URL_MAP } from '@/utils/constant';
 import storage from '@/utils/storage';
@@ -19,17 +19,17 @@ chrome.declarativeNetRequest.updateDynamicRules(
                 id: MODIFY_HEADERS_RULE_ID, // 规则 ID
                 priority: 1,
                 action: {
-                    // @ts-ignore
+                    // @ts-expect-error
                     type: 'modifyHeaders',
-                    // @ts-ignore
+                    // @ts-expect-error
                     requestHeaders: [
-                        // @ts-ignore
+                        // @ts-expect-error
                         { header: 'Origin', operation: 'set', value: URL_MAP.Ollama },
                     ],
                 },
                 condition: {
                     urlFilter: `${URL_MAP.Ollama}/*`,
-                    // @ts-ignore
+                    // @ts-expect-error
                     resourceTypes: ['xmlhttprequest'],
                 },
             },
@@ -64,31 +64,41 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             headers: request.headers,
             body: request.body,
             onStream: (chunk) => {
-                console.log('chunk', chunk);
                 storage.getConfig().then((config) => {
                     const { selectedProvider } = config;
                     if (isLocalhost(selectedProvider)) {
-                        const data: OllamaResponse = JSON.parse(chunk);
-                        const {
-                            message: { content },
-                            done,
-                        } = data;
-                        if (done && sender?.tab?.id) {
-                            chrome.tabs.sendMessage(sender.tab.id, {
-                                type: 'streamResponse',
-                                response: { data: 'data: [DONE]\n\n', ok: true, done: true },
-                            });
-                        } else if (content && sender?.tab?.id) {
-                            chrome.tabs.sendMessage(sender.tab.id, {
-                                type: 'streamResponse',
-                                response: { data: content, ok: true, done: false },
-                            });
+                        try {
+                            const data: OllamaResponse = JSON.parse(chunk);
+                            const {
+                                message: { content },
+                                done,
+                            } = data;
+                            if (done && sender?.tab?.id) {
+                                chrome.tabs.sendMessage(sender.tab.id, {
+                                    type: 'streamResponse',
+                                    response: { data: 'data: [DONE]\n\n', ok: true, done: true },
+                                });
+                            } else if (content && sender?.tab?.id) {
+                                chrome.tabs.sendMessage(sender.tab.id, {
+                                    type: 'streamResponse',
+                                    response: { data: content, ok: true, done: false },
+                                });
+                            }
+                        } catch (error) {
+                            sendResponse({ ok: false, error });
+                            if (sender?.tab?.id) {
+                                chrome.tabs.sendMessage(sender.tab.id, {
+                                    type: 'streamResponse',
+                                    response: { data: 'data: [DONE]\n\n', ok: false, done: true },
+                                });
+                            }
                         }
                     } else if (sender?.tab?.id) {
                         handleMessage(chunk, { tab: { id: sender.tab.id } });
                     }
                 });
             },
+            controller,
         })
             .then((response) => {
                 if (!request.body.includes('"stream":true')) {
@@ -96,7 +106,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 }
             })
             .catch((error) => {
-                console.log('error', error);
+                if (sender?.tab?.id) {
+                    requestControllers.delete(sender.tab.id);
+                }
                 sendResponse({ ok: false, error: error.message });
             })
             .finally(() => {
@@ -105,6 +117,21 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 }
             });
 
+        return true;
+    }
+
+    if (request.action === 'abortRequest') {
+        console.log('🚫 中止请求', sender?.tab?.id);
+        if (sender?.tab?.id) {
+            const controller = requestControllers.get(sender.tab.id);
+            if (controller) {
+                controller.abort();
+                requestControllers.delete(sender.tab.id);
+                sendResponse({ success: true });
+            }
+        } else {
+            sendResponse({ success: false, error: 'No active request to abort' });
+        }
         return true;
     }
 
@@ -159,7 +186,7 @@ chrome.commands.onCommand.addListener(async (command) => {
                     selectedText: result || null,
                 });
             }
-        } catch (error) {
+        } catch {
             if (tab.id !== undefined) {
                 chrome.tabs.sendMessage(tab.id, {
                     action: 'openChatWindow',

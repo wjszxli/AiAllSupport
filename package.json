@@ -1,10 +1,10 @@
 {
     "name": "DeepSeekAllSupports",
     "displayName": "DeepSeekAllSupports",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "browserslist": "Chrome >= 96",
-    "description": "suport all servers in deepseek",
     "private": true,
+    "description": "suport all servers in deepseek",
     "author": "wangjunsheng",
     "license": "MIT",
     "homepage": "https://github.com/wjszxli/DeepSeekAllSupports#readme",
@@ -17,6 +17,18 @@
     },
     "engines": {
         "node": "^18.12.1"
+    },
+    "lint-staged": {
+        "*.{ts,tsx,js}": [
+            "eslint -c .eslintrc.js",
+            "format-imports --config .vscode/import-sorter.json"
+        ],
+        "*.{css,less,scss}": [
+            "stylelint --config .stylelintrc.json"
+        ],
+        "*.{ts,tsx,json,js,css,less,scss,md}": [
+            "prettier --write"
+        ]
     },
     "scripts": {
         "preinstall": "npx only-allow pnpm",
@@ -31,18 +43,6 @@
         "clean": "rimraf -rf ./extension ./dist ./*.zip ./*.crx",
         "reinstall": "rimraf -rf ./node_modules && pnpm",
         "prepare": "husky install"
-    },
-    "lint-staged": {
-        "*.{ts,tsx,js}": [
-            "eslint -c .eslintrc.js",
-            "format-imports --config .vscode/import-sorter.json"
-        ],
-        "*.{css,less,scss}": [
-            "stylelint --config .stylelintrc.json"
-        ],
-        "*.{ts,tsx,json,js,css,less,scss,md}": [
-            "prettier --write"
-        ]
     },
     "dependencies": {
         "@ant-design/icons": "5.6.1",
