@@ -45,6 +45,64 @@ export const PROVIDERS_DATA: Record<string, ProviderConfig> = {
         models: [
             { label: 'V3', value: 'deepseek-ai/DeepSeek-V3' },
             { label: 'R1', value: 'deepseek-ai/DeepSeek-R1' },
+            { label: 'pro-R1', value: 'Pro/deepseek-ai/DeepSeek-R1' },
+            { label: 'pro-v3', value: 'Pro/deepseek-ai/DeepSeek-V3' },
+            { label: 'r1-llama-70b', value: 'deepseek-ai/DeepSeek-R1-Distill-Llama-70B' },
+            { label: 'r1-llama-32b', value: 'deepseek-ai/DeepSeek-R1-Distill-Qwen-32B' },
+            { label: 'r1-llama-14b', value: 'deepseek-ai/DeepSeek-R1-Distill-Qwen-14B' },
+
+            {
+                label: 'deepseek-ai/DeepSeek-R1-Distill-Llama-8B',
+                value: 'deepseek-ai/DeepSeek-R1-Distill-Llama-8B',
+            },
+            {
+                label: 'Pro/deepseek-ai/DeepSeek-R1-Distill-Llama-8B',
+                value: 'Pro/deepseek-ai/DeepSeek-R1-Distill-Llama-8B',
+            },
+            {
+                label: 'nvidia/Llama-3.1-Nemotron-70B-Instruct',
+                value: 'nvidia/Llama-3.1-Nemotron-70B-Instruct',
+            },
+            {
+                label: 'meta-llama/Meta-Llama-3.1-405B-Instruct',
+                value: 'meta-llama/Meta-Llama-3.1-405B-Instruct',
+            },
+            {
+                label: 'meta-llama/Meta-Llama-3.1-70B-Instruct',
+                value: 'meta-llama/Meta-Llama-3.1-70B-Instruct',
+            },
+            {
+                label: 'meta-llama/Meta-Llama-3.1-8B-Instruct',
+                value: 'meta-llama/Meta-Llama-3.1-8B-Instruct',
+            },
+            { label: 'google/gemma-2-27b-it', value: 'google/gemma-2-27b-it' },
+            { label: 'google/gemma-2-9b-it', value: 'google/gemma-2-9b-it' },
+            { label: '01-ai/Yi-1.5-34B-Chat-16K', value: '01-ai/Yi-1.5-34B-Chat-16K' },
+            { label: '01-ai/Yi-1.5-9B-Chat-16K', value: '01-ai/Yi-1.5-9B-Chat-16K' },
+            { label: '01-ai/Yi-1.5-6B-Chat', value: '01-ai/Yi-1.5-6B-Chat' },
+            { label: 'THUDM/glm-4-9b-chat', value: 'THUDM/glm-4-9b-chat' },
+            {
+                label: 'Vendor-A/Qwen/Qwen2.5-72B-Instruct',
+                value: 'Vendor-A/Qwen/Qwen2.5-72B-Instruct',
+            },
+            {
+                label: 'internlm/internlm2_{5}-7b-chat',
+                value: 'internlm/internlm2_{5}-7b-chat',
+            },
+            {
+                label: 'internlm/internlm2_{5}-20b-chat',
+                value: 'internlm/internlm2_{5}-20b-chat',
+            },
+            { label: 'Pro/Qwen/Qwen2.5-7B-Instruct', value: 'Pro/Qwen/Qwen2.5-7B-Instruct' },
+            { label: 'Pro/Qwen/Qwen2-7B-Instruct', value: 'Pro/Qwen/Qwen2-7B-Instruct' },
+            { label: 'Pro/Qwen/Qwen2-1.5B-Instruct', value: 'Pro/Qwen/Qwen2-1.5B-Instruct' },
+            { label: 'Pro/THUDM/chatglm3-6b', value: 'Pro/THUDM/chatglm3-6b' },
+            { label: 'Pro/THUDM/glm-4-9b-chat', value: 'Pro/THUDM/glm-4-9b-chat' },
+            {
+                label: 'Pro/meta-llama/Meta-Llama-3.1-8B-Instruct',
+                value: 'Pro/meta-llama/Meta-Llama-3.1-8B-Instruct',
+            },
+            { label: 'Pro/google/gemma-2-9b-it', value: 'Pro/google/gemma-2-9b-it' },
         ],
     },
     Tencent: {

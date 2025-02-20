@@ -1,11 +1,12 @@
 import { Button, Form, Input, message, Select, Tooltip, Typography } from 'antd';
 import React, { useEffect, useState } from 'react';
 
-import './App.scss';
-import storage from '@/utils/storage';
 import { modelList, validateApiKey } from '@/service';
-import { GIT_URL, PROVIDERS_DATA, SHORTCUTS_URL } from '@/utils/constant';
 import { isLocalhost } from '@/utils';
+import { GIT_URL, PROVIDERS_DATA, SHORTCUTS_URL } from '@/utils/constant';
+import storage from '@/utils/storage';
+
+import './App.scss';
 
 const layout = {
     labelCol: { span: 6 },
@@ -20,16 +21,13 @@ const App: React.FC = () => {
     const [selectedProvider, setSelectedProvider] = useState('DeepSeek');
     const [models, setModels] = useState<Array<{ label: string; value: string }>>([]);
 
-    useEffect(() => {
-        initData();
-    }, []);
-
     const initData = async () => {
         const { selectedProvider, selectedModel } = await storage.getConfig();
         if (!selectedProvider) {
             return;
         }
         setSelectedProvider(selectedProvider);
+        await getModels(selectedProvider);
 
         const providers = await storage.getProviders();
 
@@ -40,16 +38,17 @@ const App: React.FC = () => {
         });
     };
 
+    useEffect(() => {
+        initData();
+    }, []);
+
     const getModels = async (selectedProvider: string | null) => {
         if (!selectedProvider) {
             setModels([]);
             return;
         }
 
-        if (!isLocalhost(selectedProvider)) {
-            const models = PROVIDERS_DATA[selectedProvider].models;
-            setModels(models);
-        } else {
+        if (isLocalhost(selectedProvider)) {
             const res = (await modelList(selectedProvider)) as {
                 models?: Array<{ name: string; model: string }>;
             };
@@ -61,6 +60,9 @@ const App: React.FC = () => {
                 }));
                 setModels(models);
             }
+        } else {
+            const models = PROVIDERS_DATA[selectedProvider].models;
+            setModels(models);
         }
     };
 
@@ -124,7 +126,7 @@ const App: React.FC = () => {
 
     return (
         <div className="app">
-            <h1>工具</h1>
+            <h1>AI 工具</h1>
             <Form {...layout} form={form} name="setting" className="form" onFinish={onFinish}>
                 <Form.Item
                     label="服务商"
@@ -177,14 +179,7 @@ const App: React.FC = () => {
                         onChange={(value) => onModelChange(value)}
                         options={models}
                         allowClear
-                    >
-                        {/* {models.length &&
-                            models.map((model) => (
-                                <Option key={model.value} value={model.value}>
-                                    {model.label}
-                                </Option>
-                            ))} */}
-                    </Select>
+                    />
                 </Form.Item>
                 <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
                     <Button type="primary" htmlType="submit" loading={loadings !== '保存配置'}>

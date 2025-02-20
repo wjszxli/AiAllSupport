@@ -1,6 +1,7 @@
-import { RequestMethod } from '@/typings';
-import storage from './storage';
+import type { RequestMethod } from '@/typings';
+
 import { CHAT_BOX_ID, CHAT_BUTTON_ID, URL_MAP } from './constant';
+import storage from './storage';
 
 // 通用 Fetch 封装，支持流式响应
 export const fetchData = async ({
@@ -10,6 +11,7 @@ export const fetchData = async ({
     headers = {},
     timeout = 100000,
     onStream,
+    controller,
 }: {
     url: string;
     method?: string;
@@ -17,8 +19,8 @@ export const fetchData = async ({
     headers?: Record<string, string>;
     timeout?: number;
     onStream?: (chunk: string) => void;
+    controller: AbortController;
 }): Promise<{ status: number; ok: boolean; data: any }> => {
-    const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
     const { selectedProvider } = await storage.getConfig();
@@ -50,8 +52,6 @@ export const fetchData = async ({
 
         if (isLocalhost(selectedProvider)) {
             delete (config.headers as Record<string, string>).Authorization;
-            // (config.headers as Record<string, string>)['Origin'] = 'http://127.0.0.1';
-            // (config.headers as Record<string, string>)['Access-Control-Allow-Origin'] = '*';
         }
 
         if (method === 'GET' || method === 'HEAD') {
@@ -111,6 +111,14 @@ export const requestAIStream = async (
 
         chrome.runtime.onMessage.addListener(listener);
 
+        const controller = new AbortController();
+        // @ts-expect-error
+        window.currentAbortController = controller;
+        // @ts-expect-error
+        window.currentAbortController.signal.addEventListener('abort', () => {
+            chrome.runtime.sendMessage({ action: 'abortRequest' });
+        });
+
         chrome.runtime.sendMessage(
             {
                 action: 'fetchData',
@@ -118,13 +126,20 @@ export const requestAIStream = async (
                 method,
                 body: JSON.stringify({ ...requestBody, stream: true }), // 启用流式模式
             },
-            (response) => {
-                console.log('response', response);
+            () => {
                 if (chrome.runtime.lastError) {
                     reject(chrome.runtime.lastError.message);
                 }
             },
         );
+
+        // @ts-expect-error
+        window.currentAbortController.signal.addEventListener('abort', () => {
+            console.log('🚫 中止请求.......');
+            onData({ data: '', done: true });
+            chrome.runtime.onMessage.removeListener(listener);
+            resolve();
+        });
     });
 };
 
@@ -160,6 +175,13 @@ export const removeChatBox = async () => {
     const chatBox = document.getElementById(CHAT_BOX_ID);
     if (chatBox) chatBox.remove();
     await storage.remove('chatHistory');
+    // @ts-expect-error
+    if (window.currentAbortController) {
+        // @ts-expect-error
+        window.currentAbortController.abort();
+        // @ts-expect-error
+        window.currentAbortController = null;
+    }
 };
 
 export const isLocalhost = (selectedProvider: string | null) => {

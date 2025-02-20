@@ -1,5 +1,3 @@
-import { useEffect, useState, useRef } from 'react';
-import { Bubble, BubbleProps, Sender, Suggestion, XProvider } from '@ant-design/x';
 import {
     CloseCircleTwoTone,
     CopyOutlined,
@@ -8,18 +6,28 @@ import {
     SyncOutlined,
     UserOutlined,
 } from '@ant-design/icons';
-import { Alert, Button, Flex, Space, Tooltip, Typography, message } from 'antd';
+import type { BubbleProps } from '@ant-design/x';
+import { Bubble, Sender, Suggestion, XProvider } from '@ant-design/x';
+import { Alert, Button, Flex, message, Select, Space, Tooltip, Typography } from 'antd';
+import { useEffect, useRef, useState } from 'react';
+
 import { chatAIStream } from '@/service';
-import storage from '@/utils/storage';
-import { PROVIDERS_DATA, tags } from '@/utils/constant';
-import { IMessage } from '@/typings';
-import Think from '../Think';
+import type { IMessage } from '@/typings';
 import { isLocalhost, removeChatBox, removeChatButton } from '@/utils';
+import { PROVIDERS_DATA, tags } from '@/utils/constant';
 import { md } from '@/utils/markdownRenderer';
+import storage from '@/utils/storage';
+
+import Think from '../Think';
+
+const { Option } = Select;
 
 const renderMarkdown: BubbleProps['messageRender'] = (content: string) => (
-    <Typography>
-        <div dangerouslySetInnerHTML={{ __html: md.render(content) }} />
+    <Typography style={{ direction: 'ltr' }}>
+        <div
+            style={{ textAlign: 'left' }}
+            dangerouslySetInnerHTML={{ __html: md.render(content) }}
+        />
     </Typography>
 );
 
@@ -66,6 +74,8 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
                 loading: false,
                 avatar: { icon: <UserOutlined />, style: fooAvatar },
             };
+            const { width, height } = await storage.getChatBoxSize();
+            setSize({ width, height });
 
             setBubbleList((prevBubbleList) => [bubble, ...prevBubbleList]);
         } catch (error) {
@@ -110,12 +120,12 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
             const sendMessage = [...previousMessages, { role: 'user', content: messages }];
             let content = '';
             let reasoningContent = '';
-            setMessages('AI 在思考中');
 
             let isReasoning = false;
 
             chatAIStream(sendMessage, async (chunk) => {
                 const { data, done } = chunk;
+
                 const { selectedProvider } = await storage.getConfig();
                 if (isLocalhost(selectedProvider)) {
                     const tagPattern = new RegExp(`<(${tags.join('|')})>`, 'i');
@@ -147,19 +157,17 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
                 }
 
                 if (done) {
-                    const updatedMessages = [
-                        ...sendMessage,
-                        { role: 'assistant', content: content },
-                    ];
+                    const updatedMessages = [...sendMessage, { role: 'assistant', content }];
                     await storage.set('chatHistory', updatedMessages);
 
-                    setMessages(undefined);
+                    setMessages();
                     setLoading(false);
                     setBubbleList((prevBubbleList) =>
                         prevBubbleList.map((bubble) =>
                             bubble.key === loadingBubble.key
                                 ? {
                                       ...bubble,
+                                      loading: false,
                                       footer: (
                                           <Space>
                                               <Button
@@ -182,15 +190,14 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
                                 : bubble,
                         ),
                     );
-                    return;
                 } else {
                     setBubbleList((prevBubbleList) =>
                         prevBubbleList.map((bubble) =>
                             bubble.key === loadingBubble.key
                                 ? {
                                       ...bubble,
-                                      content: content,
-                                      loading: content ? false : true,
+                                      content,
+                                      loading: !content,
                                       header: reasoningContent ? (
                                           <Think context={reasoningContent} />
                                       ) : null,
@@ -204,6 +211,14 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
             message.error(error instanceof Error ? error.message : String(error));
             setLoading(false);
         }
+    };
+
+    const onCancel = async () => {
+        // @ts-expect-error
+        window.currentAbortController.abort();
+        // @ts-expect-error
+        window.currentAbortController = null;
+        setLoading(false);
     };
 
     const handleMouseDown = (e: React.MouseEvent) => {
@@ -237,7 +252,9 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
         const handleMouseMove = (moveEvent: MouseEvent) => {
             const newWidth = startSize.width + (moveEvent.clientX - startX);
             const newHeight = startSize.height + (moveEvent.clientY - startY);
+            if (newWidth < 300 || newHeight < 300) return;
             setSize({ width: newWidth, height: newHeight });
+            storage.setChatBoxSize({ width: newWidth, height: newHeight });
         };
 
         const handleMouseUp = () => {
@@ -270,19 +287,21 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
             ref={chatBoxRef}
             style={{
                 position: 'absolute',
-                top: position.y + 10 + 'px',
-                left: position.x + 'px',
+                top: `${position.y + 10}px`,
+                left: `${position.x}px`,
                 zIndex: 99999,
                 background: 'white',
                 boxShadow: '0 0 10px rgba(0,0,0,0.1)',
                 borderRadius: '8px',
                 height: size.height,
                 width: size.width,
-                cursor: isPinned ? 'default' : 'move',
             }}
-            onMouseDown={handleMouseDown}
         >
-            <div style={{ height: 30 }}>
+            <div
+                style={{ height: 30, cursor: isPinned ? 'default' : 'move' }}
+                id="chatBoxHeader"
+                onMouseDown={handleMouseDown}
+            >
                 <div
                     style={{
                         position: 'absolute',
@@ -332,7 +351,7 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
             <XProvider direction="ltr">
                 <Flex style={{ margin: 30, height: size.height - 80 }} vertical>
                     <Bubble.List style={{ flex: 1 }} items={bubbleList} />
-                    {isSelectProvider && (
+                    {isSelectProvider ? (
                         <Suggestion style={{ marginTop: 20 }} items={[]}>
                             {({
                                 onTrigger,
@@ -344,17 +363,20 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
                                 return (
                                     <Sender
                                         loading={loading}
-                                        disabled={loading}
                                         value={messages}
+                                        // disabled={loading}
                                         onChange={(nextVal: string) => {
                                             if (nextVal === '/') {
                                                 onTrigger();
                                             } else if (!nextVal) {
                                                 onTrigger(false);
                                             }
-                                            setMessages(nextVal);
+                                            setMessages(nextVal.trim());
                                         }}
                                         onKeyDown={onKeyDown}
+                                        onCancel={() => {
+                                            onCancel();
+                                        }}
                                         onSubmit={() => {
                                             sendChat();
                                         }}
@@ -363,7 +385,7 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
                                 );
                             }}
                         </Suggestion>
-                    )}
+                    ) : null}
                 </Flex>
             </XProvider>
             <div
@@ -378,6 +400,17 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
                 }}
                 onMouseDown={handleResizeMouseDown}
             />
+            <Select
+                placeholder="请选择服务商"
+                // onChange={(value) => onProviderChange(value)}
+                allowClear
+            >
+                {(Object.keys(PROVIDERS_DATA) as Array<keyof typeof PROVIDERS_DATA>).map((key) => (
+                    <Option key={key} value={key}>
+                        {PROVIDERS_DATA[key].name}
+                    </Option>
+                ))}
+            </Select>
         </div>
     );
 };

@@ -1,5 +1,5 @@
-import MarkdownIt from 'markdown-it';
 import hljs from 'highlight.js';
+import MarkdownIt from 'markdown-it';
 import mathjax3 from 'markdown-it-mathjax3';
 
 // 使用 WeakMap 来缓存已处理过的数学公式
@@ -23,15 +23,15 @@ const memoizedPreprocessMath = (() => {
 function preprocessMath(text: string) {
     // 使用正则表达式优化：减少重复处理
     const patterns = {
-        brackets: /[{([})\]]/g,
-        blockFormula: /\\\[([\s\S]*?)\\\]/g,
-        inlineFormula: /\\\(([\s\S]*?)\\\)/g,
-        subscripts: /(\d+|[a-zA-Z])([_^])(\d+)(?!\})/g,
+        brackets: /[()[\]{}]/g,
+        blockFormula: /\\\[([\S\s]*?)\\]/g,
+        inlineFormula: /\\\(([\S\s]*?)\\\)/g,
+        subscripts: /(\d+|[A-Za-z])([^_])(\d+)(?!})/g,
         specialSymbols: /\\(pm|mp|times|div|gamma|ln|int|infty|leq|geq|neq|approx)\b/g,
     };
 
     // 批量处理文本替换
-    let processed = text.replace(/\n{3,}/g, '\n\n').replace(/[ \t]+$/gm, '');
+    let processed = text.replace(/\n{3,}/g, '\n\n').replace(/[\t ]+$/gm, '');
 
     // 优化块级公式处理
     processed = processed.replace(
@@ -68,12 +68,12 @@ function preprocessMath(text: string) {
 }
 
 // 创建 MarkdownIt 实例并优化配置
-// @ts-ignore
+// @ts-expect-error
 const md = new MarkdownIt({
     html: true,
     linkify: true,
     typographer: true,
-    // @ts-ignore
+    // @ts-expect-error
     highlight: (str, lang) => {
         if (!lang || !hljs.getLanguage(lang)) {
             return `<div class="code-wrap">${md.utils.escapeHtml(str)}</div>`;
@@ -122,9 +122,9 @@ md.render = function (text: string) {
         }
 
         const result = originalRender(preprocessedText)
-            // @ts-ignore
-            .replace(/\$\$([\s\S]+?)\$\$/g, (_, p1) => `<div class="math-block">$$${p1}$$</div>`)
-            // @ts-ignore
+            // @ts-expect-error
+            .replace(/\$\$([\S\s]+?)\$\$/g, (_, p1) => `<div class="math-block">$$${p1}$$</div>`)
+            // @ts-expect-error
             .replace(/\$([^$]+?)\$/g, (_, p1) => `<span class="math-inline">$${p1}$</span>`);
 
         processedTexts.set(preprocessedText, result);
@@ -139,7 +139,7 @@ md.render = function (text: string) {
 md.renderer.rules.fence = (() => {
     const defaultFence = md.renderer.rules.fence;
 
-    // @ts-ignore
+    // @ts-expect-error
     return function (tokens, idx, options, env, self) {
         const token = tokens[idx];
         const code = token.content.trim();
@@ -160,7 +160,7 @@ md.renderer.rules.fence = (() => {
 // 使用事件委托处理复制按钮点击
 document.addEventListener(
     'click',
-    async function (event) {
+    async (event) => {
         const target = event.target as HTMLElement;
         const copyButton = target.closest('.copy-button');
         if (!copyButton) return;
@@ -168,7 +168,7 @@ document.addEventListener(
         event.preventDefault();
         event.stopPropagation();
 
-        // @ts-ignore
+        // @ts-expect-error
         const code = decodeURIComponent(copyButton?.dataset?.code);
         if (code) {
             try {
