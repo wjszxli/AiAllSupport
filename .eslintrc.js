@@ -15,5 +15,8 @@ module.exports = {
         'unicorn/consistent-function-scoping': OFF,
         'jsx-a11y/no-static-element-interactions': OFF,
         'jsx-a11y/click-events-have-key-events': OFF,
+        '@typescript-eslint/prefer-ts-expect-error': OFF,
+        'unicorn/no-negated-condition': OFF,
+        'object-shorthand': OFF,
     },
 };

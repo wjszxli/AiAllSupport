@@ -1,39 +1,33 @@
-import { Button, Form, Select } from 'antd';
-import React, { useEffect, useState } from 'react';
+import { Form, Select } from 'antd';
+import { useEffect, useState } from 'react';
 
 import { modelList } from '@/service';
+import type { ProviderConfig } from '@/typings';
 import { isLocalhost } from '@/utils';
 import { PROVIDERS_DATA } from '@/utils/constant';
 import storage from '@/utils/storage';
 
-import './App.scss';
-
-const layout = {
-    labelCol: { span: 6 },
-    wrapperCol: { span: 18 },
-};
-
 const { Option } = Select;
 
-const App: React.FC = () => {
+const Config = (props: {
+    width: number;
+    height: number;
+    parentInitData: () => void;
+    onCancel: () => void;
+}) => {
     const [form] = Form.useForm();
-    const [loadings, setLoadings] = useState<string>('保存配置');
-    const [selectedProvider, setSelectedProvider] = useState('DeepSeek');
     const [models, setModels] = useState<Array<{ label: string; value: string }>>([]);
-
-    useEffect(() => {
-        initData();
-    }, []);
+    const [configProviders, setConfigProviders] = useState<Record<string, ProviderConfig>>({});
 
     const initData = async () => {
+        const providers = await storage.getProviders();
+        setConfigProviders(providers);
+
         const { selectedProvider, selectedModel } = await storage.getConfig();
         if (!selectedProvider) {
             return;
         }
-        setSelectedProvider(selectedProvider);
         await getModels(selectedProvider);
-
-        const providers = await storage.getProviders();
 
         form.setFieldsValue({
             provider: selectedProvider,
@@ -41,6 +35,10 @@ const App: React.FC = () => {
             model: selectedModel,
         });
     };
+
+    useEffect(() => {
+        initData();
+    }, []);
 
     const getModels = async (selectedProvider: string | null) => {
         if (!selectedProvider) {
@@ -59,6 +57,12 @@ const App: React.FC = () => {
                     value: value.model,
                 }));
                 setModels(models);
+                const providersData = await storage.getProviders();
+                providersData[selectedProvider] = {
+                    ...PROVIDERS_DATA[selectedProvider],
+                    models: models,
+                };
+                await storage.setProviders(providersData);
             }
         } else {
             const models = PROVIDERS_DATA[selectedProvider].models;
@@ -67,7 +71,7 @@ const App: React.FC = () => {
     };
 
     const onProviderChange = async (value: string) => {
-        setSelectedProvider(value);
+        props.onCancel();
         const providers = await storage.getProviders();
         await storage.setSelectedProvider(value);
         await getModels(value);
@@ -76,53 +80,60 @@ const App: React.FC = () => {
             const model = providers[value]?.models[0].value;
             const fieldsValue = { apiKey, model };
             form.setFieldsValue(fieldsValue);
+            await storage.setSelectedModel(model);
+        } else {
+            const model = providers[value]?.models[0].value;
+            form.setFieldsValue({ model });
+            await storage.setSelectedModel(model);
         }
     };
 
-    const onModelChange = (value: string) => {
+    const onModelChange = async (value: string) => {
+        props.onCancel();
         form.setFieldsValue({ model: value });
+        await storage.setSelectedModel(value);
     };
 
     return (
-        <Form {...layout} form={form} name="setting" className="form">
+        <Form form={form} layout="inline" style={{ marginLeft: 20 }}>
             <Form.Item
                 label="服务商"
                 name="provider"
-                rules={[{ required: true, message: '请选择服务商' }]}
+                rules={[{ message: '请选择服务商' }]}
+                tooltip={{
+                    title: 'This is a required field',
+                    getPopupContainer: (trigger) =>
+                        trigger.parentElement?.parentElement?.parentElement || document.body,
+                }}
             >
                 <Select
                     placeholder="请选择服务商"
                     onChange={(value) => onProviderChange(value)}
                     allowClear
+                    getPopupContainer={(trigger) => trigger.parentElement || document.body}
+                    style={{ width: props.width / 4 }}
                 >
-                    {(Object.keys(PROVIDERS_DATA) as Array<keyof typeof PROVIDERS_DATA>).map(
+                    {(Object.keys(configProviders) as Array<keyof typeof configProviders>).map(
                         (key) => (
                             <Option key={key} value={key}>
-                                {PROVIDERS_DATA[key].name}
+                                {configProviders[key].name}
                             </Option>
                         ),
                     )}
                 </Select>
             </Form.Item>
-            <Form.Item
-                label="模型选择"
-                name="model"
-                rules={[{ required: true, message: '请选择您要使用的模型' }]}
-            >
+            <Form.Item label="模型" name="model" rules={[{ message: '请选择您要使用的模型' }]}>
                 <Select
                     placeholder="请选择您要使用的模型"
                     onChange={(value) => onModelChange(value)}
                     options={models}
                     allowClear
+                    getPopupContainer={(trigger) => trigger.parentElement || document.body}
+                    style={{ width: props.width / 4 }}
                 />
-            </Form.Item>
-            <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
-                <Button type="primary" htmlType="submit" loading={loadings !== '保存配置'}>
-                    {loadings}
-                </Button>
             </Form.Item>
         </Form>
     );
 };
 
-export default App;
+export default Config;

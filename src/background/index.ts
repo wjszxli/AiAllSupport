@@ -19,17 +19,17 @@ chrome.declarativeNetRequest.updateDynamicRules(
                 id: MODIFY_HEADERS_RULE_ID, // 规则 ID
                 priority: 1,
                 action: {
-                    // @ts-expect-error
+                    // @ts-ignore
                     type: 'modifyHeaders',
-                    // @ts-expect-error
+                    // @ts-ignore
                     requestHeaders: [
-                        // @ts-expect-error
+                        // @ts-ignore
                         { header: 'Origin', operation: 'set', value: URL_MAP.Ollama },
                     ],
                 },
                 condition: {
                     urlFilter: `${URL_MAP.Ollama}/*`,
-                    // @ts-expect-error
+                    // @ts-ignore
                     resourceTypes: ['xmlhttprequest'],
                 },
             },
