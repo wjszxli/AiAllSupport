@@ -1,4 +1,4 @@
-import { Button, Form, Input, message, Select, Tooltip, Typography } from 'antd';
+import { Button, Form, Input, message, Select, Switch, Tooltip, Typography } from 'antd';
 import React, { useEffect, useState } from 'react';
 
 import { modelList, validateApiKey } from '@/service';
@@ -26,15 +26,18 @@ const App: React.FC = () => {
         if (!selectedProvider) {
             return;
         }
+        const isIcon = await storage.getIsChatBoxIcon();
         setSelectedProvider(selectedProvider);
         await getModels(selectedProvider);
 
         const providers = await storage.getProviders();
+        console.log('isIcon', isIcon);
 
         form.setFieldsValue({
             provider: selectedProvider,
             apiKey: providers[selectedProvider]?.apiKey || '',
             model: selectedModel,
+            isIcon,
         });
     };
 
@@ -67,8 +70,9 @@ const App: React.FC = () => {
     };
 
     const onFinish = async (values: any) => {
+        console.log('values', values);
         setLoadings('保存配置中');
-        const { provider, apiKey, model } = values;
+        const { provider, apiKey, model, isIcon } = values;
 
         let providersData = await storage.getProviders();
         if (!providersData) {
@@ -81,6 +85,7 @@ const App: React.FC = () => {
         await storage.setSelectedProvider(provider);
         await storage.setSelectedModel(model);
         await storage.updateApiKey(provider, apiKey);
+        await storage.setIsChatBoxIcon(isIcon);
         message.success('配置已保存');
         setLoadings('校验 api 是否正常');
         onValidateApiKey();
@@ -179,6 +184,16 @@ const App: React.FC = () => {
                         onChange={(value) => onModelChange(value)}
                         options={models}
                         allowClear
+                    />
+                </Form.Item>
+                <Form.Item
+                    label="是否选中文本出现图标"
+                    name="isIcon"
+                    rules={[{ required: true, message: '请选择是否选中文本出现图标' }]}
+                >
+                    <Switch
+                        defaultChecked
+                        onChange={(value) => form.setFieldValue('isIcon', value)}
                     />
                 </Form.Item>
                 <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
