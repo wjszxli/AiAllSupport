@@ -8,7 +8,7 @@ import {
 } from '@ant-design/icons';
 import type { BubbleProps } from '@ant-design/x';
 import { Bubble, Sender, Suggestion, XProvider } from '@ant-design/x';
-import { Alert, Button, Flex, message, Select, Space, Tooltip, Typography } from 'antd';
+import { Alert, Button, Flex, message, Space, Tooltip, Typography } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 
 import { chatAIStream } from '@/service';
@@ -18,9 +18,8 @@ import { PROVIDERS_DATA, tags } from '@/utils/constant';
 import { md } from '@/utils/markdownRenderer';
 import storage from '@/utils/storage';
 
+import Config from '../Config';
 import Think from '../Think';
-
-const { Option } = Select;
 
 const renderMarkdown: BubbleProps['messageRender'] = (content: string) => (
     <Typography style={{ direction: 'ltr' }}>
@@ -70,14 +69,14 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
                 key: Date.now(),
                 placement: 'start',
                 messageRender: renderMarkdown,
-                content: `我是大模型 ${provider.name} AI 助手，可以回答你的任何的问题`,
+                content: `我是 AI 助手，可以回答你的任何的问题`,
                 loading: false,
                 avatar: { icon: <UserOutlined />, style: fooAvatar },
             };
             const { width, height } = await storage.getChatBoxSize();
             setSize({ width, height });
 
-            setBubbleList((prevBubbleList) => [bubble, ...prevBubbleList]);
+            setBubbleList([bubble]);
         } catch (error) {
             console.error('Failed to initialize data:', error);
         }
@@ -159,8 +158,6 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
                 if (done) {
                     const updatedMessages = [...sendMessage, { role: 'assistant', content }];
                     await storage.set('chatHistory', updatedMessages);
-
-                    setMessages();
                     setLoading(false);
                     setBubbleList((prevBubbleList) =>
                         prevBubbleList.map((bubble) =>
@@ -182,7 +179,7 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
                                                   variant="text"
                                                   size="small"
                                                   icon={<SyncOutlined />}
-                                                  onClick={() => regenerateResponse(content)}
+                                                  onClick={() => regenerateResponse()}
                                               />
                                           </Space>
                                       ),
@@ -213,11 +210,15 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
         }
     };
 
-    const onCancel = async () => {
-        // @ts-expect-error
-        window.currentAbortController.abort();
-        // @ts-expect-error
-        window.currentAbortController = null;
+    const onCancel = () => {
+        try {
+            // @ts-ignore
+            window.currentAbortController.abort();
+            // @ts-ignore
+            window.currentAbortController = null;
+        } catch (error) {
+            console.error('Failed to abort:', error);
+        }
         setLoading(false);
     };
 
@@ -252,7 +253,7 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
         const handleMouseMove = (moveEvent: MouseEvent) => {
             const newWidth = startSize.width + (moveEvent.clientX - startX);
             const newHeight = startSize.height + (moveEvent.clientY - startY);
-            if (newWidth < 300 || newHeight < 300) return;
+            if (newWidth < 360 || newHeight < 300) return;
             setSize({ width: newWidth, height: newHeight });
             storage.setChatBoxSize({ width: newWidth, height: newHeight });
         };
@@ -277,8 +278,8 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
             });
     };
 
-    const regenerateResponse = async (message: string) => {
-        setMessages(message);
+    const regenerateResponse = async () => {
+        onCancel();
         await sendChat();
     };
 
@@ -349,7 +350,7 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
                 />
             )}
             <XProvider direction="ltr">
-                <Flex style={{ margin: 30, height: size.height - 80 }} vertical>
+                <Flex style={{ margin: 20, height: size.height - 120 }} vertical>
                     <Bubble.List style={{ flex: 1 }} items={bubbleList} />
                     {isSelectProvider ? (
                         <Suggestion style={{ marginTop: 20 }} items={[]}>
@@ -388,6 +389,12 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
                     ) : null}
                 </Flex>
             </XProvider>
+            <Config
+                width={size.width}
+                height={size.height}
+                parentInitData={initData}
+                onCancel={onCancel}
+            />
             <div
                 style={{
                     position: 'absolute',
@@ -400,17 +407,6 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
                 }}
                 onMouseDown={handleResizeMouseDown}
             />
-            <Select
-                placeholder="请选择服务商"
-                // onChange={(value) => onProviderChange(value)}
-                allowClear
-            >
-                {(Object.keys(PROVIDERS_DATA) as Array<keyof typeof PROVIDERS_DATA>).map((key) => (
-                    <Option key={key} value={key}>
-                        {PROVIDERS_DATA[key].name}
-                    </Option>
-                ))}
-            </Select>
         </div>
     );
 };
