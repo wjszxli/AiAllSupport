@@ -2,13 +2,14 @@ import { createRoot } from 'react-dom/client';
 
 import { removeChatBox, removeChatButton } from '@/utils';
 import { CHAT_BOX_ID, CHAT_BUTTON_ID } from '@/utils/constant';
+import storage from '@/utils/storage';
 
 import ChatWindow from './components/ChatWindow';
 
 // 监听选中文字
 document.addEventListener(
     'mouseup',
-    (event) => {
+    async (event) => {
         const selection = window.getSelection();
         if (!selection || selection.toString().trim() === '') {
             removeChatButton();
@@ -17,6 +18,12 @@ document.addEventListener(
 
         const text = selection.toString();
         const { clientX, clientY } = event;
+
+        const isIcon = await storage.getIsChatBoxIcon();
+        console.log('isIcon', isIcon);
+        if (!isIcon) {
+            return;
+        }
 
         injectChatButton(clientX, clientY, text);
     },

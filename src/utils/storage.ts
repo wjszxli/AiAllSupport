@@ -85,6 +85,12 @@ const storage = {
         const height = (await storage.get<number>('height')) || 500;
         return { width, height };
     },
+    setIsChatBoxIcon: async (isIcon: boolean): Promise<void> => {
+        await storage.set('isIcon', isIcon);
+    },
+    getIsChatBoxIcon: async () => {
+        return await storage.get<boolean>('isIcon');
+    },
 };
 
 export default storage;
