@@ -52,11 +52,11 @@ DeepSeekAllSupports 是一款免费开源的浏览器扩展，支持 [DeepSeek](
 
 ## 如何安装
 
-[安装文档](./doc/install.md)
+[安装文档](./public/doc/install.md)
 
 ## 如何使用
 
-[使用文档](./doc/use.md)
+[使用文档](./public/doc/use.md)
 
 ## 贡献指南
 

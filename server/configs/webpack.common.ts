@@ -82,7 +82,7 @@ const commonConfig: Configuration = {
         new HtmlWebpackPlugin({
             chunks: ['install'],
             filename: 'install.html',
-            title: 'install page',
+            title: '使用说明',
             template: resolvePublic('install.html'),
         }),
         new MiniCssExtractPlugin({
