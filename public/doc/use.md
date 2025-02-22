@@ -57,6 +57,67 @@
 ![image](https://files.mdnice.com/user/14956/9219618d-ac17-4b86-8d83-54e1185c44f3.png)
 ![2](https://files.mdnice.com/user/14956/ee7dbbba-8e32-482a-a84a-117e24d77366.gif)
 
+### 本地模型支持
+
+#### 跨平台安装指南
+
+跨平台安装指南 Ollama 作为本地运行大模型的利器，支持三大主流操作系统：
+
+```
+# macOS一键安装
+# Windows用户
+访问官网 https://ollama.com/download 下载安装包
+
+# Linux安装（Ubuntu/Debian为例）
+curl -fsSL https://ollama.com/install.sh | sudo bash
+sudo usermod -aG ollama $USER  # 添加用户权限
+sudo systemctl start ollama    # 启动服务
+```
+
+#### 服务验证
+
+```
+Ollama -v
+# 输出 ollama version is 0.5.11
+```
+
+出现上述则表示安装成功，可浏览器访问 http://localhost:11434/验证
+
+#### 安装模型
+
+```
+# 安装模型，如 deepseek-r1:7b，具体可以参考：https://ollama.com/search
+ollama run deepseek-r1:7b
+```
+
+#### 配置本地模型
+
+服务商选择本地 Ollama，模型选择你安装的模型，如下图所示
+
+![image](https://files.mdnice.com/user/14956/aa56949a-ac4f-40c3-991d-6174e43b902a.png)
+
+### 快捷键操作和自定义快捷键
+
+#### 全局打开聊天窗口
+
+默认快捷 mac 上为 `Command+Shift+Y`, windows 为 `Ctrl+Shift+Y`
+
+#### 关闭聊天窗口
+
+默认的快捷键为键盘右上角的 `Esc`，也可以点击聊天窗口右上角的 x 来关闭
+
+#### 自定义快捷键
+
+可以点击设置的设置快捷，进入快捷键自定义设置
+![image](https://files.mdnice.com/user/14956/3d87a401-7999-4cfb-9c90-ac50a005302b.png)
+
+### 窗口可以自由调整
+
+1. 鼠标浮到右下角，可以调整高度和宽度
+2. 鼠标浮到顶部，可以拖拽窗口
+3. 点击左上角 📍，可以固定窗口或者取消固定窗口
+   ![2](https://files.mdnice.com/user/14956/b9fbcf60-9c91-4528-b292-c57252be62d1.gif)
+
 ## 总结
 
 DeepSeekAllSupports 是一款高效、便捷的 AI 插件，支持多个 DeepSeek API 提供商，让用户无需复杂的技术操作即可快速接入 AI 服务。无论是网页内容分析、多轮对话，还是代码高亮、Markdown 渲染，该插件都能提供一流的体验。
