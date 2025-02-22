@@ -3,14 +3,14 @@ import { fetchData, handleMessage, isLocalhost } from '@/utils';
 import { MODIFY_HEADERS_RULE_ID, URL_MAP } from '@/utils/constant';
 import storage from '@/utils/storage';
 
-// chrome.runtime.onInstalled.addListener((details) => {
-//     if (details.reason === chrome.runtime.OnInstalledReason.INSTALL) {
-//         // 打开说明页面
-//         chrome.tabs.create({
-//             url: chrome.runtime.getURL('/Instructions.html'),
-//         });
-//     }
-// });
+chrome.runtime.onInstalled.addListener((details) => {
+    if (details.reason === chrome.runtime.OnInstalledReason.INSTALL) {
+        // 打开说明页面
+        chrome.tabs.create({
+            url: chrome.runtime.getURL('/install.html'),
+        });
+    }
+});
 
 chrome.declarativeNetRequest.updateDynamicRules(
     {

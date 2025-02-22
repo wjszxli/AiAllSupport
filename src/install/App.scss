@@ -1,0 +1,68 @@
+/* stylelint-disable selector-pseudo-element-colon-notation */
+/* markdown-container 包裹所有内容 */
+.markdown-container {
+    display: flex;
+    flex-direction: row;
+    padding: 20px;
+}
+
+/* Markdown 内容区域 */
+.markdown-content {
+    width: 75%;
+    margin-right: 20px;
+}
+
+/* 大纲区域 */
+.table-of-contents {
+    position: sticky;
+    top: 20px;
+    width: 25%;
+    padding: 20px;
+    background-color: #f4f4f4;
+    border: 1px solid #ddd;
+}
+
+.table-of-contents ul {
+    padding: 0;
+    list-style-type: none;
+}
+
+.table-of-contents li {
+    margin-bottom: 5px;
+}
+
+.table-of-contents a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.table-of-contents a:hover {
+    text-decoration: underline;
+}
+
+/* 每个标题的折叠 */
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3 {
+    margin: 20px 0;
+    color: #333;
+    cursor: pointer;
+}
+
+.markdown-content h1:before,
+.markdown-content h2:before,
+.markdown-content h3:before {
+    color: #007bff;
+    content: '+ ';
+}
+
+.markdown-content h1.collapsed:before,
+.markdown-content h2.collapsed:before,
+.markdown-content h3.collapsed:before {
+    content: '- ';
+}
+
+/* 对折叠部分进行隐藏 */
+.markdown-body .collapsed + p {
+    display: none;
+}
