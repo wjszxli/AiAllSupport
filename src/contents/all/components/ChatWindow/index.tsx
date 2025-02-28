@@ -372,7 +372,7 @@ const ChatBox = ({ x, y, text }: { x: number; y: number; text: string }) => {
                                             } else if (!nextVal) {
                                                 onTrigger(false);
                                             }
-                                            setMessages(nextVal.trim());
+                                            setMessages(nextVal);
                                         }}
                                         onKeyDown={onKeyDown}
                                         onCancel={() => {
