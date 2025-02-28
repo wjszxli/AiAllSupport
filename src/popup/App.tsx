@@ -22,22 +22,23 @@ const App: React.FC = () => {
     const [models, setModels] = useState<Array<{ label: string; value: string }>>([]);
 
     const initData = async () => {
+        const isIcon = (await storage.getIsChatBoxIcon()) || true;
+        form.setFieldsValue({ isIcon });
+
         const { selectedProvider, selectedModel } = await storage.getConfig();
         if (!selectedProvider) {
             return;
         }
-        const isIcon = await storage.getIsChatBoxIcon();
+
         setSelectedProvider(selectedProvider);
         await getModels(selectedProvider);
 
         const providers = await storage.getProviders();
-        console.log('isIcon', isIcon);
 
         form.setFieldsValue({
             provider: selectedProvider,
             apiKey: providers[selectedProvider]?.apiKey || '',
             model: selectedModel,
-            isIcon,
         });
     };
 
