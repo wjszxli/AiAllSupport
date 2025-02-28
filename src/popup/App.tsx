@@ -22,13 +22,13 @@ const App: React.FC = () => {
     const [models, setModels] = useState<Array<{ label: string; value: string }>>([]);
 
     const initData = async () => {
-        const isIcon = (await storage.getIsChatBoxIcon()) || true;
-        form.setFieldsValue({ isIcon });
-
         const { selectedProvider, selectedModel } = await storage.getConfig();
+
         if (!selectedProvider) {
             return;
         }
+
+        const isChatBoxIcon = await storage.getIsChatBoxIcon();
 
         setSelectedProvider(selectedProvider);
         await getModels(selectedProvider);
@@ -39,6 +39,7 @@ const App: React.FC = () => {
             provider: selectedProvider,
             apiKey: providers[selectedProvider]?.apiKey || '',
             model: selectedModel,
+            isIcon: isChatBoxIcon !== undefined ? isChatBoxIcon : true,
         });
     };
 
@@ -191,11 +192,9 @@ const App: React.FC = () => {
                     label="是否选中文本出现图标"
                     name="isIcon"
                     rules={[{ required: true, message: '请选择是否选中文本出现图标' }]}
+                    initialValue={true}
                 >
-                    <Switch
-                        defaultChecked
-                        onChange={(value) => form.setFieldValue('isIcon', value)}
-                    />
+                    <Switch onChange={(value) => form.setFieldValue('isIcon', value)} />
                 </Form.Item>
                 <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
                     <Button type="primary" htmlType="submit" loading={loadings !== '保存配置'}>
