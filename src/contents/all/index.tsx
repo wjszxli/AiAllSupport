@@ -20,7 +20,6 @@ document.addEventListener(
         const { clientX, clientY } = event;
 
         const isIcon = await storage.getIsChatBoxIcon();
-        console.log('isIcon', isIcon);
         if (!isIcon) {
             return;
         }
