@@ -21,6 +21,7 @@ import { locales } from '@/locales';
 import { isLocalhost } from '@/utils';
 import { GIT_URL, PROVIDERS_DATA, SHORTCUTS_URL } from '@/utils/constant';
 import storage from '@/utils/storage';
+import { featureSettings } from '@/utils/featureSettings';
 
 import './App.scss';
 
@@ -143,33 +144,41 @@ const App: React.FC = () => {
 
     const onFinish = async (values: any) => {
         setLoadingState(LOADING_STATE.SAVING);
-        const { provider, apiKey, model, isIcon, webSearchEnabled, useWebpageContext } = values;
 
-        // Check if both webSearchEnabled and useWebpageContext are true
-        // These features are mutually exclusive and cannot be enabled at the same time
-        if (webSearchEnabled && useWebpageContext) {
-            message.error(t('exclusiveFeatureError'));
+        const isValid = await featureSettings.validateAndSubmitSettings(values, t);
+        if (!isValid) {
             setLoadingState(LOADING_STATE.SAVE);
             return;
         }
 
-        let providersData = await storage.getProviders();
-        if (!providersData) {
-            providersData = PROVIDERS_DATA;
+        const { provider, apiKey, model, isIcon, webSearchEnabled, useWebpageContext } = values;
+
+        try {
+            let providersData = await storage.getProviders();
+            if (!providersData) {
+                providersData = PROVIDERS_DATA;
+            }
+
+            providersData[provider] = { ...PROVIDERS_DATA[provider], apiKey };
+
+            await Promise.all([
+                storage.setProviders(providersData),
+                storage.setSelectedProvider(provider),
+                storage.setSelectedModel(model),
+                storage.updateApiKey(provider, apiKey),
+                storage.setIsChatBoxIcon(isIcon),
+                storage.setWebSearchEnabled(webSearchEnabled),
+                storage.setUseWebpageContext(useWebpageContext),
+            ]);
+
+            message.success(t('configSaved'));
+            setLoadingState(LOADING_STATE.VALIDATING);
+            onValidateApiKey();
+        } catch (error) {
+            console.error('Failed to save configuration:', error);
+            message.error(t('savingConfigError'));
+            setLoadingState(LOADING_STATE.SAVE);
         }
-
-        providersData[provider] = { ...PROVIDERS_DATA[provider], apiKey };
-
-        await storage.setProviders(providersData);
-        await storage.setSelectedProvider(provider);
-        await storage.setSelectedModel(model);
-        await storage.updateApiKey(provider, apiKey);
-        await storage.setIsChatBoxIcon(isIcon);
-        await storage.setWebSearchEnabled(webSearchEnabled);
-        await storage.setUseWebpageContext(useWebpageContext);
-        message.success(t('configSaved'));
-        setLoadingState(LOADING_STATE.VALIDATING);
-        onValidateApiKey();
     };
 
     const onProviderChange = async (value: string) => {
@@ -359,11 +368,13 @@ const App: React.FC = () => {
                         name="webSearchEnabled"
                         valuePropName="checked"
                         initialValue={false}
+                        tooltip={t('webSearchTooltip')}
                     >
                         <Switch
                             onChange={(checked) => {
                                 if (checked && form.getFieldValue('useWebpageContext')) {
-                                    message.warning(t('exclusiveFeatureError'));
+                                    message.warning(t('exclusiveFeatureWarning'));
+                                    form.setFieldsValue({ useWebpageContext: false });
                                 }
                             }}
                         />
@@ -375,11 +386,13 @@ const App: React.FC = () => {
                         name="useWebpageContext"
                         valuePropName="checked"
                         initialValue={true}
+                        tooltip={t('includeWebpageTooltip')}
                     >
                         <Switch
                             onChange={(checked) => {
                                 if (checked && form.getFieldValue('webSearchEnabled')) {
-                                    message.warning(t('exclusiveFeatureError'));
+                                    message.warning(t('exclusiveFeatureWarning'));
+                                    form.setFieldsValue({ webSearchEnabled: false });
                                 }
                             }}
                         />

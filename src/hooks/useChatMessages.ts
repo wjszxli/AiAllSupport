@@ -14,10 +14,9 @@ export const markdownCache = new LRUCache<string, string>(50);
 
 export interface UseChatMessagesProps {
     t: (key: TranslationKey) => string;
-    useWebpageContext: boolean;
 }
 
-export const useChatMessages = ({ t, useWebpageContext }: UseChatMessagesProps) => {
+export const useChatMessages = ({ t }: UseChatMessagesProps) => {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [streamingMessageId, setStreamingMessageId] = useState<number | null>(null);
@@ -188,19 +187,21 @@ export const useChatMessages = ({ t, useWebpageContext }: UseChatMessagesProps) 
             const messageId = Date.now() + 100;
 
             try {
-                const webSearchEnabled = await storage.getWebSearchEnabled();
+                // 获取当前配置
+                const [webSearchEnabled, useWebpageContext] = await Promise.all([
+                    storage.getWebSearchEnabled(),
+                    storage.getUseWebpageContext()
+                ]);
+
                 let enhancedMessage = inputMessage;
 
                 if (useWebpageContext) {
-                    // 根据当前网页设置发送消息
                     enhancedMessage = await sendMessageWithWebpageContext(
                         messageId,
                         enhancedMessage ?? '',
                         setMessages,
                     );
-                 console.log('messages', messages)
                 } else if (webSearchEnabled) {
-                    // 联网搜索
                     enhancedMessage = await localFetchWebContentWithContext(
                         messageId,
                         inputMessage,
@@ -232,19 +233,14 @@ export const useChatMessages = ({ t, useWebpageContext }: UseChatMessagesProps) 
                 setIsLoading(false);
             }
         },
-        [
-            isLoading,
-            streamingMessageId,
-            useWebpageContext,
-            createStreamUpdateHandler,
-            scrollToBottom,
-            t,
-        ],
+        [messages, isLoading, streamingMessageId, t, createStreamUpdateHandler]
     );
 
     // Regenerate last AI response
     const regenerateResponse = useCallback(async () => {
         if (messages.length < 2) return;
+
+        const useWebpageContext = await storage.getUseWebpageContext();
 
         const lastUserMessageIndex = messages.map((m) => m.sender).lastIndexOf('user');
         if (lastUserMessageIndex === -1) return;
@@ -287,7 +283,7 @@ export const useChatMessages = ({ t, useWebpageContext }: UseChatMessagesProps) 
             setIsLoading(false);
             setStreamingMessageId(null);
         }
-    }, [messages, isLoading, streamingMessageId, t, useWebpageContext, createStreamUpdateHandler]);
+    }, [messages, isLoading, streamingMessageId, t, createStreamUpdateHandler]);
 
     return {
         messages,

@@ -1,23 +1,16 @@
 import { useState, useRef, useEffect, useCallback, useMemo, memo } from 'react';
 import { Button, Input, message as messageNotification, Typography } from 'antd';
-import {
-    SendOutlined,
-    LinkOutlined,
-    CloseOutlined,
-    CopyOutlined,
-    RedoOutlined,
-} from '@ant-design/icons';
+import { SendOutlined, CloseOutlined, CopyOutlined, RedoOutlined } from '@ant-design/icons';
 import './index.scss';
 import './promptSuggestions.css';
 import type { TranslationKey } from '@/contexts/LanguageContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import WebSearchToggle from '../WebSearchToggle';
 import { useStableCallback } from '@/utils/reactOptimizations';
 import { md } from '@/utils/markdownRenderer';
 import useChatMessages, { markdownCache } from '@/hooks/useChatMessages';
 import { parseModelResponse } from '@/utils';
 import { ChatMessage } from '@/typings';
-import storage from '@/utils/storage';
+import ChatControls from '../ChatControls';
 
 interface ChatInterfaceProps {
     initialText?: string;
@@ -200,26 +193,11 @@ const EmptyChat = memo(({ t, handleExampleClick }: EmptyChatProps) => (
 
 const ChatInterface = ({ initialText }: ChatInterfaceProps) => {
     const [inputMessage, setInputMessage] = useState(initialText || '');
-    const [useWebpageContext, setUseWebpageContext] = useState(true);
     const [isComposing, setIsComposing] = useState(false);
     const [showPrompts, setShowPrompts] = useState(false);
     const [filteredPrompts, setFilteredPrompts] = useState<Prompt[]>([]);
     const [selectedPromptIndex, setSelectedPromptIndex] = useState<number>(-1);
     const { t } = useLanguage();
-
-    // Initialize useWebpageContext from storage
-    useEffect(() => {
-        const initUseWebpageContext = async () => {
-            try {
-                const storedUseWebpageContext = await storage.getUseWebpageContext();
-                setUseWebpageContext(storedUseWebpageContext);
-            } catch (error) {
-                console.error('Failed to get useWebpageContext from storage:', error);
-            }
-        };
-
-        initUseWebpageContext();
-    }, []);
 
     const {
         messages,
@@ -231,7 +209,7 @@ const ChatInterface = ({ initialText }: ChatInterfaceProps) => {
         cancelStreamingResponse,
         sendChatMessage,
         regenerateResponse,
-    } = useChatMessages({ t, useWebpageContext });
+    } = useChatMessages({ t });
 
     const messagesContainerRef = useRef<HTMLDivElement>(null);
 
@@ -346,36 +324,6 @@ const ChatInterface = ({ initialText }: ChatInterfaceProps) => {
         },
         [sendChatMessage],
     );
-
-    const toggleWebpageContext = useCallback(() => {
-        const newValue = !useWebpageContext;
-        
-        // If trying to enable useWebpageContext, check if webSearchEnabled is true
-        // Web search and webpage context are mutually exclusive features
-        if (newValue) {
-            storage.getWebSearchEnabled().then(webSearchEnabled => {
-                if (webSearchEnabled) {
-                    // Cannot enable both features at the same time
-                    messageNotification.warning(t('exclusiveFeatureError'));
-                    return;
-                }
-                
-                // If webSearchEnabled is false, proceed with enabling useWebpageContext
-                setUseWebpageContext(newValue);
-                storage.setUseWebpageContext(newValue).catch(error => {
-                    console.error('Failed to save useWebpageContext to storage:', error);
-                });
-            }).catch(error => {
-                console.error('Failed to get webSearchEnabled from storage:', error);
-            });
-        } else {
-            // If disabling, no need to check
-            setUseWebpageContext(newValue);
-            storage.setUseWebpageContext(newValue).catch(error => {
-                console.error('Failed to save useWebpageContext to storage:', error);
-            });
-        }
-    }, [useWebpageContext, t]);
 
     // 修改以处理提示放置
     const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -496,15 +444,7 @@ const ChatInterface = ({ initialText }: ChatInterfaceProps) => {
                     </div>
                 </div>
             ) : null}
-            <div className="chat-controls">
-                <div className="context-label" onClick={toggleWebpageContext}>
-                    <span>
-                        <LinkOutlined className={useWebpageContext ? 'enabled' : 'disabled'} />
-                        {t('includeWebpage')}
-                    </span>
-                </div>
-                <WebSearchToggle />
-            </div>
+            <ChatControls />
             <div className="messages-wrapper" ref={messagesWrapperRef}>
                 <div ref={messagesContainerRef} className="messages-container">
                     {messages.length === 0 ? (

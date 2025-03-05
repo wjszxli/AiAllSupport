@@ -26,6 +26,7 @@ export const zhCN = {
     configSaved: '配置已保存',
     validatingApi: '校验 api 是否正常',
     apiValidSuccess: 'Api Key 校验通过，可以正常使用本工具',
+    savingConfigError: '保存配置失败，请重试。',
     aiAssistant: 'AI 助手',
     askAnything: '今天我能帮您做什么？',
     exampleSummarize: '总结这个网页',
@@ -65,7 +66,7 @@ export const zhCN = {
     languageKo: '한국어',
     languageChanged: '语言已成功更改',
     includeWebpage: '基于当前网页进行回答',
-
+    includeWebpageTooltip: '启用后，AI 会基于当前网页内容进行回答',
     // Slash command prompts
     translate: '翻译',
     translatePrompt: '将以下文本翻译成中文：',

@@ -19,72 +19,7 @@ $thinking-border-color: #e1e8ed;
     background-color: #f8fafc;
     background-image: linear-gradient(to bottom right, #f8fafc, #eef2ff);
 
-    .chat-controls {
-        position: sticky;
-        top: 0;
-        z-index: 10;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-top: 5px;
-        margin-bottom: 15px;
 
-        .context-label {
-            display: flex;
-            align-items: center;
-            padding: 9px 14px;
-            cursor: pointer;
-            background: #fff;
-            border: 1px solid rgb(229 231 235 / 50%);
-            border-radius: 10px;
-            box-shadow: 0 1px 3px rgb(0 0 0 / 5%), 0 1px 2px rgb(0 0 0 / 3%);
-            transition: all 0.2s ease;
-
-            input[type='checkbox'] {
-                margin-right: 8px;
-                cursor: pointer;
-            }
-
-            span {
-                display: flex;
-                align-items: center;
-                font-size: 13px;
-                color: #4b5563;
-
-                .anticon {
-                    margin-right: 6px;
-                    font-size: 14px;
-
-                    &.enabled {
-                        color: #4776e6;
-                    }
-
-                    &.disabled {
-                        color: #9ca3af;
-                    }
-                }
-            }
-        }
-
-        .settings-button {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: auto;
-            padding: 9px 14px;
-            color: #4b5563;
-            background: #fff;
-            border: 1px solid rgb(229 231 235 / 50%);
-            border-radius: 10px;
-            box-shadow: 0 1px 3px rgb(0 0 0 / 5%), 0 1px 2px rgb(0 0 0 / 3%);
-            transition: all 0.2s ease;
-
-            &:hover {
-                background: #f9fafb;
-                border-color: rgb(209 213 219 / 80%);
-            }
-        }
-    }
 
     .settings-panel {
         padding: 16px;

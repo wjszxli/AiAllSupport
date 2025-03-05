@@ -123,7 +123,7 @@ const storage = {
     },
 
     getUseWebpageContext: async (): Promise<boolean> => {
-        return (await storage.get<boolean>('useWebpageContext')) ?? true;
+        return (await storage.get<boolean>('useWebpageContext')) ?? false;
     },
 };
 
