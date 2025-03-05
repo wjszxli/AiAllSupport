@@ -3,17 +3,12 @@ import { message as messageNotification } from 'antd';
 import { sendMessage, sendMessageWithWebpageContext } from '@/services/chatService';
 import { useThrottledCallback } from '@/utils/reactOptimizations';
 import { parseModelResponse } from '@/utils';
-import { performSearch, fetchWebContent } from '@/services/localChatService';
 import { LRUCache } from '@/utils/memoryOptimization';
 import type { TranslationKey } from '@/contexts/LanguageContext';
 import storage from '@/utils/storage';
-
-export interface ChatMessage {
-    id: number;
-    text: string;
-    sender: 'user' | 'ai' | 'system';
-    isThinking?: boolean;
-}
+import { localFetchWebContentWithContext } from '@/services/localChatService';
+import type { ChatMessage } from '@/typings';
+import { updateMessage } from '@/utils/messageUtils';
 
 export const markdownCache = new LRUCache<string, string>(50);
 
@@ -26,12 +21,9 @@ export const useChatMessages = ({ t, useWebpageContext }: UseChatMessagesProps) 
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [streamingMessageId, setStreamingMessageId] = useState<number | null>(null);
-    const [showThinking, setShowThinking] = useState(true);
 
     const messagesWrapperRef = useRef<HTMLDivElement>(null);
-    const thinkingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const previousMessagesLengthRef = useRef(0);
-    const messageIdCounter = useRef(0);
 
     // Scroll to bottom functionality
     const scrollToBottom = useThrottledCallback(
@@ -43,14 +35,6 @@ export const useChatMessages = ({ t, useWebpageContext }: UseChatMessagesProps) 
         100,
         [],
     );
-
-    // Clear thinking timeout helper
-    const clearThinkingTimeout = useCallback(() => {
-        if (thinkingTimeoutRef.current) {
-            clearTimeout(thinkingTimeoutRef.current);
-            thinkingTimeoutRef.current = null;
-        }
-    }, []);
 
     // Copy to clipboard functionality
     const copyToClipboard = useCallback(
@@ -67,26 +51,6 @@ export const useChatMessages = ({ t, useWebpageContext }: UseChatMessagesProps) 
         [t],
     );
 
-    // Add thinking message when AI is processing
-    useEffect(() => {
-        if (isLoading && showThinking) {
-            const thinkingMessage: ChatMessage = {
-                id: messageIdCounter.current++,
-                text: '',
-                sender: 'ai',
-                isThinking: true,
-            };
-            setMessages((prevMessages) => [...prevMessages, thinkingMessage]);
-        }
-    }, [isLoading, showThinking]);
-
-    // Remove thinking message when response arrives or error occurs
-    useEffect(() => {
-        if (!isLoading) {
-            setMessages((prevMessages) => prevMessages.filter((msg) => !msg.isThinking));
-        }
-    }, [isLoading]);
-
     // Scroll to bottom when messages change
     useEffect(() => {
         if (messages.length !== previousMessagesLengthRef.current) {
@@ -102,15 +66,6 @@ export const useChatMessages = ({ t, useWebpageContext }: UseChatMessagesProps) 
         }
     }, [streamingMessageId, scrollToBottom]);
 
-    // Clean up thinking timeout on unmount
-    useEffect(() => {
-        return () => {
-            if (thinkingTimeoutRef.current) {
-                clearTimeout(thinkingTimeoutRef.current);
-            }
-        };
-    }, []);
-
     // Create stream update handler factory
     const createStreamUpdateHandler = useCallback(
         (aiMessageId: number) => {
@@ -119,11 +74,9 @@ export const useChatMessages = ({ t, useWebpageContext }: UseChatMessagesProps) 
             let isJsonFormat = false; // Flag to track if response is in JSON format
 
             return (partialResponse: string) => {
-                // If this is the first chunk, set streaming message ID and hide thinking indicator
+                // If this is the first chunk, set streaming message ID
                 if (!streamingMessageId) {
                     setStreamingMessageId(aiMessageId);
-                    setShowThinking(false);
-                    clearThinkingTimeout();
                 }
 
                 // Add new chunk to our accumulator
@@ -181,13 +134,10 @@ export const useChatMessages = ({ t, useWebpageContext }: UseChatMessagesProps) 
 
                 // Update the message
                 setMessages((prevMessages) => {
-                    // Filter out any thinking indicators
-                    const filteredMessages = prevMessages.filter((msg) => !msg.isThinking);
-
-                    const existingMessage = filteredMessages.find((msg) => msg.id === aiMessageId);
+                    const existingMessage = prevMessages.find((msg) => msg.id === aiMessageId);
 
                     return existingMessage
-                        ? filteredMessages.map((msg) =>
+                        ? prevMessages.map((msg) =>
                               msg.id === aiMessageId
                                   ? {
                                         ...msg,
@@ -196,7 +146,7 @@ export const useChatMessages = ({ t, useWebpageContext }: UseChatMessagesProps) 
                                   : msg,
                           )
                         : [
-                              ...filteredMessages,
+                              ...prevMessages,
                               {
                                   id: aiMessageId,
                                   text: messageText,
@@ -206,7 +156,7 @@ export const useChatMessages = ({ t, useWebpageContext }: UseChatMessagesProps) 
                 });
             };
         },
-        [streamingMessageId, clearThinkingTimeout],
+        [streamingMessageId],
     );
 
     // Cancel an ongoing streaming response
@@ -219,11 +169,8 @@ export const useChatMessages = ({ t, useWebpageContext }: UseChatMessagesProps) 
         // Update UI state
         setStreamingMessageId(null);
         setIsLoading(false);
-        setShowThinking(false);
-        clearThinkingTimeout();
-    }, [clearThinkingTimeout]);
+    }, []);
 
-    // Send a message
     const sendChatMessage = useCallback(
         async (inputMessage: string) => {
             if (!inputMessage.trim()) return;
@@ -237,124 +184,58 @@ export const useChatMessages = ({ t, useWebpageContext }: UseChatMessagesProps) 
             setMessages((prev) => [...prev, userMessage]);
             setIsLoading(true);
 
-            // Set a timeout to show thinking indicator after a short delay
-            clearThinkingTimeout();
-            thinkingTimeoutRef.current = setTimeout(() => {
-                if (isLoading && !streamingMessageId) {
-                    setShowThinking(true);
-                }
-            }, 300);
+            // 生成数据 id
+            const messageId = Date.now() + 100;
 
             try {
-                // Get web search status from storage
                 const webSearchEnabled = await storage.getWebSearchEnabled();
                 let enhancedMessage = inputMessage;
 
-                // If web search is enabled, perform search first
-                if (webSearchEnabled) {
-                    // Add a system message to notify user of search
-                    const searchingMessage: ChatMessage = {
-                        id: Date.now() + 1,
-                        text: t('searchingWeb' as any),
-                        sender: 'system',
-                    };
-                    setMessages((prev) => [...prev, searchingMessage]);
-
-                    // Perform web search
-                    const searchResults = await performSearch(inputMessage);
-
-                    console.log('searchResults', searchResults);
-                    // If search results exist, get webpage content
-                    if (searchResults.length > 0) {
-                        const contents = await Promise.all(
-                            searchResults.slice(0, 2).map((result) => fetchWebContent(result.link)),
-                        );
-
-                        console.log('contents', contents);
-
-                        // Build enhanced message with search results
-                        const webContext = `${t('webSearchResultsTips1')}:${contents
-                            .map(
-                                (content, i) =>
-                                    `${t('Source')} ${i + 1}: ${
-                                        searchResults[i].title
-                                    }\n${content.substring(0, 1500)}\n`,
-                            )
-                            .join('\n')}
-${t('webSearchResultsTips2')}: ${inputMessage}
-`;
-                        enhancedMessage = webContext;
-
-                        // Update system message to inform user search is complete
-                        const searchCompleteMessage: ChatMessage = {
-                            id: Date.now() + 2,
-                            text: t('searchComplete' as any),
-                            sender: 'system',
-                        };
-                        setMessages((prev) =>
-                            prev.map((msg) =>
-                                msg.id === searchingMessage.id ? searchCompleteMessage : msg,
-                            ),
-                        );
-                    } else {
-                        // If no search results, inform user
-                        const noResultsMessage: ChatMessage = {
-                            id: Date.now() + 2,
-                            text: t('noSearchResults' as any),
-                            sender: 'system',
-                        };
-                        setMessages((prev) =>
-                            prev.map((msg) =>
-                                msg.id === searchingMessage.id ? noResultsMessage : msg,
-                            ),
-                        );
-                    }
+                if (useWebpageContext) {
+                    // 根据当前网页设置发送消息
+                    enhancedMessage = await sendMessageWithWebpageContext(
+                        messageId,
+                        enhancedMessage ?? '',
+                        setMessages,
+                    );
+                 console.log('messages', messages)
+                } else if (webSearchEnabled) {
+                    // 联网搜索
+                    enhancedMessage = await localFetchWebContentWithContext(
+                        messageId,
+                        inputMessage,
+                        enhancedMessage,
+                        setMessages,
+                    );
                 }
 
-                const messageId = Date.now() + 100;
-                setStreamingMessageId(messageId);
-
-                const streamingMessage: ChatMessage = {
+                const thinkingMessage: ChatMessage = {
                     id: messageId,
-                    text: '',
+                    text: t('thinking'),
                     sender: 'ai',
                 };
 
-                setMessages((prev) => [...prev, streamingMessage]);
+                updateMessage(setMessages, messageId, thinkingMessage);
 
-                // Create stream update handler
+                setStreamingMessageId(messageId);
+                // 响应数据流
                 const handleStreamUpdate = createStreamUpdateHandler(messageId);
+                await sendMessage(enhancedMessage ?? '', handleStreamUpdate);
 
-                // Send message with appropriate service based on context setting
-                if (useWebpageContext) {
-                    await sendMessageWithWebpageContext(
-                        enhancedMessage ?? '',
-                        true,
-                        handleStreamUpdate,
-                    );
-                } else {
-                    await sendMessage(enhancedMessage ?? '', handleStreamUpdate);
-                }
-
-                // Request complete
+                // 请求完成
                 setStreamingMessageId(null);
                 setIsLoading(false);
-                clearThinkingTimeout();
-                setShowThinking(false);
                 scrollToBottom();
             } catch (error) {
                 console.error('Error sending message:', error);
                 messageNotification.error(t('errorProcessing'));
                 setIsLoading(false);
-                clearThinkingTimeout();
-                setShowThinking(false);
             }
         },
         [
             isLoading,
             streamingMessageId,
             useWebpageContext,
-            clearThinkingTimeout,
             createStreamUpdateHandler,
             scrollToBottom,
             t,
@@ -370,20 +251,10 @@ ${t('webSearchResultsTips2')}: ${inputMessage}
 
         const lastUserMessage = messages[lastUserMessageIndex];
 
-        // Filter out any thinking indicators and messages after the last user message
-        setMessages(
-            messages.filter((msg, index) => !msg.isThinking && index <= lastUserMessageIndex),
-        );
+        // Filter out any messages after the last user message
+        setMessages(messages.filter((_, index) => index <= lastUserMessageIndex));
 
         setIsLoading(true);
-
-        // Set a timeout to show thinking indicator after a short delay
-        clearThinkingTimeout();
-        thinkingTimeoutRef.current = setTimeout(() => {
-            if (isLoading && !streamingMessageId) {
-                setShowThinking(true);
-            }
-        }, 300);
 
         try {
             // Create an empty AI message placeholder that will be incrementally updated
@@ -395,21 +266,17 @@ ${t('webSearchResultsTips2')}: ${inputMessage}
 
             // Call appropriate API with streaming callback
             await (useWebpageContext
-                ? sendMessageWithWebpageContext(lastUserMessage.text, true, handleStreamUpdate)
+                ? sendMessageWithWebpageContext(aiMessageId, lastUserMessage.text, setMessages)
                 : sendMessage(lastUserMessage.text, handleStreamUpdate));
 
             // Mark streaming response complete
             setStreamingMessageId(null);
             setIsLoading(false);
-            setShowThinking(false);
-            clearThinkingTimeout();
         } catch (error) {
             console.error('Error regenerating response:', error);
             setMessages((prevMessages) => {
-                // Filter out any thinking indicators
-                const filteredMessages = prevMessages.filter((msg) => !msg.isThinking);
                 return [
-                    ...filteredMessages,
+                    ...prevMessages,
                     {
                         id: Date.now(),
                         text: t('errorRegenerating'),
@@ -419,18 +286,8 @@ ${t('webSearchResultsTips2')}: ${inputMessage}
             });
             setIsLoading(false);
             setStreamingMessageId(null);
-            setShowThinking(false);
-            clearThinkingTimeout();
         }
-    }, [
-        messages,
-        isLoading,
-        streamingMessageId,
-        t,
-        useWebpageContext,
-        clearThinkingTimeout,
-        createStreamUpdateHandler,
-    ]);
+    }, [messages, isLoading, streamingMessageId, t, useWebpageContext, createStreamUpdateHandler]);
 
     return {
         messages,
@@ -443,7 +300,6 @@ ${t('webSearchResultsTips2')}: ${inputMessage}
         cancelStreamingResponse,
         sendChatMessage,
         regenerateResponse,
-        showThinking,
     };
 };
 

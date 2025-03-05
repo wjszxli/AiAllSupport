@@ -69,12 +69,16 @@ const App: React.FC = () => {
                 provider: defaultProvider,
                 model: defaultModel,
                 isIcon: true,
+                webSearchEnabled: false,
+                useWebpageContext: false,
             });
 
             await storage.setProviders(PROVIDERS_DATA);
             await storage.setSelectedProvider(defaultProvider);
             await storage.setSelectedModel(defaultModel);
             await storage.setIsChatBoxIcon(true);
+            await storage.setWebSearchEnabled(false);
+            await storage.setUseWebpageContext(true);
 
             setSelectedProvider(defaultProvider);
             await getModels(defaultProvider);
@@ -82,6 +86,8 @@ const App: React.FC = () => {
         }
 
         const isChatBoxIcon = await storage.getIsChatBoxIcon();
+        const isWebSearchEnabled = await storage.getWebSearchEnabled();
+        const isUseWebpageContext = await storage.getUseWebpageContext();
 
         setSelectedProvider(selectedProvider);
         await getModels(selectedProvider);
@@ -93,6 +99,8 @@ const App: React.FC = () => {
             apiKey: providers[selectedProvider]?.apiKey || '',
             model: selectedModel,
             isIcon: isChatBoxIcon !== undefined ? isChatBoxIcon : true,
+            webSearchEnabled: isWebSearchEnabled,
+            useWebpageContext: isUseWebpageContext,
         });
     };
 
@@ -135,7 +143,15 @@ const App: React.FC = () => {
 
     const onFinish = async (values: any) => {
         setLoadingState(LOADING_STATE.SAVING);
-        const { provider, apiKey, model, isIcon } = values;
+        const { provider, apiKey, model, isIcon, webSearchEnabled, useWebpageContext } = values;
+
+        // Check if both webSearchEnabled and useWebpageContext are true
+        // These features are mutually exclusive and cannot be enabled at the same time
+        if (webSearchEnabled && useWebpageContext) {
+            message.error(t('exclusiveFeatureError'));
+            setLoadingState(LOADING_STATE.SAVE);
+            return;
+        }
 
         let providersData = await storage.getProviders();
         if (!providersData) {
@@ -149,6 +165,8 @@ const App: React.FC = () => {
         await storage.setSelectedModel(model);
         await storage.updateApiKey(provider, apiKey);
         await storage.setIsChatBoxIcon(isIcon);
+        await storage.setWebSearchEnabled(webSearchEnabled);
+        await storage.setUseWebpageContext(useWebpageContext);
         message.success(t('configSaved'));
         setLoadingState(LOADING_STATE.VALIDATING);
         onValidateApiKey();
@@ -330,10 +348,41 @@ const App: React.FC = () => {
                         label={t('showIcon')}
                         name="isIcon"
                         valuePropName="checked"
-                        rules={[{ required: true, message: t('showIcon') }]}
                         initialValue={true}
                     >
                         <Switch />
+                    </Form.Item>
+
+                    <Form.Item
+                        className="form-item"
+                        label={t('webSearch')}
+                        name="webSearchEnabled"
+                        valuePropName="checked"
+                        initialValue={false}
+                    >
+                        <Switch
+                            onChange={(checked) => {
+                                if (checked && form.getFieldValue('useWebpageContext')) {
+                                    message.warning(t('exclusiveFeatureError'));
+                                }
+                            }}
+                        />
+                    </Form.Item>
+
+                    <Form.Item
+                        className="form-item"
+                        label={t('includeWebpage')}
+                        name="useWebpageContext"
+                        valuePropName="checked"
+                        initialValue={true}
+                    >
+                        <Switch
+                            onChange={(checked) => {
+                                if (checked && form.getFieldValue('webSearchEnabled')) {
+                                    message.warning(t('exclusiveFeatureError'));
+                                }
+                            }}
+                        />
                     </Form.Item>
 
                     <Divider />

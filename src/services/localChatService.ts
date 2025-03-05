@@ -1,4 +1,7 @@
-import type { SearchResult } from '@/typings';
+import type { ChatMessage, SearchResult } from '@/typings';
+import { t } from './i18n';
+import React from 'react';
+import { updateMessage } from '@/utils/messageUtils';
 
 // 检查扩展API是否可用
 const isExtensionApiAvailable = (): boolean => {
@@ -143,4 +146,59 @@ export async function fetchWebContent(url: string): Promise<string> {
         console.error('Failed to fetch content:', error);
         return '';
     }
+}
+
+export async function localFetchWebContentWithContext(
+    messageId: number,
+    inputMessage: string,
+    enhancedMessage: string,
+    setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>,
+): Promise<string> {
+    const searchingMessage: ChatMessage = {
+        id: messageId,
+        text: t('searchingWeb' as any),
+        sender: 'system',
+    };
+
+    updateMessage(setMessages, messageId, searchingMessage);
+
+    const searchResults = await performSearch(inputMessage);
+
+    if (searchResults.length > 0) {
+        // 查询结果存在，获取网页内容
+        const contents = await Promise.all(
+            searchResults.slice(0, 2).map((result) => fetchWebContent(result.link)),
+        );
+
+        // 构建咨询的问题
+        const webContext = `${t('webSearchResultsTips1')}:${contents
+            .map(
+                (content, i) =>
+                    `${t('Source')} ${i + 1}: ${searchResults[i].title}\n${content.substring(
+                        0,
+                        1500,
+                    )}\n`,
+            )
+            .join('\n')}${t('webSearchResultsTips2')}: ${inputMessage}`;
+        enhancedMessage = webContext;
+
+        // 更新咨询的问题
+        const searchCompleteMessage: ChatMessage = {
+            id: messageId,
+            text: t('searchComplete' as any),
+            sender: 'system',
+        };
+
+        updateMessage(setMessages, messageId, searchCompleteMessage);
+    } else {
+        const noResultsMessage: ChatMessage = {
+            id: messageId,
+            text: t('noSearchResults' as any),
+            sender: 'system',
+        };
+
+        updateMessage(setMessages, messageId, noResultsMessage);
+    }
+
+    return enhancedMessage;
 }

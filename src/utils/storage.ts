@@ -117,6 +117,14 @@ const storage = {
     getWebSearchEnabled: async (): Promise<boolean> => {
         return (await storage.get<boolean>('webSearchEnabled')) ?? false;
     },
+
+    setUseWebpageContext: async (enabled: boolean): Promise<void> => {
+        await storage.set('useWebpageContext', enabled);
+    },
+
+    getUseWebpageContext: async (): Promise<boolean> => {
+        return (await storage.get<boolean>('useWebpageContext')) ?? true;
+    },
 };
 
 export default storage;

@@ -64,6 +64,7 @@ export const en = {
     searchingWeb: 'Searching the web for information...',
     searchComplete: 'Search complete. Processing results with AI...',
     noSearchResults: 'No search results found. Using AI knowledge only...',
+    exclusiveFeatureError: 'Web search and webpage context cannot be enabled at the same time. Please enable only one of them.',
 
     translate: 'Translate',
     translatePrompt: 'Translate the following text to English: ',
@@ -80,4 +81,9 @@ export const en = {
     webSearchResultsTips2:
         'Based on this information and your knowledge, please answer this question',
     Source: 'Source',
+    webpageContent: 'The following is the content of the webpage I\'m currently viewing:',
+    webpagePrompt: 'Based on this webpage, please respond to my question',
+    fetchWebpageContent: 'Fetching the content of the current webpage...',
+    fetchWebpageContentSuccess: 'Successfully fetched the webpage content, processing with AI...',
+    fetchWebpageContentFailed: 'Failed to fetch webpage content. Using AI knowledge only...',
 };

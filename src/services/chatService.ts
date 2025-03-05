@@ -1,7 +1,10 @@
 import { extractWebpageContent } from '../utils/webContentExtractor';
 import { chatAIStream } from '@/services';
-import type { IMessage } from '@/typings';
+import type { ChatMessage, IMessage } from '@/typings';
 import storage from '@/utils/storage';
+import { t } from './i18n';
+import React from 'react';
+import { updateMessage } from '@/utils/messageUtils';
 
 /**
  * Sends a message to the AI service
@@ -101,31 +104,59 @@ export async function sendMessage(
  * @returns {Promise<string>} The response from the LLM
  */
 export async function sendMessageWithWebpageContext(
+    messageId: number,
     userMessage: string,
-    includeWebpage = true,
-    onStreamUpdate?: (chunk: string) => void,
+    setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>,
 ): Promise<string> {
     try {
         console.log('sendMessageWithWebpageContext called with:', userMessage);
         let contextMessage = userMessage;
 
-        if (includeWebpage) {
-            console.log('Extracting webpage content...');
-            const webpageContent = await extractWebpageContent();
-            console.log('Extracted webpage content length:', webpageContent.length);
+        console.log('Extracting webpage content...');
 
-            // Format the message with webpage context
-            contextMessage = `The following is the content of the webpage I'm currently viewing:
+        const fetchCurrentWebpage: ChatMessage = {
+            id: messageId,
+            text: t('fetchWebpageContent' as any),
+            sender: 'system',
+        };
 
-${webpageContent}
+        updateMessage(setMessages, messageId, fetchCurrentWebpage);
 
-Based on this webpage, please respond to my question: ${userMessage}`;
-        }
+        const webpageContent = await extractWebpageContent();
 
-        // Call sendMessage with the enhanced context
+        const fetchCurrentWebpageSuccess: ChatMessage = {
+            id: messageId,
+            text: t('fetchWebpageContentSuccess' as any),
+            sender: 'system',
+        };
+
+        updateMessage(setMessages, messageId, fetchCurrentWebpageSuccess);
+
+        console.log('Extracted webpage content length:', webpageContent.length);
+
+        // 格式化消息与网页上下文
+        contextMessage = `${t('webpageContent')}:${webpageContent}${t(
+            'webpagePrompt',
+        )}: ${userMessage}`;
+
+        // 调用sendMessage发送消息
         console.log('Sending message with context of length:', contextMessage.length);
-        return await sendMessage(contextMessage, onStreamUpdate);
+
+        return contextMessage;
     } catch (error) {
+        const fetchWebpageContentFailed: ChatMessage = {
+            id: messageId,
+            text: t('fetchWebpageContentFailed' as any),
+            sender: 'system',
+        };
+
+        setMessages((prev) => {
+            const existingMessage = prev.find((msg) => msg.id === messageId);
+            if (existingMessage) {
+                return prev.map((msg) => (msg.id === messageId ? fetchWebpageContentFailed : msg));
+            }
+            return [...prev, fetchWebpageContentFailed];
+        });
         console.error('Error sending message with webpage context:', error);
         throw error;
     }

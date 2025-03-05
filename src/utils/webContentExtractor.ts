@@ -16,7 +16,7 @@ export async function extractWebpageContent(): Promise<string> {
             // Use identified main content areas
             mainElements.forEach((element) => {
                 // @ts-ignore
-                contentText += `${element.innerText  }\n\n`;
+                contentText += `${element.innerText}\n\n`;
             });
         } else {
             // Fallback: get the body text but exclude scripts, styles, etc.
@@ -31,10 +31,9 @@ export async function extractWebpageContent(): Promise<string> {
         const extractedContent = `
 URL: ${currentUrl}
 Title: ${pageTitle}
-
-Content:
-${contentText.slice(0, 15000)}${contentText.length > 15000 ? '...(content truncated)' : ''}
-    `.trim();
+Content:${contentText.slice(0, 15000)}${
+            contentText.length > 15000 ? '...(content truncated)' : ''
+        }`.trim();
 
         return extractedContent;
     } catch (error) {

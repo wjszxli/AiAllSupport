@@ -1,3 +1,9 @@
+declare global {
+    interface Window {
+        currentAbortController?: AbortController;
+    }
+}
+
 // 定义请求方法类型
 export type RequestMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
@@ -57,9 +63,8 @@ export interface ChatParams {
     onFinish: (result: string) => void;
 }
 
-
-declare global {
-    interface Window {
-        currentAbortController?: AbortController;
-    }
+export interface ChatMessage {
+    id: number;
+    text: string;
+    sender: 'user' | 'ai' | 'system';
 }
