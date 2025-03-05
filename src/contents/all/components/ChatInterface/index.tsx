@@ -8,7 +8,6 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useStableCallback } from '@/utils/reactOptimizations';
 import { md } from '@/utils/markdownRenderer';
 import useChatMessages, { markdownCache } from '@/hooks/useChatMessages';
-import { parseModelResponse } from '@/utils';
 import { ChatMessage } from '@/typings';
 import ChatControls from '../ChatControls';
 
@@ -38,15 +37,63 @@ interface Prompt {
 const MessageBubble = memo(
     ({ message, isStreaming, t, copyToClipboard, regenerateResponse }: MessageBubbleProps) => {
         const handleCopy = useCallback(() => {
-            const { response } = parseModelResponse(message.text);
+            // 直接从消息文本中获取响应部分
+            // AI消息的格式为JSON或带有<think>标签的格式，我们需要提取响应部分
+            let response = message.text;
+
+            // 检查是否是JSON格式
+            if (message.text.trim().startsWith('{')) {
+                try {
+                    const jsonData = JSON.parse(message.text);
+                    if (jsonData.content) {
+                        response = jsonData.content;
+                    }
+                } catch (e) {
+                    // 不是合法的JSON，继续处理
+                }
+            }
+
+            // 检查是否包含<think>标签
+            const thinkTagMatch = /<think>([\s\S]*?)<\/think>/g.exec(message.text);
+            if (thinkTagMatch) {
+                // 从消息中移除<think>标签部分
+                response = message.text.replace(thinkTagMatch[0], '').trim();
+            }
+
             copyToClipboard(response);
-        }, [copyToClipboard, message.text, message.sender]);
+        }, [copyToClipboard, message.text]);
 
         // 解析消息中的思考部分和回复部分
         const { thinking, response } = useMemo(() => {
             // 只处理AI消息
             if (message.sender === 'ai') {
-                return parseModelResponse(message.text);
+                // 检查是否是JSON格式
+                if (message.text.trim().startsWith('{')) {
+                    try {
+                        const jsonData = JSON.parse(message.text);
+                        if (jsonData.reasoning_content && jsonData.content) {
+                            return {
+                                thinking: jsonData.reasoning_content,
+                                response: jsonData.content,
+                            };
+                        }
+                    } catch (e) {
+                        // 不是合法的JSON，继续处理
+                    }
+                }
+
+                // 检查是否包含<think>标签
+                const thinkRegex = /<think>([\s\S]*?)<\/think>/g;
+                const match = thinkRegex.exec(message.text);
+                if (match) {
+                    const thinking = match[1].trim();
+                    // 从消息中移除<think>标签部分
+                    const response = message.text.replace(match[0], '').trim();
+                    return { thinking, response };
+                }
+
+                // 没有思考部分
+                return { thinking: '', response: message.text };
             }
             // 对于用户消息，不进行解析
             return { thinking: '', response: message.text };

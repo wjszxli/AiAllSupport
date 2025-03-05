@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { message as messageNotification } from 'antd';
 import { sendMessage, sendMessageWithWebpageContext } from '@/services/chatService';
 import { useThrottledCallback } from '@/utils/reactOptimizations';
-import { parseModelResponse } from '@/utils';
+import { parseModelChunk, createInitialParsingState, type ParsingState } from '@/utils';
 import { LRUCache } from '@/utils/memoryOptimization';
 import type { TranslationKey } from '@/contexts/LanguageContext';
 import storage from '@/utils/storage';
@@ -65,73 +65,65 @@ export const useChatMessages = ({ t }: UseChatMessagesProps) => {
         }
     }, [streamingMessageId, scrollToBottom]);
 
+    // 在适当的地方添加解析状态
+    const [parsingState, setParsingState] = useState<ParsingState>(createInitialParsingState());
+
     // Create stream update handler factory
     const createStreamUpdateHandler = useCallback(
         (aiMessageId: number) => {
-            let accumulator = ''; // For accumulating content and detecting thinking content
-            let hasSeenThinkingContent = false; // Flag to track if any thinking content has been seen
-            let isJsonFormat = false; // Flag to track if response is in JSON format
+            let accumulator = ''; // 用于累积内容和检测思考内容
+            let hasSeenThinkingContent = false; // 标志，用于跟踪是否看到任何思考内容
+            let messageText = '';
 
             return (partialResponse: string) => {
-                // If this is the first chunk, set streaming message ID
+                // 第一帧数据，设置数据 ID
                 if (!streamingMessageId) {
                     setStreamingMessageId(aiMessageId);
                 }
 
-                // Add new chunk to our accumulator
+                // 处理新的数据块
+                const newState = parseModelChunk(partialResponse, parsingState);
+                setParsingState(newState);
+
+                // 仍然保留累加器用于后备和兼容
                 accumulator += partialResponse;
 
-                // Check if this might be a JSON response with reasoning_content
-                if (!isJsonFormat && accumulator.trim().startsWith('{')) {
-                    isJsonFormat = true;
+                // 检查是否有思考内容
+                if (!hasSeenThinkingContent && (newState.thinking || newState.isInThinkTag)) {
+                    hasSeenThinkingContent = true;
                 }
 
-                // Check if this might be a chunk containing any thinking indicators
-                if (!hasSeenThinkingContent) {
-                    if (isJsonFormat && accumulator.includes('reasoning_content')) {
-                        hasSeenThinkingContent = true;
-                    } else if (
-                        accumulator.includes('<think>') ||
-                        accumulator.includes('</think>')
-                    ) {
-                        hasSeenThinkingContent = true;
-                    }
-                }
-
-                let messageText = '';
-
-                // Process accumulated content
+                // 使用新的解析状态来构建消息
                 try {
-                    // Parse content using our utility function
-                    const parsed = parseModelResponse(accumulator);
-
-                    if (parsed.thinking) {
+                    if (newState.thinking) {
                         hasSeenThinkingContent = true;
 
-                        // For JSON format, we rebuild the message
-                        if (isJsonFormat) {
-                            // Create a JSON object, which will be parsed again by parseModelResponse
-                            messageText = JSON.stringify({
-                                reasoning_content: parsed.thinking,
-                                content: parsed.response,
+                        // 对于 JSON 格式，我们重建消息
+                        if (newState.jsonMode) {
+                            // 创建一个 JSON 对象
+                            messageText += JSON.stringify({
+                                reasoning_content: newState.thinking,
+                                content: newState.response,
                             });
                         } else {
-                            // For <think> tag format, wrap thinking content in tags
-                            messageText = `<think>${parsed.thinking}</think>\n\n${parsed.response}`;
+                            // 对于 <think> 标签格式
+                            messageText += `<think>${newState.thinking}</think>\n\n${newState.response}`;
                         }
                     } else {
-                        // No thinking content detected
-                        messageText = isJsonFormat
-                            ? accumulator // Keep original JSON
-                            : parsed.response; // Use processed response
+                        // 没有检测到思考内容
+                        messageText += newState.jsonMode
+                            ? newState.partialJson || accumulator // 使用部分JSON或累加器
+                            : newState.response; // 使用已解析的响应
                     }
                 } catch (error) {
-                    // If any error occurs, just use the original accumulator
-                    console.error('Error processing response:', error);
+                    // 如果发生任何错误，直接使用累加器
+                    console.error('Error in chunk parsing:', error);
                     messageText = accumulator;
                 }
 
-                // Update the message
+                console.log('messageText', messageText);
+
+                // 更新消息
                 setMessages((prevMessages) => {
                     const existingMessage = prevMessages.find((msg) => msg.id === aiMessageId);
 
@@ -155,7 +147,7 @@ export const useChatMessages = ({ t }: UseChatMessagesProps) => {
                 });
             };
         },
-        [streamingMessageId],
+        [streamingMessageId, parsingState],
     );
 
     // Cancel an ongoing streaming response
@@ -190,7 +182,7 @@ export const useChatMessages = ({ t }: UseChatMessagesProps) => {
                 // 获取当前配置
                 const [webSearchEnabled, useWebpageContext] = await Promise.all([
                     storage.getWebSearchEnabled(),
-                    storage.getUseWebpageContext()
+                    storage.getUseWebpageContext(),
                 ]);
 
                 let enhancedMessage = inputMessage;
@@ -233,7 +225,7 @@ export const useChatMessages = ({ t }: UseChatMessagesProps) => {
                 setIsLoading(false);
             }
         },
-        [messages, isLoading, streamingMessageId, t, createStreamUpdateHandler]
+        [messages, isLoading, streamingMessageId, t, createStreamUpdateHandler],
     );
 
     // Regenerate last AI response

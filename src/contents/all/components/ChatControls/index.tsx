@@ -17,9 +17,9 @@ const ChatControls: React.FC = () => {
             try {
                 const [webSearch, webpageContext] = await Promise.all([
                     storage.getWebSearchEnabled(),
-                    storage.getUseWebpageContext()
+                    storage.getUseWebpageContext(),
                 ]);
-                
+
                 setWebSearchEnabled(webSearch ?? false);
                 setUseWebpageContext(webpageContext ?? true);
             } catch (error) {
@@ -30,23 +30,29 @@ const ChatControls: React.FC = () => {
         loadSettings();
     }, []);
 
-    const handleWebSearchToggle = useCallback(async (checked: boolean) => {
-        try {
-            const newState = await featureSettings.toggleWebSearch(checked, t);
-            setWebSearchEnabled(newState);
-        } catch (error) {
-            console.error('Failed to toggle web search:', error);
-        }
-    }, [t]);
+    const handleWebSearchToggle = useCallback(
+        async (checked: boolean) => {
+            try {
+                const newState = await featureSettings.toggleWebSearch(checked, t);
+                setWebSearchEnabled(newState);
+            } catch (error) {
+                console.error('Failed to toggle web search:', error);
+            }
+        },
+        [t],
+    );
 
-    const handleWebpageContextToggle = useCallback(async (checked: boolean) => {
-        try {
-            const newState = await featureSettings.toggleWebpageContext(checked, t);
-            setUseWebpageContext(newState);
-        } catch (error) {
-            console.error('Failed to toggle webpage context:', error);
-        }
-    }, [t]);
+    const handleWebpageContextToggle = useCallback(
+        async (checked: boolean) => {
+            try {
+                const newState = await featureSettings.toggleWebpageContext(checked, t);
+                setUseWebpageContext(newState);
+            } catch (error) {
+                console.error('Failed to toggle webpage context:', error);
+            }
+        },
+        [t],
+    );
 
     return (
         <div className="chat-controls">
