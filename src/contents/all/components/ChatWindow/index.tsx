@@ -169,7 +169,6 @@ const ChatWindow = ({ x, y, text }: { x: number; y: number; text?: string }) => 
             // @ts-expect-error
             window.currentAbortController = null;
         }
-        dispatch({ type: 'SET_VISIBILITY', payload: false });
     }, []);
 
     const togglePin = useCallback(() => {
@@ -363,7 +362,10 @@ const ChatWindow = ({ x, y, text }: { x: number; y: number; text?: string }) => 
                 <HeaderActions
                     isPinned={isPinned}
                     togglePin={togglePin}
-                    onCancel={onCancel}
+                    onCancel={() => {
+                        onCancel();
+                        dispatch({ type: 'SET_VISIBILITY', payload: false });
+                    }}
                     pinTooltip={pinTooltip}
                     closeTooltip={closeTooltip}
                 />

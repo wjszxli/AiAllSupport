@@ -37,6 +37,7 @@ export const zhCN = {
     // Chat interface
     send: '发送',
     thinking: 'AI 正在思考...',
+    think: '已深思熟虑',
     you: '你',
     assistant: 'AI 助手',
     askWebpage: '询问关于这个网页...',
@@ -96,4 +97,5 @@ export const zhCN = {
     fetchWebpageContent: '正在获取当前网页内容...',
     fetchWebpageContentSuccess: '获取网页内容成功，正在用AI处理结果...',
     fetchWebpageContentFailed: '获取网页内容失败，仅使用AI知识回答...',
+    pleaseInputApiKey: '请在配置页输入 API Key 哦',
 };

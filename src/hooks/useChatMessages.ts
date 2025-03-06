@@ -2,7 +2,6 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { message as messageNotification } from 'antd';
 import { sendMessage, sendMessageWithWebpageContext } from '@/services/chatService';
 import { useThrottledCallback } from '@/utils/reactOptimizations';
-import { parseModelChunk, createInitialParsingState, type ParsingState } from '@/utils';
 import { LRUCache } from '@/utils/memoryOptimization';
 import type { TranslationKey } from '@/contexts/LanguageContext';
 import storage from '@/utils/storage';
@@ -24,7 +23,6 @@ export const useChatMessages = ({ t }: UseChatMessagesProps) => {
     const messagesWrapperRef = useRef<HTMLDivElement>(null);
     const previousMessagesLengthRef = useRef(0);
 
-    // Scroll to bottom functionality
     const scrollToBottom = useThrottledCallback(
         () => {
             if (messagesWrapperRef.current) {
@@ -35,7 +33,6 @@ export const useChatMessages = ({ t }: UseChatMessagesProps) => {
         [],
     );
 
-    // Copy to clipboard functionality
     const copyToClipboard = useCallback(
         (text: string) => {
             navigator.clipboard
@@ -50,114 +47,42 @@ export const useChatMessages = ({ t }: UseChatMessagesProps) => {
         [t],
     );
 
-    // Scroll to bottom when messages change
     useEffect(() => {
         if (messages.length !== previousMessagesLengthRef.current) {
             scrollToBottom();
             previousMessagesLengthRef.current = messages.length;
         }
-    }, [messages.length, scrollToBottom]);
 
-    // Scroll to bottom during streaming updates
-    useEffect(() => {
         if (streamingMessageId) {
             scrollToBottom();
         }
-    }, [streamingMessageId, scrollToBottom]);
+    }, [messages.length, scrollToBottom, streamingMessageId]);
 
-    // 在适当的地方添加解析状态
-    const [parsingState, setParsingState] = useState<ParsingState>(createInitialParsingState());
-
-    // Create stream update handler factory
     const createStreamUpdateHandler = useCallback(
         (aiMessageId: number) => {
-            let accumulator = ''; // 用于累积内容和检测思考内容
-            let hasSeenThinkingContent = false; // 标志，用于跟踪是否看到任何思考内容
-            let messageText = '';
-
-            return (partialResponse: string) => {
+            return (messageText: string, thinkingText: string) => {
                 // 第一帧数据，设置数据 ID
                 if (!streamingMessageId) {
                     setStreamingMessageId(aiMessageId);
                 }
 
-                // 处理新的数据块
-                const newState = parseModelChunk(partialResponse, parsingState);
-                setParsingState(newState);
-
-                // 仍然保留累加器用于后备和兼容
-                accumulator += partialResponse;
-
-                // 检查是否有思考内容
-                if (!hasSeenThinkingContent && (newState.thinking || newState.isInThinkTag)) {
-                    hasSeenThinkingContent = true;
-                }
-
-                // 使用新的解析状态来构建消息
-                try {
-                    if (newState.thinking) {
-                        hasSeenThinkingContent = true;
-
-                        // 对于 JSON 格式，我们重建消息
-                        if (newState.jsonMode) {
-                            // 创建一个 JSON 对象
-                            messageText += JSON.stringify({
-                                reasoning_content: newState.thinking,
-                                content: newState.response,
-                            });
-                        } else {
-                            // 对于 <think> 标签格式
-                            messageText += `<think>${newState.thinking}</think>\n\n${newState.response}`;
-                        }
-                    } else {
-                        // 没有检测到思考内容
-                        messageText += newState.jsonMode
-                            ? newState.partialJson || accumulator // 使用部分JSON或累加器
-                            : newState.response; // 使用已解析的响应
-                    }
-                } catch (error) {
-                    // 如果发生任何错误，直接使用累加器
-                    console.error('Error in chunk parsing:', error);
-                    messageText = accumulator;
-                }
-
-                console.log('messageText', messageText);
-
                 // 更新消息
-                setMessages((prevMessages) => {
-                    const existingMessage = prevMessages.find((msg) => msg.id === aiMessageId);
-
-                    return existingMessage
-                        ? prevMessages.map((msg) =>
-                              msg.id === aiMessageId
-                                  ? {
-                                        ...msg,
-                                        text: messageText,
-                                    }
-                                  : msg,
-                          )
-                        : [
-                              ...prevMessages,
-                              {
-                                  id: aiMessageId,
-                                  text: messageText,
-                                  sender: 'ai',
-                              },
-                          ];
+                updateMessage(setMessages, aiMessageId, {
+                    id: aiMessageId,
+                    text: messageText,
+                    thinking: thinkingText,
+                    sender: 'ai',
                 });
             };
         },
-        [streamingMessageId, parsingState],
+        [streamingMessageId],
     );
 
-    // Cancel an ongoing streaming response
     const cancelStreamingResponse = useCallback(() => {
-        // Use global abort controller to cancel API request
         if (window.currentAbortController) {
             window.currentAbortController.abort();
         }
 
-        // Update UI state
         setStreamingMessageId(null);
         setIsLoading(false);
     }, []);
@@ -232,49 +157,12 @@ export const useChatMessages = ({ t }: UseChatMessagesProps) => {
     const regenerateResponse = useCallback(async () => {
         if (messages.length < 2) return;
 
-        const useWebpageContext = await storage.getUseWebpageContext();
-
         const lastUserMessageIndex = messages.map((m) => m.sender).lastIndexOf('user');
         if (lastUserMessageIndex === -1) return;
 
         const lastUserMessage = messages[lastUserMessageIndex];
 
-        // Filter out any messages after the last user message
-        setMessages(messages.filter((_, index) => index <= lastUserMessageIndex));
-
-        setIsLoading(true);
-
-        try {
-            // Create an empty AI message placeholder that will be incrementally updated
-            const aiMessageId = Date.now();
-            const handleStreamUpdate = createStreamUpdateHandler(aiMessageId);
-
-            // Set streamingMessageId before starting stream
-            setStreamingMessageId(aiMessageId);
-
-            // Call appropriate API with streaming callback
-            await (useWebpageContext
-                ? sendMessageWithWebpageContext(aiMessageId, lastUserMessage.text, setMessages)
-                : sendMessage(lastUserMessage.text, handleStreamUpdate));
-
-            // Mark streaming response complete
-            setStreamingMessageId(null);
-            setIsLoading(false);
-        } catch (error) {
-            console.error('Error regenerating response:', error);
-            setMessages((prevMessages) => {
-                return [
-                    ...prevMessages,
-                    {
-                        id: Date.now(),
-                        text: t('errorRegenerating'),
-                        sender: 'system',
-                    },
-                ];
-            });
-            setIsLoading(false);
-            setStreamingMessageId(null);
-        }
+        sendChatMessage(lastUserMessage.text);
     }, [messages, isLoading, streamingMessageId, t, createStreamUpdateHandler]);
 
     return {

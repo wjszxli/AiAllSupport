@@ -36,106 +36,60 @@ interface Prompt {
 
 const MessageBubble = memo(
     ({ message, isStreaming, t, copyToClipboard, regenerateResponse }: MessageBubbleProps) => {
+        const [isThinkingExpanded, setIsThinkingExpanded] = useState(true);
+
+        const toggleThinking = useCallback(() => {
+            setIsThinkingExpanded(!isThinkingExpanded);
+        }, []);
+
         const handleCopy = useCallback(() => {
-            // 直接从消息文本中获取响应部分
-            // AI消息的格式为JSON或带有<think>标签的格式，我们需要提取响应部分
-            let response = message.text;
-
-            // 检查是否是JSON格式
-            if (message.text.trim().startsWith('{')) {
-                try {
-                    const jsonData = JSON.parse(message.text);
-                    if (jsonData.content) {
-                        response = jsonData.content;
-                    }
-                } catch (e) {
-                    // 不是合法的JSON，继续处理
-                }
-            }
-
-            // 检查是否包含<think>标签
-            const thinkTagMatch = /<think>([\s\S]*?)<\/think>/g.exec(message.text);
-            if (thinkTagMatch) {
-                // 从消息中移除<think>标签部分
-                response = message.text.replace(thinkTagMatch[0], '').trim();
-            }
-
+            const response = message.text;
             copyToClipboard(response);
         }, [copyToClipboard, message.text]);
-
-        // 解析消息中的思考部分和回复部分
-        const { thinking, response } = useMemo(() => {
-            // 只处理AI消息
-            if (message.sender === 'ai') {
-                // 检查是否是JSON格式
-                if (message.text.trim().startsWith('{')) {
-                    try {
-                        const jsonData = JSON.parse(message.text);
-                        if (jsonData.reasoning_content && jsonData.content) {
-                            return {
-                                thinking: jsonData.reasoning_content,
-                                response: jsonData.content,
-                            };
-                        }
-                    } catch (e) {
-                        // 不是合法的JSON，继续处理
-                    }
-                }
-
-                // 检查是否包含<think>标签
-                const thinkRegex = /<think>([\s\S]*?)<\/think>/g;
-                const match = thinkRegex.exec(message.text);
-                if (match) {
-                    const thinking = match[1].trim();
-                    // 从消息中移除<think>标签部分
-                    const response = message.text.replace(match[0], '').trim();
-                    return { thinking, response };
-                }
-
-                // 没有思考部分
-                return { thinking: '', response: message.text };
-            }
-            // 对于用户消息，不进行解析
-            return { thinking: '', response: message.text };
-        }, [message.text, message.sender]);
 
         // 渲染消息内容
         const renderMessageContent = useCallback(() => {
             if (message.sender === 'ai') {
+                const { thinking = '', text: response } = message;
+
+                // 通用的渲染Markdown函数
+                const renderMarkdown = (
+                    content: string,
+                    contentType: string,
+                    messageId: number,
+                ) => {
+                    // 为了防止缓存混淆，生成唯一的缓存键
+                    const contentHash =
+                        content.length + '-' + content.substr(0, 20).replace(/\s/g, '');
+                    const cacheKey = `${contentType}-${messageId}-${contentHash}`;
+
+                    // 检查缓存
+                    let renderedHtml = markdownCache.get(cacheKey);
+
+                    // 如果没有缓存，渲染Markdown
+                    if (!renderedHtml) {
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = md.render(content || '');
+                        renderedHtml = tempDiv.innerHTML;
+                        markdownCache.set(cacheKey, renderedHtml);
+                    }
+
+                    return renderedHtml;
+                };
+
                 // 先检查是否有思考部分
                 if (thinking) {
-                    // 为了防止缓存混淆，生成唯一的缓存键
-                    const thinkingHash =
-                        thinking.length + '-' + thinking.substr(0, 20).replace(/\s/g, '');
-                    const responseHash =
-                        response.length + '-' + response.substr(0, 20).replace(/\s/g, '');
-
-                    const thinkingCacheKey = `thinking-${message.id}-${thinkingHash}`;
-                    const responseCacheKey = `response-${message.id}-${responseHash}`;
-
-                    let thinkingHtml = markdownCache.get(thinkingCacheKey);
-                    let responseHtml = markdownCache.get(responseCacheKey);
-
-                    if (!thinkingHtml) {
-                        const thinkingDiv = document.createElement('div');
-                        thinkingDiv.innerHTML = md.render(thinking || '');
-                        thinkingHtml = thinkingDiv.innerHTML;
-                        markdownCache.set(thinkingCacheKey, thinkingHtml);
-                    }
-
-                    if (!responseHtml) {
-                        const responseDiv = document.createElement('div');
-                        responseDiv.innerHTML = md.render(response || '');
-                        responseHtml = responseDiv.innerHTML;
-                        markdownCache.set(responseCacheKey, responseHtml);
-                    }
+                    // 渲染思考和响应内容
+                    const thinkingHtml = renderMarkdown(thinking, 'thinking', message.id);
+                    const responseHtml = renderMarkdown(response, 'response', message.id);
 
                     return (
                         <>
-                            <div className="thinking-container">
-                                <div className="thinking-header">
-                                    <span className="thinking-label">
-                                        {t('thinking') || '已深思熟虑'}
+                            <div className={`thinking-container ${isThinkingExpanded ? 'expanded' : 'collapsed'}`}>
+                                <div className="thinking-header" onClick={toggleThinking}>
+                                    <span className="thinking-label">🧠 {t('think')}</span>
+                                    <span className="thinking-toggle">
+                                        {isThinkingExpanded ? '▼' : '►'}
                                     </span>
                                 </div>
                                 <div
@@ -154,19 +108,7 @@ const MessageBubble = memo(
                 }
 
                 // 没有思考部分，只渲染响应
-                // 为了防止缓存混淆，使用消息长度作为键的一部分
-                const messageHash =
-                    message.text.length + '-' + message.text.substr(0, 20).replace(/\s/g, '');
-                const cacheKey = `message-${message.id}-${messageHash}`;
-                let renderedHtml = markdownCache.get(cacheKey);
-
-                if (!renderedHtml) {
-                    // 创建一个临时 div 来解析和修改 HTML 内容
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = md.render(message.text || '');
-                    renderedHtml = tempDiv.innerHTML;
-                    markdownCache.set(cacheKey, renderedHtml);
-                }
+                const renderedHtml = renderMarkdown(message.text, 'message', message.id);
 
                 return (
                     <div
@@ -174,24 +116,18 @@ const MessageBubble = memo(
                         dangerouslySetInnerHTML={{ __html: renderedHtml }}
                     />
                 );
-            } else {
-                return <div className="message-content">{message.text}</div>;
             }
-        }, [message, isStreaming, t, thinking, response]);
+            return <div className="message-content">{message.text}</div>;
+        }, [message, isStreaming, t, isThinkingExpanded]);
 
         return (
-            <div
-                className={`message-bubble ${message.sender} ${
-                    isStreaming ? 'streaming-message' : ''
-                }`}
-            >
+            <div className={`message-bubble ${message.sender}`}>
                 <div className="message-header">
                     <div className="sender-name">
                         {message.sender === 'user' ? t('you') : t('assistant')}
                     </div>
                 </div>
                 {renderMessageContent()}
-
                 {message.sender === 'ai' && !isStreaming && (
                     <div className="message-actions-bottom">
                         <Button
@@ -462,7 +398,6 @@ const ChatInterface = ({ initialText }: ChatInterfaceProps) => {
             }
         }
 
-        // Don't trigger send during IME composition
         if (e.key === 'Enter' && !e.shiftKey && !isComposing) {
             e.preventDefault();
             handleSendMessage();

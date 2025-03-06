@@ -31,12 +31,16 @@ export const PROVIDERS_DATA: Record<string, ProviderConfig> = {
             { label: 'V3', value: 'deepseek-chat' },
             { label: 'R1', value: 'deepseek-reasoner' },
         ],
+        selectedModel: 'deepseek-reasoner',
+        selected: true,
     },
     Ollama: {
         name: '本地 Ollama',
         apiKey: null,
         apiKeyUrl: 'https://ollama.com/api_keys',
         models: [],
+        selectedModel: null,
+        selected: false,
     },
     SiliconFlow: {
         name: '硅基流动',
@@ -104,6 +108,8 @@ export const PROVIDERS_DATA: Record<string, ProviderConfig> = {
             },
             { label: 'Pro/google/gemma-2-9b-it', value: 'Pro/google/gemma-2-9b-it' },
         ],
+        selectedModel: 'deepseek-ai/DeepSeek-R1',
+        selected: false,
     },
     Tencent: {
         name: '腾讯云',
@@ -113,6 +119,8 @@ export const PROVIDERS_DATA: Record<string, ProviderConfig> = {
             { label: 'V3', value: 'deepseek-v3' },
             { label: 'R1', value: 'deepseek-r1' },
         ],
+        selectedModel: 'deepseek-r1',
+        selected: false,
     },
     Baidu: {
         name: '百度云',
@@ -122,6 +130,8 @@ export const PROVIDERS_DATA: Record<string, ProviderConfig> = {
             { label: 'V3', value: 'deepseek-v3' },
             { label: 'R1', value: 'deepseek-r1' },
         ],
+        selectedModel: 'deepseek-r1',
+        selected: false,
     },
     Aliyun: {
         name: '阿里云',
@@ -131,6 +141,8 @@ export const PROVIDERS_DATA: Record<string, ProviderConfig> = {
             { label: 'V3', value: 'deepseek-v3' },
             { label: 'R1', value: 'deepseek-r1' },
         ],
+        selectedModel: 'deepseek-r1',
+        selected: false,
     },
 };
 

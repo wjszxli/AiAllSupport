@@ -1,4 +1,4 @@
-import { Form, Select } from 'antd';
+import { Form, message, Select } from 'antd';
 import { useEffect, useState } from 'react';
 
 import { modelList } from '@/services';
@@ -28,7 +28,10 @@ const Config = (props: {
 
         // 只过滤出已经设置了 API Key 的服务商
         const providersWithApiKey = Object.keys(providers).filter((key) => {
+            console.log('providers', providers);
+            console.log('key', key);
             const apiKey = providers[key]?.apiKey;
+            console.log('apiKey', apiKey);
             return apiKey !== null && apiKey !== undefined && apiKey.trim() !== '';
         });
         setAvailableProviders(providersWithApiKey);
@@ -37,6 +40,7 @@ const Config = (props: {
         if (!selectedProvider) {
             return;
         }
+
         await getModels(selectedProvider);
 
         form.setFieldsValue({
@@ -97,59 +101,63 @@ const Config = (props: {
         }
     };
 
-    const onProviderChange = async (value: string) => {
+    const onProviderChange = async (provider: string) => {
         props.onCancel();
+
+        // 获取提供商数据并设置选中的提供商
+        let providersData = await storage.getProviders();
+        if (!providersData) {
+            providersData = PROVIDERS_DATA;
+        }
+        const apiKey = providersData[provider]?.apiKey;
+        if (!apiKey && provider !== 'Ollama') {
+            message.error(t('pleaseInputApiKey'));
+            return;
+        }
 
         // 先重置表单中的模型值
         form.resetFields(['model']);
 
-        // 获取提供商数据并设置选中的提供商
-        const providers = await storage.getProviders();
-        await storage.setSelectedProvider(value);
+        providersData[provider] = {
+            ...PROVIDERS_DATA[provider],
+            selected: true,
+            apiKey,
+        };
+
+        await storage.setProviders(providersData);
+        await storage.setSelectedProvider(provider);
 
         // 获取模型列表
-        await getModels(value);
-        console.log('isLocalhost(value)', isLocalhost(value))
+        await getModels(provider);
+        const model = providersData[provider]?.selectedModel;
 
-        // 获取模型列表后，根据情况设置默认模型
-        if (!isLocalhost(value)) {
-            const apiKey = providers[value]?.apiKey;
-            const availableModels = providers[value]?.models || [];
-
-            if (availableModels.length > 0) {
-                const defaultModel = availableModels[0].value;
-                await storage.setSelectedModel(defaultModel);
-                form.setFieldsValue({
-                    apiKey,
-                    model: defaultModel,
-                });
-            } else {
-                // 如果没有模型，清空选择模型
-                await storage.setSelectedModel('');
-                form.setFieldsValue({
-                    apiKey,
-                    model: null,
-                });
-            }
+        if (!isLocalhost(provider)) {
+            const apiKey = providersData[provider]?.apiKey;
+            const fieldsValue = { apiKey, model };
+            form.setFieldsValue(fieldsValue);
         } else {
-            const availableModels = providers[value]?.models || [];
-
-            if (availableModels.length > 0) {
-                const defaultModel = availableModels[0].value;
-                await storage.setSelectedModel(defaultModel);
-                form.setFieldsValue({ model: defaultModel });
-            } else {
-                // 如果没有模型，清空选择模型
-                await storage.setSelectedModel('');
-                form.setFieldsValue({ model: undefined });
-            }
+            const fieldsValue = { model };
+            form.setFieldsValue(fieldsValue);
         }
     };
 
     const onModelChange = async (value: string) => {
+        const providersData = await storage.getProviders();
+        const selectedProvider = await storage.getSelectedProvider();
+        if (!selectedProvider) {
+            return;
+        }
+
         props.onCancel();
         form.setFieldsValue({ model: value });
+
         await storage.setSelectedModel(value);
+
+        providersData[selectedProvider] = {
+            ...PROVIDERS_DATA[selectedProvider],
+            selectedModel: value,
+        };
+        await storage.setProviders(providersData);
     };
 
     return (

@@ -70,9 +70,19 @@ const storage = {
         await storage.set('selectedProvider', provider);
     },
 
+    //  获取当前选中的服务商
+    getSelectedProvider: async (): Promise<string | null> => {
+        return await storage.get<string>('selectedProvider');
+    },
+
     //  设置当前选中的模型
     setSelectedModel: async (model: string): Promise<void> => {
         await storage.set('selectedModel', model);
+    },
+
+    //  获取当前选中的模型
+    getSelectedModel: async (): Promise<string | null> => {
+        return await storage.get<string>('selectedModel');
     },
 
     setChatBoxSize: async ({ width, height }: { width: number; height: number }): Promise<void> => {

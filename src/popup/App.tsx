@@ -159,7 +159,12 @@ const App: React.FC = () => {
                 providersData = PROVIDERS_DATA;
             }
 
-            providersData[provider] = { ...PROVIDERS_DATA[provider], apiKey };
+            providersData[provider] = {
+                ...PROVIDERS_DATA[provider],
+                apiKey,
+                selected: true,
+                selectedModel: model,
+            };
 
             await Promise.all([
                 storage.setProviders(providersData),

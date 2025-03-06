@@ -14,26 +14,25 @@ import { updateMessage } from '@/utils/messageUtils';
  */
 export async function sendMessage(
     message: string,
-    onStreamUpdate?: (chunk: string) => void,
+    onStreamUpdate?: (response: string, thinking: string) => void,
 ): Promise<string> {
     try {
-        console.log('sendMessage called with:', message);
         const previousMessages: IMessage[] = (await storage.get('chatHistory')) || [];
         const sendMessage = [...previousMessages, { role: 'user', content: message }];
-        console.log('Chat history with new message:', sendMessage);
 
-        let response = '';
+        let messageText = '';
+        let thinkingText = '';
 
+        let isInThinkStartTag = false;
+        let isInThinkEndTag = false;
         // @ts-ignore
         window.currentAbortController = new AbortController();
         // @ts-ignore
         const signal = window.currentAbortController.signal;
 
         return new Promise((resolve, reject) => {
-            // Check if chatAIStream accepts signal parameter
-            // If not, we need to adjust how we call it
+            console.log('发送数据：', sendMessage)
             chatAIStream(sendMessage, async (chunk) => {
-                // If request was aborted, stop processing
                 if (signal.aborted) {
                     return;
                 }
@@ -41,23 +40,35 @@ export async function sendMessage(
                 console.log('Received chunk:', chunk);
                 const { data, done } = chunk;
 
-                // Process direct text content
                 if (!done && !data.startsWith('data: ')) {
                     console.log('Adding direct text to response:', data);
-                    response += data;
-                    if (onStreamUpdate) onStreamUpdate(data);
-                }
-                // Process streaming data
-                else if (!done) {
+                    // 思考结束后，开始收集响应
+                    if (data.includes('<think>')) {
+                        isInThinkStartTag = true;
+                    } else if (data.includes('</think>')) {
+                        isInThinkEndTag = true;
+                    } else if (isInThinkStartTag && !isInThinkEndTag) {
+                        thinkingText += data;
+                    } else if (isInThinkEndTag) {
+                        messageText += data;
+                    }
+
+                    if (onStreamUpdate) onStreamUpdate(messageText, thinkingText);
+                } else if (!done) {
                     try {
                         console.log('Parsing stream data:', data);
-                        const chunkStringData = data.slice(6); // Remove "data: " prefix
+                        const chunkStringData = data.slice(6);
                         const chunkData = JSON.parse(chunkStringData);
                         if (chunkData.choices?.[0]?.delta?.content) {
                             const content = chunkData.choices[0].delta.content;
                             console.log('Adding content to response:', content);
-                            response += content;
-                            if (onStreamUpdate) onStreamUpdate(content);
+                            messageText += content;
+                            if (onStreamUpdate) onStreamUpdate(messageText, thinkingText);
+                        } else if (chunkData.choices?.[0]?.delta?.reasoning_content) {
+                            const reasoning_content = chunkData.choices[0].delta.reasoning_content;
+                            console.log('Adding thinking to response:', thinkingText);
+                            thinkingText += reasoning_content
+                            if (onStreamUpdate) onStreamUpdate(messageText, thinkingText);
                         } else {
                             console.log('No content in chunk data:', chunkData);
                         }
@@ -66,25 +77,22 @@ export async function sendMessage(
                     }
                 }
 
-                // Handle completion
                 if (done) {
-                    console.log('Stream complete. Final response:', response);
+                    console.log('Stream complete. Final response:', messageText);
 
-                    // Update chat history with the completed response
                     const updatedMessages = [
                         ...sendMessage,
-                        { role: 'assistant', content: response },
+                        { role: 'assistant', content: messageText },
                     ];
                     await storage.set('chatHistory', updatedMessages);
 
                     // @ts-ignore
                     window.currentAbortController = null;
 
-                    resolve(response);
+                    resolve(messageText);
                 }
             }).catch((error) => {
                 console.error('Error in chatAIStream:', error);
-                // Only reject if not aborted
                 if (!signal.aborted) {
                     reject(error);
                 }

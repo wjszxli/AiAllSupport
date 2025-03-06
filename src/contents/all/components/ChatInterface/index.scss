@@ -213,11 +213,17 @@ $thinking-border-color: #e1e8ed;
                     background-color: #f8f9fa;
                     border: 1px solid #e2e8f0;
                     border-radius: 6px;
+                    transition: all 0.3s ease;
 
                     .thinking-header {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
                         padding-bottom: 4px;
                         margin-bottom: 6px;
                         border-bottom: 1px solid #edf2f7;
+                        cursor: pointer;
+                        user-select: none;
 
                         .thinking-label {
                             font-size: 12px;
@@ -225,13 +231,21 @@ $thinking-border-color: #e1e8ed;
                             color: #718096;
                             letter-spacing: 0.3px;
                         }
+
+                        .thinking-toggle {
+                            font-size: 10px;
+                            color: #718096;
+                            transition: transform 0.2s ease;
+                        }
                     }
 
                     .thinking-content {
+                        overflow: hidden;
                         font-size: 14px;
                         line-height: 1.5;
                         color: #4a5568;
                         white-space: pre-wrap;
+                        transition: max-height 0.3s ease, opacity 0.2s ease;
 
                         p:last-child {
                             margin-bottom: 0;
@@ -253,6 +267,30 @@ $thinking-border-color: #e1e8ed;
                             font-family: SFMono-Regular, Consolas, 'Liberation Mono', Menlo,
                                 monospace;
                             font-size: 12px;
+                        }
+                    }
+
+                    // 展开和折叠状态的样式
+                    &.collapsed {
+                        .thinking-content {
+                            opacity: 0;
+                            margin-top: 0;
+                            margin-bottom: 0;
+                            padding-top: 0;
+                            padding-bottom: 0;
+                            max-height: 0;
+                        }
+
+                        .thinking-header {
+                            margin-bottom: 0;
+                            border-bottom: none;
+                        }
+                    }
+
+                    &.expanded {
+                        .thinking-content {
+                            max-height: 1000px; // 足够大以容纳内容
+                            opacity: 1;
                         }
                     }
                 }

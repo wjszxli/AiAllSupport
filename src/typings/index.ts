@@ -22,6 +22,8 @@ export interface ProviderConfig {
     apiKey: string | null; // 当前服务商的 API Key
     models: { label: string; value: string }[]; // 该服务商支持的模型列表
     apiKeyUrl?: string; // 获取 API Key 的 URL
+    selectedModel: string | null; // 当前选中的模型
+    selected: boolean; // 是否选中
 }
 
 export interface StorageData {
@@ -66,5 +68,6 @@ export interface ChatParams {
 export interface ChatMessage {
     id: number;
     text: string;
+    thinking?: string;
     sender: 'user' | 'ai' | 'system';
 }
