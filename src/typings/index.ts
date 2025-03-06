@@ -53,6 +53,7 @@ export interface SearchResult {
     link: string;
     snippet: string;
     thinking?: string; // 添加思考部分，可选
+    source: string; // 添加来源
 }
 
 export interface ChatParams {

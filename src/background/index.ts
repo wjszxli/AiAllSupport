@@ -4,8 +4,46 @@ import { MODIFY_HEADERS_RULE_ID, URL_MAP } from '@/utils/constant';
 import storage from '@/utils/storage';
 import { load } from 'cheerio';
 
-// 专门用于网页搜索的函数
+// 用于网页搜索的函数，支持多个搜索引擎
 async function searchWeb(query: string): Promise<SearchResult[]> {
+    try {
+        console.log('执行多搜索引擎搜索:', query);
+
+        // 并行执行多个搜索引擎的请求
+        const results = await Promise.allSettled([
+            // searchBaidu(query),
+            searchGoogle(query),
+            searchDuckDuckGo(query),
+            searchSogou(query),
+            searchBrave(query),
+            searchSearxng(query),
+        ]);
+
+        console.log('results', results)
+
+        // 合并结果
+        const combinedResults: SearchResult[] = [];
+
+        results.forEach((result) => {
+            if (result.status === 'fulfilled' && result.value.length > 0) {
+                combinedResults.push(...result.value);
+            }
+        });
+
+        // 如果所有搜索引擎都没有返回结果
+        if (combinedResults.length === 0) {
+            console.log('所有搜索引擎均未返回结果');
+        }
+
+        return combinedResults;
+    } catch (error: any) {
+        console.error('执行多搜索引擎搜索失败:', error);
+        return [];
+    }
+}
+
+// 百度搜索函数
+async function searchBaidu(query: string): Promise<SearchResult[]> {
     try {
         console.log('执行百度搜索:', query);
 
@@ -34,7 +72,6 @@ async function searchWeb(query: string): Promise<SearchResult[]> {
         const results: SearchResult[] = [];
 
         // 百度搜索结果通常在带有特定class的div中
-        // 注意：百度可能会更改其HTML结构，以下选择器可能需要根据实际情况调整
         $('.result, .c-container').each((i, element) => {
             if (i >= 5) return false; // 只获取前5个结果
 
@@ -53,6 +90,7 @@ async function searchWeb(query: string): Promise<SearchResult[]> {
                     title,
                     link,
                     snippet,
+                    source: 'Baidu',
                 });
             }
 
@@ -72,20 +110,361 @@ async function searchWeb(query: string): Promise<SearchResult[]> {
     }
 }
 
+// Google搜索函数
+async function searchGoogle(query: string): Promise<SearchResult[]> {
+    try {
+        console.log('执行Google搜索:', query);
+
+        const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+
+        const response = await fetch(searchUrl, {
+            method: 'GET',
+            headers: {
+                'Accept':
+                    'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'User-Agent':
+                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36',
+                'Accept-Language': 'en-US,en;q=0.9',
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error(`Google搜索请求失败，状态码: ${response.status}`);
+        }
+
+        const html = await response.text();
+
+        // 使用cheerio解析Google搜索结果HTML
+        const $ = load(html);
+        const results: SearchResult[] = [];
+
+        // Google搜索结果选择器
+        $('div.g').each((i, element) => {
+            if (i >= 5) return false; // 只获取前5个结果
+
+            const titleElement = $(element).find('h3');
+            const title = titleElement.text().trim();
+
+            // 获取链接
+            const linkElement = $(element).find('a');
+            const link = linkElement.attr('href') || '';
+
+            // 获取摘要
+            const snippetElement = $(element).find('div.VwiC3b');
+            const snippet = snippetElement.text().trim();
+
+            if (title && link && link.startsWith('http')) {
+                results.push({
+                    title,
+                    link,
+                    snippet,
+                    source: 'Google',
+                });
+            }
+
+            return true;
+        });
+
+        if (results.length === 0) {
+            console.log('未能从Google搜索结果中提取数据，可能选择器需要更新');
+        }
+
+        return results;
+    } catch (error: any) {
+        console.error('Google搜索失败:', error);
+        return [];
+    }
+}
+
+// DuckDuckGo搜索函数
+async function searchDuckDuckGo(query: string): Promise<SearchResult[]> {
+    try {
+        console.log('执行DuckDuckGo搜索:', query);
+
+        const searchUrl = `https://duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
+
+        const response = await fetch(searchUrl, {
+            method: 'GET',
+            headers: {
+                'Accept':
+                    'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'User-Agent':
+                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36',
+                'Accept-Language': 'en-US,en;q=0.9',
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error(`DuckDuckGo搜索请求失败，状态码: ${response.status}`);
+        }
+
+        const html = await response.text();
+
+        // 使用cheerio解析DuckDuckGo搜索结果HTML
+        const $ = load(html);
+        const results: SearchResult[] = [];
+
+        // DuckDuckGo搜索结果选择器
+        $('.result').each((i, element) => {
+            if (i >= 5) return false; // 只获取前5个结果
+
+            const titleElement = $(element).find('.result__title');
+            const title = titleElement.text().trim();
+
+            // 获取链接
+            const linkElement = $(element).find('.result__url');
+            let link = linkElement.attr('href') || '';
+
+            // 获取摘要
+            const snippetElement = $(element).find('.result__snippet');
+            const snippet = snippetElement.text().trim();
+
+            if (title && link) {
+                results.push({
+                    title,
+                    link,
+                    snippet,
+                    source: 'DuckDuckGo',
+                });
+            }
+
+            return true;
+        });
+
+        if (results.length === 0) {
+            console.log('未能从DuckDuckGo搜索结果中提取数据，可能选择器需要更新');
+        }
+
+        return results;
+    } catch (error: any) {
+        console.error('DuckDuckGo搜索失败:', error);
+        return [];
+    }
+}
+
+// 搜狗搜索函数
+async function searchSogou(query: string): Promise<SearchResult[]> {
+    try {
+        console.log('执行搜狗搜索:', query);
+
+        const searchUrl = `https://www.sogou.com/web?query=${encodeURIComponent(query)}`;
+
+        const response = await fetch(searchUrl, {
+            method: 'GET',
+            headers: {
+                'Accept':
+                    'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'User-Agent':
+                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36',
+                'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error(`搜狗搜索请求失败，状态码: ${response.status}`);
+        }
+
+        const html = await response.text();
+
+        // 使用cheerio解析搜狗搜索结果HTML
+        const $ = load(html);
+        const results: SearchResult[] = [];
+
+        // 搜狗搜索结果选择器
+        $('.vrwrap, .rb').each((i, element) => {
+            if (i >= 5) return false; // 只获取前5个结果
+
+            const titleElement = $(element).find('.pt, .vr-title');
+            const title = titleElement.text().trim();
+
+            // 获取链接
+            const linkElement = $(element).find('a');
+            let link = linkElement.attr('href') || '';
+
+            // 获取摘要
+            const snippetElement = $(element).find('.ft, .vr-summary');
+            const snippet = snippetElement.text().trim();
+
+            if (title && link) {
+                results.push({
+                    title,
+                    link,
+                    snippet,
+                    source: 'Sogou',
+                });
+            }
+
+            return true;
+        });
+
+        if (results.length === 0) {
+            console.log('未能从搜狗搜索结果中提取数据，可能选择器需要更新');
+        }
+
+        return results;
+    } catch (error: any) {
+        console.error('搜狗搜索失败:', error);
+        return [];
+    }
+}
+
+// Brave搜索函数
+async function searchBrave(query: string): Promise<SearchResult[]> {
+    try {
+        console.log('执行Brave搜索:', query);
+
+        const searchUrl = `https://search.brave.com/search?q=${encodeURIComponent(query)}`;
+
+        const response = await fetch(searchUrl, {
+            method: 'GET',
+            headers: {
+                'Accept':
+                    'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'User-Agent':
+                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36',
+                'Accept-Language': 'en-US,en;q=0.9',
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error(`Brave搜索请求失败，状态码: ${response.status}`);
+        }
+
+        const html = await response.text();
+
+        // 使用cheerio解析Brave搜索结果HTML
+        const $ = load(html);
+        const results: SearchResult[] = [];
+
+        // Brave搜索结果选择器
+        $('.snippet').each((i, element) => {
+            if (i >= 5) return false; // 只获取前5个结果
+
+            const titleElement = $(element).find('.snippet-title');
+            const title = titleElement.text().trim();
+
+            // 获取链接
+            const linkElement = $(element).find('.result-header a');
+            let link = linkElement.attr('href') || '';
+
+            // 获取摘要
+            const snippetElement = $(element).find('.snippet-description');
+            const snippet = snippetElement.text().trim();
+
+            if (title && link) {
+                results.push({
+                    title,
+                    link,
+                    snippet,
+                    source: 'Brave',
+                });
+            }
+
+            return true;
+        });
+
+        if (results.length === 0) {
+            console.log('未能从Brave搜索结果中提取数据，可能选择器需要更新');
+        }
+
+        return results;
+    } catch (error: any) {
+        console.error('Brave搜索失败:', error);
+        return [];
+    }
+}
+
+// SearXNG搜索函数
+async function searchSearxng(query: string): Promise<SearchResult[]> {
+    try {
+        console.log('执行SearXNG搜索:', query);
+
+        // 使用公共的SearXNG实例，可以根据需要更改
+        const searchUrl = `https://searx.be/search?q=${encodeURIComponent(query)}`;
+
+        const response = await fetch(searchUrl, {
+            method: 'GET',
+            headers: {
+                'Accept':
+                    'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'User-Agent':
+                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36',
+                'Accept-Language': 'en-US,en;q=0.9',
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error(`SearXNG搜索请求失败，状态码: ${response.status}`);
+        }
+
+        const html = await response.text();
+
+        // 使用cheerio解析SearXNG搜索结果HTML
+        const $ = load(html);
+        const results: SearchResult[] = [];
+
+        // SearXNG搜索结果选择器
+        $('.result').each((i, element) => {
+            if (i >= 5) return false; // 只获取前5个结果
+
+            const titleElement = $(element).find('h4');
+            const title = titleElement.text().trim();
+
+            // 获取链接
+            const linkElement = $(element).find('h4 a');
+            let link = linkElement.attr('href') || '';
+
+            // 获取摘要
+            const snippetElement = $(element).find('.result-content');
+            const snippet = snippetElement.text().trim();
+
+            if (title && link) {
+                results.push({
+                    title,
+                    link,
+                    snippet,
+                    source: 'SearXNG',
+                });
+            }
+
+            return true;
+        });
+
+        if (results.length === 0) {
+            console.log('未能从SearXNG搜索结果中提取数据，可能选择器需要更新');
+        }
+
+        return results;
+    } catch (error: any) {
+        console.error('SearXNG搜索失败:', error);
+        return [];
+    }
+}
+
 // 专门用于获取网页内容的函数
 async function fetchWebPage(url: string): Promise<string> {
     try {
         console.log('获取网页内容:', url);
 
-        // 处理百度重定向链接
+        // 处理各搜索引擎的重定向链接
         let targetUrl = url;
 
-        // 如果是百度重定向链接，需要获取真实URL
+        // 检查是否是搜索引擎的重定向链接
         if (
+            // 百度重定向链接
             url.startsWith('http://www.baidu.com/link?') ||
-            url.startsWith('https://www.baidu.com/link?')
+            url.startsWith('https://www.baidu.com/link?') ||
+            // Google重定向链接
+            url.includes('google.com/url?') ||
+            // DuckDuckGo重定向链接
+            url.includes('duckduckgo.com/l/?') ||
+            // 搜狗重定向链接
+            url.includes('sogou.com/link?') ||
+            // Brave和SearXNG可能使用不同的重定向机制，添加对应的检测条件
+            url.includes('search.brave.com/outgoing?') ||
+            url.includes('searx.be/r?')
         ) {
-            console.log('检测到百度重定向链接，获取真实URL');
+            console.log('检测到搜索引擎重定向链接，获取真实URL');
 
             try {
                 const redirectResponse = await fetch(url, {
@@ -104,12 +483,51 @@ async function fetchWebPage(url: string): Promise<string> {
                         targetUrl = location;
                         console.log('获取到真实URL:', targetUrl);
                     }
+                } else if (redirectResponse.ok) {
+                    // 有些搜索引擎可能不使用HTTP重定向，而是在URL参数中包含目标URL
+                    // 例如Google的url参数，DuckDuckGo的uddg参数
+                    const urlObj = new URL(url);
+                    
+                    if (url.includes('google.com/url?')) {
+                        const googleUrl = urlObj.searchParams.get('url');
+                        if (googleUrl) {
+                            targetUrl = googleUrl;
+                            console.log('从Google URL参数中提取目标URL:', targetUrl);
+                        }
+                    } else if (url.includes('duckduckgo.com/l/?')) {
+                        const duckUrl = urlObj.searchParams.get('uddg');
+                        if (duckUrl) {
+                            targetUrl = duckUrl;
+                            console.log('从DuckDuckGo URL参数中提取目标URL:', targetUrl);
+                        }
+                    } else if (url.includes('search.brave.com/outgoing?')) {
+                        const braveUrl = urlObj.searchParams.get('url');
+                        if (braveUrl) {
+                            targetUrl = braveUrl;
+                            console.log('从Brave URL参数中提取目标URL:', targetUrl);
+                        }
+                    } else if (url.includes('searx.be/r?')) {
+                        const searxUrl = urlObj.searchParams.get('url');
+                        if (searxUrl) {
+                            targetUrl = searxUrl;
+                            console.log('从SearXNG URL参数中提取目标URL:', targetUrl);
+                        }
+                    } else if (url.includes('sogou.com/link?')) {
+                        const sogouUrl = urlObj.searchParams.get('url');
+                        if (sogouUrl) {
+                            targetUrl = sogouUrl;
+                            console.log('从搜狗URL参数中提取目标URL:', targetUrl);
+                        }
+                    }
                 }
             } catch (redirectError) {
-                console.error('解析百度重定向链接失败:', redirectError);
-                // 如果失败，继续使用原始URL
+                console.error('获取真实URL失败:', redirectError);
+                // 如果获取真实URL失败，继续使用原始URL
             }
         }
+
+        // 获取网页内容
+        console.log('正在获取页面内容，URL:', targetUrl);
 
         // 创建一个请求，使用合适的User-Agent以模拟浏览器
         const contentResponse = await fetch(targetUrl, {
