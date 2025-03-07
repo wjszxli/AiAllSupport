@@ -83,7 +83,15 @@ export async function performSearch(query: string): Promise<SearchResult[]> {
     }
 }
 
-// 抓取网页内容 - 获取每个网页的内容
+// 定义网页内容的格式
+export interface WebContent {
+    id: number;
+    content: string;
+    sourceUrl: string;
+    type: 'url';
+}
+
+// 抓取网页内容 - 获取每个网页的内容，返回原始字符串
 export async function fetchWebContent(url: string): Promise<string> {
     try {
         console.log('Fetching content from URL:', url);
@@ -115,7 +123,6 @@ export async function fetchWebContent(url: string): Promise<string> {
 
                 if (response.success) {
                     console.log('Background fetched content length:', response.content.length);
-
                     return response.content;
                 } else {
                     throw new Error('Background web content fetch failed');
@@ -149,6 +156,16 @@ export async function fetchWebContent(url: string): Promise<string> {
     }
 }
 
+// 将获取的网页内容转换为特定格式
+export function formatWebContent(content: string, url: string, id: number): WebContent {
+    return {
+        id,
+        content,
+        sourceUrl: url,
+        type: 'url',
+    };
+}
+
 export async function localFetchWebContentWithContext(
     messageId: number,
     inputMessage: string,
@@ -174,23 +191,24 @@ export async function localFetchWebContentWithContext(
 
         console.log('contents', contents);
 
-        // const referenceContent = `\`\`\`json\n${JSON.stringify(webSearchReferences, null, 2)}\n\`\`\``
-        // const value = REFERENCE_PROMPT.replace('{question}', message.content).replace('{references}', referenceContent)
+        // 转换为请求的格式
+        const formattedContents = contents.map((content, index) =>
+            formatWebContent(content, searchResults[index].link, index + 1),
+        );
 
-        // 构建咨询的问题
-        const webContext = `${t('webSearchResultsTips1')}:${contents
-            .map(
-                (content, i) =>
-                    `${t('Source')} ${i + 1}: ${searchResults[i].title}\n${content.substring(
-                        0,
-                        1500,
-                    )}\n`,
-            )
-            .join('\n')}${t('webSearchResultsTips2')}: ${inputMessage}`;
+        console.log('formattedContents', formattedContents);
 
-        enhancedMessage = webContext;
+        // 创建一个Web内容引用的JSON格式
+        const webReferences = JSON.stringify(formattedContents, null, 2);
 
-        // 更新咨询的问题
+        // 为AI模型准备引用内容
+        const referenceContent = `\`\`\`json\n${webReferences}\n\`\`\``;
+        const promptForAI = t('REFERENCE_PROMPT')
+            .replace('{question}', inputMessage)
+            .replace('{references}', referenceContent);
+
+
+        // 更新系统消息，显示已完成搜索
         const searchCompleteMessage: ChatMessage = {
             id: messageId,
             text: t('searchComplete' as any),
@@ -198,15 +216,17 @@ export async function localFetchWebContentWithContext(
         };
 
         updateMessage(setMessages, messageId, searchCompleteMessage);
-    } else {
-        const noResultsMessage: ChatMessage = {
-            id: messageId,
-            text: t('noSearchResults' as any),
-            sender: 'system',
-        };
-
-        updateMessage(setMessages, messageId, noResultsMessage);
+        return promptForAI
     }
 
-    return enhancedMessage;
+    // 没有结果
+    const noResultsMessage: ChatMessage = {
+        id: messageId,
+        text: t('noSearchResults' as any),
+        sender: 'system',
+    };
+
+    updateMessage(setMessages, messageId, noResultsMessage);
+
+    return enhancedMessage; // 没有搜索结果，返回原始增强消息
 }

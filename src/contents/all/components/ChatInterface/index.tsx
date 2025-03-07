@@ -39,7 +39,7 @@ const MessageBubble = memo(
         const [isThinkingExpanded, setIsThinkingExpanded] = useState(true);
 
         const toggleThinking = useCallback(() => {
-            setIsThinkingExpanded(!isThinkingExpanded);
+            setIsThinkingExpanded((prev) => !prev);
         }, []);
 
         const handleCopy = useCallback(() => {
