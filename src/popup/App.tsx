@@ -166,17 +166,26 @@ const App: React.FC = () => {
     };
 
     const onFinish = async (values: any) => {
-        setLoadingState(LOADING_STATE.SAVING);
-
-        const isValid = await featureSettings.validateAndSubmitSettings(values, t);
-        if (!isValid) {
-            setLoadingState(LOADING_STATE.SAVE);
-            return;
-        }
-
-        const { provider, apiKey, model, isIcon, webSearchEnabled, useWebpageContext } = values;
-
         try {
+            // 如果网络搜索开启，但没有选择搜索引擎，则阻止提交
+            if (
+                values.webSearchEnabled &&
+                (!values.searchEngines || values.searchEngines.length === 0)
+            ) {
+                message.error('启用网络搜索时至少选择一个搜索引擎');
+                return;
+            }
+
+            setLoadingState(LOADING_STATE.SAVING);
+
+            const isValid = await featureSettings.validateAndSubmitSettings(values, t);
+            if (!isValid) {
+                setLoadingState(LOADING_STATE.SAVE);
+                return;
+            }
+
+            const { provider, apiKey, model, isIcon, webSearchEnabled, useWebpageContext } = values;
+
             let providersData = await storage.getProviders();
             if (!providersData) {
                 providersData = PROVIDERS_DATA;
@@ -197,7 +206,7 @@ const App: React.FC = () => {
                 storage.setIsChatBoxIcon(isIcon),
                 storage.setWebSearchEnabled(webSearchEnabled),
                 storage.setUseWebpageContext(useWebpageContext),
-                storage.setEnabledSearchEngines(enabledSearchEngines),
+                storage.setEnabledSearchEngines(values.searchEngines || []),
                 storage.setTavilyApiKey(values.tavilyApiKey || ''),
                 storage.setFilteredDomains(filteredDomains),
             ]);
@@ -286,15 +295,6 @@ const App: React.FC = () => {
             }
         } catch (error) {
             console.log('Failed to notify tabs about language change:', error);
-        }
-    };
-
-    // 处理搜索引擎选择变化
-    const handleSearchEngineChange = (engine: string, checked: boolean) => {
-        if (checked) {
-            setEnabledSearchEngines((prev) => [...prev, engine]);
-        } else {
-            setEnabledSearchEngines((prev) => prev.filter((e) => e !== engine));
         }
     };
 
@@ -424,18 +424,17 @@ const App: React.FC = () => {
                     </Form.Item>
 
                     <Form.Item
-                        className="form-item"
-                        label={t('webSearch')}
                         name="webSearchEnabled"
                         valuePropName="checked"
-                        initialValue={false}
+                        label={t('webSearch')}
                         tooltip={t('webSearchTooltip')}
                     >
                         <Switch
+                            checked={form.getFieldValue('webSearchEnabled')}
                             onChange={(checked) => {
                                 if (checked && form.getFieldValue('useWebpageContext')) {
                                     message.warning(t('exclusiveFeatureWarning'));
-                                    form.setFieldsValue({ useWebpageContext: false });
+                                    form.setFieldsValue({ webSearchEnabled: false });
                                 }
                             }}
                         />
@@ -453,89 +452,108 @@ const App: React.FC = () => {
                             onChange={(checked) => {
                                 if (checked && form.getFieldValue('webSearchEnabled')) {
                                     message.warning(t('exclusiveFeatureWarning'));
-                                    form.setFieldsValue({ webSearchEnabled: false });
+                                    form.setFieldsValue({ useWebpageContext: false });
                                 }
                             }}
                         />
                     </Form.Item>
 
-                    <Form.Item className="form-item" label={t('tavilyApiKey')} name="tavilyApiKey">
-                        <Input
-                            value={tavilyApiKey}
-                            onChange={(e) => setTavilyApiKey(e.target.value)}
-                            placeholder={t('enterTavilyApiKey')}
-                        />
+                    <Form.Item
+                        shouldUpdate={(prevValues, currentValues) =>
+                            prevValues.webSearchEnabled !== currentValues.webSearchEnabled
+                        }
+                    >
+                        {({ getFieldValue }) =>
+                            getFieldValue('webSearchEnabled') ? (
+                                <>
+                                    <Form.Item
+                                        label="Tavily API Key"
+                                        name="tavilyApiKey"
+                                        rules={[
+                                            { required: false, message: '请输入 Tavily API Key' },
+                                        ]}
+                                    >
+                                        <Input.Password
+                                            value={tavilyApiKey}
+                                            onChange={(e) => setTavilyApiKey(e.target.value)}
+                                            placeholder="请输入 Tavily API Key"
+                                        />
+                                    </Form.Item>
+
+                                    <Form.Item
+                                        label="搜索引擎"
+                                        name="searchEngines"
+                                        rules={[
+                                            {
+                                                required: true,
+                                                message: '启用网络搜索时至少选择一个搜索引擎',
+                                            },
+                                            {
+                                                validator: (_, value) => {
+                                                    if (!value || value.length === 0) {
+                                                        return Promise.reject(
+                                                            '启用网络搜索时至少选择一个搜索引擎',
+                                                        );
+                                                    }
+                                                    return Promise.resolve();
+                                                },
+                                            },
+                                        ]}
+                                    >
+                                        <div className="search-engines-container">
+                                            {Object.values(SEARCH_ENGINE_NAMES).map((engine) => (
+                                                <Checkbox value={engine} key={engine}>
+                                                    {PROVIDERS_DATA[engine]?.name || engine}
+                                                </Checkbox>
+                                            ))}
+                                        </div>
+                                    </Form.Item>
+
+                                    <Form.Item label="过滤的域名">
+                                        <div className="filtered-domains-container">
+                                            <div className="filtered-domains-list">
+                                                {filteredDomains.length > 0 ? (
+                                                    filteredDomains.map((domain, index) => (
+                                                        <Tag
+                                                            closable
+                                                            key={index}
+                                                            onClose={() =>
+                                                                handleRemoveFilterDomain(domain)
+                                                            }
+                                                        >
+                                                            {domain}
+                                                        </Tag>
+                                                    ))
+                                                ) : (
+                                                    <div className="no-domains-message">
+                                                        暂无过滤域名
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="add-domain-container">
+                                                <Input
+                                                    placeholder="输入要过滤的域名"
+                                                    value={newFilterDomain}
+                                                    onChange={(e) =>
+                                                        setNewFilterDomain(e.target.value)
+                                                    }
+                                                    onPressEnter={handleAddFilterDomain}
+                                                    style={{ width: '70%' }}
+                                                />
+                                                <Button
+                                                    type="primary"
+                                                    onClick={handleAddFilterDomain}
+                                                    style={{ marginLeft: '8px' }}
+                                                >
+                                                    添加
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </Form.Item>
+                                </>
+                            ) : null
+                        }
                     </Form.Item>
-
-                    {form.getFieldValue('webSearchEnabled') && (
-                        <>
-                            <Form.Item className="form-item" label={t('searchEngines')}>
-                                <div className="search-engines-container">
-                                    {Object.entries(SEARCH_ENGINE_NAMES).map(([engine, name]) => (
-                                        <div key={engine} className="search-engine-item">
-                                            <Checkbox
-                                                checked={enabledSearchEngines.includes(engine)}
-                                                onChange={(e) =>
-                                                    handleSearchEngineChange(
-                                                        engine,
-                                                        e.target.checked,
-                                                    )
-                                                }
-                                            >
-                                                {name}
-                                            </Checkbox>
-                                        </div>
-                                    ))}
-                                </div>
-                            </Form.Item>
-
-                            <Form.Item className="form-item" label={t('filteredDomains')}>
-                                <div className="filtered-domains-container">
-                                    <Space direction="vertical" style={{ width: '100%' }}>
-                                        <div className="filtered-domains-list">
-                                            {filteredDomains.length > 0 ? (
-                                                filteredDomains.map((domain) => (
-                                                    <Tag
-                                                        key={domain}
-                                                        closable
-                                                        onClose={() =>
-                                                            handleRemoveFilterDomain(domain)
-                                                        }
-                                                        style={{ marginBottom: '8px' }}
-                                                    >
-                                                        {domain}
-                                                    </Tag>
-                                                ))
-                                            ) : (
-                                                <div className="no-domains-message">
-                                                    {t('noFilteredDomains') || '无过滤域名'}
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="add-domain-container">
-                                            <Input
-                                                placeholder={
-                                                    t('enterDomainToFilter') ||
-                                                    '输入要过滤的域名 (例如: zhihu.com)'
-                                                }
-                                                value={newFilterDomain}
-                                                onChange={(e) => setNewFilterDomain(e.target.value)}
-                                                onPressEnter={handleAddFilterDomain}
-                                                style={{ width: 'calc(100% - 80px)' }}
-                                            />
-                                            <Button
-                                                type="primary"
-                                                onClick={handleAddFilterDomain}
-                                                disabled={!newFilterDomain}
-                                            >
-                                                {t('add') || '添加'}
-                                            </Button>
-                                        </div>
-                                    </Space>
-                                </div>
-                            </Form.Item>
-                        </>
-                    )}
 
                     <Divider />
 
