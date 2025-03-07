@@ -10,6 +10,7 @@ import {
     Divider,
     Card,
     Space,
+    Checkbox,
 } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { GlobalOutlined, SettingOutlined, GithubOutlined, RocketOutlined } from '@ant-design/icons';
@@ -19,7 +20,7 @@ import { t, getLocale, setLocale } from '@/services/i18n';
 import type { LocaleType } from '@/locales';
 import { locales } from '@/locales';
 import { isLocalhost } from '@/utils';
-import { GIT_URL, PROVIDERS_DATA, SHORTCUTS_URL } from '@/utils/constant';
+import { GIT_URL, PROVIDERS_DATA, SHORTCUTS_URL, isFirefox, SEARCH_ENGINE_NAMES, DEFAULT_SEARCH_ENGINES } from '@/utils/constant';
 import storage from '@/utils/storage';
 import { featureSettings } from '@/utils/featureSettings';
 
@@ -38,6 +39,8 @@ const App: React.FC = () => {
     const [selectedProvider, setSelectedProvider] = useState('DeepSeek');
     const [models, setModels] = useState<Array<{ label: string; value: string }>>([]);
     const [currentLocale, setCurrentLocale] = useState<LocaleType>(getLocale());
+    const [enabledSearchEngines, setEnabledSearchEngines] = useState<string[]>(DEFAULT_SEARCH_ENGINES);
+    const [tavilyApiKey, setTavilyApiKey] = useState<string>('');
 
     useEffect(() => {
         const init = async () => {
@@ -89,11 +92,16 @@ const App: React.FC = () => {
         const isChatBoxIcon = await storage.getIsChatBoxIcon();
         const isWebSearchEnabled = await storage.getWebSearchEnabled();
         const isUseWebpageContext = await storage.getUseWebpageContext();
+        const userEnabledSearchEngines = await storage.getEnabledSearchEngines();
+        const userTavilyApiKey = await storage.getTavilyApiKey() || '';
 
         setSelectedProvider(selectedProvider);
         await getModels(selectedProvider);
 
         const providers = await storage.getProviders();
+
+        setEnabledSearchEngines(userEnabledSearchEngines);
+        setTavilyApiKey(userTavilyApiKey);
 
         form.setFieldsValue({
             provider: selectedProvider,
@@ -102,6 +110,7 @@ const App: React.FC = () => {
             isIcon: isChatBoxIcon !== undefined ? isChatBoxIcon : true,
             webSearchEnabled: isWebSearchEnabled,
             useWebpageContext: isUseWebpageContext,
+            tavilyApiKey: userTavilyApiKey,
         });
     };
 
@@ -174,6 +183,8 @@ const App: React.FC = () => {
                 storage.setIsChatBoxIcon(isIcon),
                 storage.setWebSearchEnabled(webSearchEnabled),
                 storage.setUseWebpageContext(useWebpageContext),
+                storage.setEnabledSearchEngines(enabledSearchEngines),
+                storage.setTavilyApiKey(values.tavilyApiKey || ''),
             ]);
 
             message.success(t('configSaved'));
@@ -226,6 +237,14 @@ const App: React.FC = () => {
         chrome.tabs.create({
             url: SHORTCUTS_URL,
         });
+
+        if (isFirefox) {
+            // Firefox需要额外的步骤来访问快捷键设置
+            message.info(
+                '在Firefox扩展页面打开后，请点击左侧的"⚙️ 管理您的扩展程序"，然后选择"⌨️ 管理扩展快捷键"',
+                8,
+            );
+        }
     };
 
     const handleLanguageChange = async (locale: LocaleType) => {
@@ -252,6 +271,15 @@ const App: React.FC = () => {
             }
         } catch (error) {
             console.log('Failed to notify tabs about language change:', error);
+        }
+    };
+
+    // 处理搜索引擎选择变化
+    const handleSearchEngineChange = (engine: string, checked: boolean) => {
+        if (checked) {
+            setEnabledSearchEngines(prev => [...prev, engine]);
+        } else {
+            setEnabledSearchEngines(prev => prev.filter(e => e !== engine));
         }
     };
 
@@ -402,6 +430,34 @@ const App: React.FC = () => {
                             }}
                         />
                     </Form.Item>
+
+                    <Form.Item
+                        className="form-item"
+                        label={t('tavilyApiKey')}
+                        name="tavilyApiKey"
+                    >
+                        <Input value={tavilyApiKey} onChange={(e) => setTavilyApiKey(e.target.value)} placeholder={t('enterTavilyApiKey')} />
+                    </Form.Item>
+
+                    {form.getFieldValue('webSearchEnabled') && (
+                        <Form.Item
+                            className="form-item"
+                            label={t('searchEngines')}
+                        >
+                            <div className="search-engines-container">
+                                {Object.entries(SEARCH_ENGINE_NAMES).map(([engine, name]) => (
+                                    <div key={engine} className="search-engine-item">
+                                        <Checkbox
+                                            checked={enabledSearchEngines.includes(engine)}
+                                            onChange={(e) => handleSearchEngineChange(engine, e.target.checked)}
+                                        >
+                                            {name}
+                                        </Checkbox>
+                                    </div>
+                                ))}
+                            </div>
+                        </Form.Item>
+                    )}
 
                     <Divider />
 

@@ -1,9 +1,8 @@
 import type { ProviderConfig, StorageData } from '@/typings';
-
-import { PROVIDERS_DATA } from './constant';
+import { DEFAULT_SEARCH_ENGINES, PROVIDERS_DATA } from './constant';
 
 // 封装存储 & 读取 & 监听变化的方法
-const storage = {
+const storageUtils = {
     //  存储数据
     set: (key: string, value: any): Promise<void> => {
         return new Promise((resolve) => {
@@ -31,74 +30,74 @@ const storage = {
 
     //  获取完整配置
     getConfig: async (): Promise<StorageData> => {
-        const providers = (await storage.get<Record<string, ProviderConfig>>('providers')) || {};
-        const selectedProvider = await storage.get<string>('selectedProvider');
-        const selectedModel = await storage.get<string>('selectedModel');
+        const providers = (await storageUtils.get<Record<string, ProviderConfig>>('providers')) || {};
+        const selectedProvider = await storageUtils.get<string>('selectedProvider');
+        const selectedModel = await storageUtils.get<string>('selectedModel');
         return { providers, selectedProvider, selectedModel };
     },
     //  获取指定服务商的 API Key
     getApiKey: async (provider: string): Promise<string | null> => {
-        const providers = (await storage.get<Record<string, ProviderConfig>>('providers')) || {};
+        const providers = (await storageUtils.get<Record<string, ProviderConfig>>('providers')) || {};
         return providers[provider]?.apiKey ?? null;
     },
 
     //  存储完整的 providers 数据
     setProviders: async (providers: Record<string, ProviderConfig>): Promise<void> => {
-        await storage.set('providers', providers);
+        await storageUtils.set('providers', providers);
     },
 
     //  获取完整的 providers 数据
     getProviders: async (): Promise<Record<string, ProviderConfig>> => {
-        return (await storage.get<Record<string, ProviderConfig>>('providers')) || {};
+        return (await storageUtils.get<Record<string, ProviderConfig>>('providers')) || {};
     },
 
     //  更新某个服务商的 API Key
     updateApiKey: async (provider: string, apiKey: string): Promise<void> => {
         const data =
-            (await storage.get<Record<string, ProviderConfig>>('providers')) || PROVIDERS_DATA;
+            (await storageUtils.get<Record<string, ProviderConfig>>('providers')) || PROVIDERS_DATA;
         if (!data[provider]) {
             throw new Error(`数据非法，没有服务商：${provider}`);
         }
 
         data[provider].apiKey = apiKey;
 
-        await storage.set('providers', data);
+        await storageUtils.set('providers', data);
     },
 
     //  设置当前选中的服务商
     setSelectedProvider: async (provider: string): Promise<void> => {
-        await storage.set('selectedProvider', provider);
+        await storageUtils.set('selectedProvider', provider);
     },
 
     //  获取当前选中的服务商
     getSelectedProvider: async (): Promise<string | null> => {
-        return await storage.get<string>('selectedProvider');
+        return await storageUtils.get<string>('selectedProvider');
     },
 
     //  设置当前选中的模型
     setSelectedModel: async (model: string): Promise<void> => {
-        await storage.set('selectedModel', model);
+        await storageUtils.set('selectedModel', model);
     },
 
     //  获取当前选中的模型
     getSelectedModel: async (): Promise<string | null> => {
-        return await storage.get<string>('selectedModel');
+        return await storageUtils.get<string>('selectedModel');
     },
 
     setChatBoxSize: async ({ width, height }: { width: number; height: number }): Promise<void> => {
-        await storage.set('height', height);
-        await storage.set('width', width);
+        await storageUtils.set('height', height);
+        await storageUtils.set('width', width);
     },
     getChatBoxSize: async () => {
-        const width = (await storage.get<number>('width')) || 500;
-        const height = (await storage.get<number>('height')) || 500;
+        const width = (await storageUtils.get<number>('width')) || 500;
+        const height = (await storageUtils.get<number>('height')) || 500;
         return { width, height };
     },
     setIsChatBoxIcon: async (isIcon: boolean): Promise<void> => {
-        await storage.set('isIcon', isIcon);
+        await storageUtils.set('isIcon', isIcon);
     },
     getIsChatBoxIcon: async () => {
-        return await storage.get<boolean>('isIcon');
+        return await storageUtils.get<boolean>('isIcon');
     },
 
     getLocale: async (): Promise<string | null> => {
@@ -121,20 +120,40 @@ const storage = {
     },
 
     setWebSearchEnabled: async (enabled: boolean): Promise<void> => {
-        await storage.set('webSearchEnabled', enabled);
+        await storageUtils.set('webSearchEnabled', enabled);
     },
 
     getWebSearchEnabled: async (): Promise<boolean> => {
-        return (await storage.get<boolean>('webSearchEnabled')) ?? false;
+        return (await storageUtils.get<boolean>('webSearchEnabled')) ?? false;
     },
 
     setUseWebpageContext: async (enabled: boolean): Promise<void> => {
-        await storage.set('useWebpageContext', enabled);
+        await storageUtils.set('useWebpageContext', enabled);
     },
 
     getUseWebpageContext: async (): Promise<boolean> => {
-        return (await storage.get<boolean>('useWebpageContext')) ?? false;
+        return (await storageUtils.get<boolean>('useWebpageContext')) ?? false;
+    },
+
+    // 获取启用的搜索引擎列表
+    getEnabledSearchEngines: async (): Promise<string[]> => {
+        return (await storageUtils.get<string[]>('enabledSearchEngines')) ?? DEFAULT_SEARCH_ENGINES;
+    },
+
+    // 设置启用的搜索引擎列表
+    setEnabledSearchEngines: async (engines: string[]): Promise<void> => {
+        await storageUtils.set('enabledSearchEngines', engines);
+    },
+
+    // 获取Tavily API密钥
+    getTavilyApiKey: async (): Promise<string | null> => {
+        return await storageUtils.get<string>('tavilyApiKey') || null;
+    },
+
+    // 设置Tavily API密钥
+    setTavilyApiKey: async (apiKey: string): Promise<void> => {
+        await storageUtils.set('tavilyApiKey', apiKey);
     },
 };
 
-export default storage;
+export default storageUtils;

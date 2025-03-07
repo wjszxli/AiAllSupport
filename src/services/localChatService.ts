@@ -2,6 +2,7 @@ import type { ChatMessage, SearchResult } from '@/typings';
 import { t } from './i18n';
 import React from 'react';
 import { updateMessage } from '@/utils/messageUtils';
+import { SEARCH_COUNT } from '@/utils/constant';
 
 // 检查扩展API是否可用
 const isExtensionApiAvailable = (): boolean => {
@@ -163,12 +164,18 @@ export async function localFetchWebContentWithContext(
     updateMessage(setMessages, messageId, searchingMessage);
 
     const searchResults = await performSearch(inputMessage);
+    console.log('searchResults', searchResults);
 
     if (searchResults.length > 0) {
         // 查询结果存在，获取网页内容
         const contents = await Promise.all(
-            searchResults.slice(0, 2).map((result) => fetchWebContent(result.link)),
+            searchResults.slice(0, SEARCH_COUNT).map((result) => fetchWebContent(result.link)),
         );
+
+        console.log('contents', contents);
+
+        // const referenceContent = `\`\`\`json\n${JSON.stringify(webSearchReferences, null, 2)}\n\`\`\``
+        // const value = REFERENCE_PROMPT.replace('{question}', message.content).replace('{references}', referenceContent)
 
         // 构建咨询的问题
         const webContext = `${t('webSearchResultsTips1')}:${contents
@@ -180,6 +187,7 @@ export async function localFetchWebContentWithContext(
                     )}\n`,
             )
             .join('\n')}${t('webSearchResultsTips2')}: ${inputMessage}`;
+
         enhancedMessage = webContext;
 
         // 更新咨询的问题

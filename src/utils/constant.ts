@@ -164,4 +164,44 @@ export const MODIFY_HEADERS_RULE_ID = 1001;
 
 export const tags = ['think', 'reason', 'reasoning', 'thought'];
 
-export const SHORTCUTS_URL = 'chrome://extensions/shortcuts';
+// 检测是否为Firefox浏览器
+export const isFirefox = navigator.userAgent.includes('Firefox');
+
+// 浏览器快捷键设置URL
+export const SHORTCUTS_URL = isFirefox 
+    ? 'about:addons' // Firefox的扩展设置页面
+    : 'chrome://extensions/shortcuts'; // Chrome的快捷键设置页面
+
+export const SEARCH_COUNT = 5;
+
+// 搜索引擎配置
+export const SEARCH_ENGINES = {
+    BAIDU: 'baidu',
+    GOOGLE: 'google',
+    DUCKDUCKGO: 'duckduckgo',
+    SOGOU: 'sogou',
+    BRAVE: 'brave',
+    SEARXNG: 'searxng',
+    TAVILY: 'tavily'
+};
+
+// 默认启用的搜索引擎
+export const DEFAULT_SEARCH_ENGINES = [
+    SEARCH_ENGINES.BAIDU,
+    SEARCH_ENGINES.GOOGLE,
+    SEARCH_ENGINES.DUCKDUCKGO,
+    SEARCH_ENGINES.SOGOU,
+    SEARCH_ENGINES.BRAVE,
+    SEARCH_ENGINES.SEARXNG
+];
+
+// 搜索引擎显示名称
+export const SEARCH_ENGINE_NAMES = {
+    [SEARCH_ENGINES.BAIDU]: '百度',
+    [SEARCH_ENGINES.GOOGLE]: 'Google',
+    [SEARCH_ENGINES.DUCKDUCKGO]: 'DuckDuckGo',
+    [SEARCH_ENGINES.SOGOU]: '搜狗',
+    [SEARCH_ENGINES.BRAVE]: 'Brave',
+    [SEARCH_ENGINES.SEARXNG]: 'SearXNG',
+    [SEARCH_ENGINES.TAVILY]: 'Tavily'
+};

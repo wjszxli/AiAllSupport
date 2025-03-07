@@ -98,4 +98,22 @@ export const zhCN = {
     fetchWebpageContentSuccess: '获取网页内容成功，正在用AI处理结果...',
     fetchWebpageContentFailed: '获取网页内容失败，仅使用AI知识回答...',
     pleaseInputApiKey: '请在配置页输入 API Key 哦',
+
+    REFERENCE_PROMPT: `请根据参考资料回答问题
+
+## 标注规则：
+- 请在适当的情况下在句子末尾引用上下文。
+- 请按照引用编号[number]的格式在答案中对应部分引用上下文。
+- 如果一句话源自多个上下文，请列出所有相关的引用编号，例如[1][2]，切记不要将引用集中在最后返回引用编号，而是在答案对应部分列出。
+
+## 我的问题是：
+
+{question}
+
+## 参考资料：
+
+{references}
+
+请使用同用户问题相同的语言进行回答。
+`,
 };

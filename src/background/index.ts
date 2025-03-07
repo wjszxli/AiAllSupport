@@ -1,6 +1,6 @@
 import type { OllamaResponse, SearchResult } from '@/typings';
 import { fetchData, handleMessage, isLocalhost } from '@/utils';
-import { MODIFY_HEADERS_RULE_ID, URL_MAP } from '@/utils/constant';
+import { MODIFY_HEADERS_RULE_ID, URL_MAP, SEARCH_ENGINES } from '@/utils/constant';
 import storage from '@/utils/storage';
 import { load } from 'cheerio';
 
@@ -9,17 +9,33 @@ async function searchWeb(query: string): Promise<SearchResult[]> {
     try {
         console.log('执行多搜索引擎搜索:', query);
 
-        // 并行执行多个搜索引擎的请求
-        const results = await Promise.allSettled([
-            // searchBaidu(query),
-            searchGoogle(query),
-            searchDuckDuckGo(query),
-            searchSogou(query),
-            searchBrave(query),
-            searchSearxng(query),
-        ]);
+        // 获取启用的搜索引擎列表
+        const enabledEngines = await storage.getEnabledSearchEngines();
+        console.log('启用的搜索引擎:', enabledEngines);
 
-        console.log('results', results)
+        // 创建搜索引擎函数映射
+        const searchFunctions: Record<string, (query: string) => Promise<SearchResult[]>> = {
+            [SEARCH_ENGINES.BAIDU]: searchBaidu,
+            [SEARCH_ENGINES.GOOGLE]: searchGoogle,
+            [SEARCH_ENGINES.DUCKDUCKGO]: searchDuckDuckGo,
+            [SEARCH_ENGINES.SOGOU]: searchSogou,
+            [SEARCH_ENGINES.BRAVE]: searchBrave,
+            [SEARCH_ENGINES.SEARXNG]: searchSearxng,
+            [SEARCH_ENGINES.TAVILY]: searchTavily,
+        };
+
+        // 获取启用的搜索函数
+        const enabledSearchFunctions = enabledEngines
+            .filter((engine) => searchFunctions[engine])
+            .map((engine) => searchFunctions[engine]);
+
+        if (enabledSearchFunctions.length === 0) {
+            console.log('没有启用的搜索引擎');
+            return [];
+        }
+
+        // 并行执行启用的搜索引擎的请求
+        const results = await Promise.allSettled(enabledSearchFunctions.map((fn) => fn(query)));
 
         // 合并结果
         const combinedResults: SearchResult[] = [];
@@ -441,6 +457,69 @@ async function searchSearxng(query: string): Promise<SearchResult[]> {
     }
 }
 
+// Tavily搜索函数
+async function searchTavily(query: string): Promise<SearchResult[]> {
+    try {
+        console.log('执行Tavily搜索:', query);
+
+        // 获取Tavily API密钥
+        const apiKey = await storage.getTavilyApiKey();
+        if (!apiKey) {
+            console.error('未配置Tavily API密钥');
+            return [];
+        }
+
+        // 请求Tavily API
+        const searchUrl = 'https://api.tavily.com/search';
+
+        const response = await fetch(searchUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`,
+            },
+            body: JSON.stringify({
+                query: query,
+                search_depth: 'basic',
+                include_domains: [],
+                exclude_domains: [],
+                max_results: 5,
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error(`Tavily搜索请求失败，状态码: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // 解析Tavily API返回的结果
+        const results: SearchResult[] = [];
+
+        if (data.results && Array.isArray(data.results)) {
+            data.results.forEach((item: any) => {
+                if (item.title && item.url) {
+                    results.push({
+                        title: item.title,
+                        link: item.url,
+                        snippet: item.content || '',
+                        source: 'Tavily',
+                    });
+                }
+            });
+        }
+
+        if (results.length === 0) {
+            console.log('未从Tavily API获取到搜索结果');
+        }
+
+        return results;
+    } catch (error: any) {
+        console.error('Tavily搜索失败:', error);
+        return [];
+    }
+}
+
 // 专门用于获取网页内容的函数
 async function fetchWebPage(url: string): Promise<string> {
     try {
@@ -487,7 +566,7 @@ async function fetchWebPage(url: string): Promise<string> {
                     // 有些搜索引擎可能不使用HTTP重定向，而是在URL参数中包含目标URL
                     // 例如Google的url参数，DuckDuckGo的uddg参数
                     const urlObj = new URL(url);
-                    
+
                     if (url.includes('google.com/url?')) {
                         const googleUrl = urlObj.searchParams.get('url');
                         if (googleUrl) {
