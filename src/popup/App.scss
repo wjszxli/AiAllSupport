@@ -80,3 +80,42 @@
         min-width: 120px;
     }
 }
+
+.filtered-domains-container {
+    width: 100%;
+    
+    .filtered-domains-list {
+        min-height: 50px;
+        max-height: 150px;
+        overflow-y: auto;
+        padding: 10px;
+        margin-bottom: 10px;
+        border: 1px solid #e8e8e8;
+        border-radius: 4px;
+        background-color: #fafafa;
+    }
+    
+    .no-domains-message {
+        color: #888;
+        font-style: italic;
+        text-align: center;
+        padding: 10px;
+    }
+    
+    .add-domain-container {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        
+        button {
+            margin-left: 10px;
+        }
+    }
+    
+    .ant-tag {
+        margin-right: 8px;
+        margin-bottom: 8px;
+        padding: 4px 8px;
+        font-size: 14px;
+    }
+}

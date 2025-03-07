@@ -205,3 +205,8 @@ export const SEARCH_ENGINE_NAMES = {
     [SEARCH_ENGINES.SEARXNG]: 'SearXNG',
     [SEARCH_ENGINES.TAVILY]: 'Tavily'
 };
+
+// 搜索结果中需要过滤的域名列表
+export const FILTERED_DOMAINS = [
+    'zhihu.com',
+];

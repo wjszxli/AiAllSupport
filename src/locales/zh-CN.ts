@@ -80,7 +80,7 @@ export const zhCN = {
     rewrite: '重写',
     rewritePrompt: '重写以下文本，使其更专业：',
 
-    webSearch: '网络搜索',
+    webSearch: '是否启用网络搜索',
     webSearchTooltip: '启用网络搜索获取最新信息',
     on: '开启',
     off: '关闭',
@@ -116,4 +116,6 @@ export const zhCN = {
 
 请使用同用户问题相同的语言进行回答。
 `,
+    filteredDomains: '过滤的域名',
+    searchEngines: '启用的搜索引擎',
 };

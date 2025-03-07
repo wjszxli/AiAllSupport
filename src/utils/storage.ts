@@ -1,5 +1,5 @@
 import type { ProviderConfig, StorageData } from '@/typings';
-import { DEFAULT_SEARCH_ENGINES, PROVIDERS_DATA } from './constant';
+import { DEFAULT_SEARCH_ENGINES, FILTERED_DOMAINS, PROVIDERS_DATA } from './constant';
 
 // 封装存储 & 读取 & 监听变化的方法
 const storageUtils = {
@@ -153,6 +153,16 @@ const storageUtils = {
     // 设置Tavily API密钥
     setTavilyApiKey: async (apiKey: string): Promise<void> => {
         await storageUtils.set('tavilyApiKey', apiKey);
+    },
+
+    // 获取搜索过滤的域名列表
+    getFilteredDomains: async (): Promise<string[]> => {
+        return (await storageUtils.get<string[]>('filteredDomains')) || FILTERED_DOMAINS;
+    },
+
+    // 设置搜索过滤的域名列表
+    setFilteredDomains: async (domains: string[]): Promise<void> => {
+        await storageUtils.set('filteredDomains', domains);
     },
 };
 

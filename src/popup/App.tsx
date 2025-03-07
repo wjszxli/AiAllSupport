@@ -11,6 +11,7 @@ import {
     Card,
     Space,
     Checkbox,
+    Tag,
 } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { GlobalOutlined, SettingOutlined, GithubOutlined, RocketOutlined } from '@ant-design/icons';
@@ -20,7 +21,15 @@ import { t, getLocale, setLocale } from '@/services/i18n';
 import type { LocaleType } from '@/locales';
 import { locales } from '@/locales';
 import { isLocalhost } from '@/utils';
-import { GIT_URL, PROVIDERS_DATA, SHORTCUTS_URL, isFirefox, SEARCH_ENGINE_NAMES, DEFAULT_SEARCH_ENGINES } from '@/utils/constant';
+import {
+    GIT_URL,
+    PROVIDERS_DATA,
+    SHORTCUTS_URL,
+    isFirefox,
+    SEARCH_ENGINE_NAMES,
+    DEFAULT_SEARCH_ENGINES,
+    FILTERED_DOMAINS,
+} from '@/utils/constant';
 import storage from '@/utils/storage';
 import { featureSettings } from '@/utils/featureSettings';
 
@@ -39,8 +48,11 @@ const App: React.FC = () => {
     const [selectedProvider, setSelectedProvider] = useState('DeepSeek');
     const [models, setModels] = useState<Array<{ label: string; value: string }>>([]);
     const [currentLocale, setCurrentLocale] = useState<LocaleType>(getLocale());
-    const [enabledSearchEngines, setEnabledSearchEngines] = useState<string[]>(DEFAULT_SEARCH_ENGINES);
+    const [enabledSearchEngines, setEnabledSearchEngines] =
+        useState<string[]>(DEFAULT_SEARCH_ENGINES);
     const [tavilyApiKey, setTavilyApiKey] = useState<string>('');
+    const [filteredDomains, setFilteredDomains] = useState<string[]>(FILTERED_DOMAINS);
+    const [newFilterDomain, setNewFilterDomain] = useState<string>('');
 
     useEffect(() => {
         const init = async () => {
@@ -93,7 +105,8 @@ const App: React.FC = () => {
         const isWebSearchEnabled = await storage.getWebSearchEnabled();
         const isUseWebpageContext = await storage.getUseWebpageContext();
         const userEnabledSearchEngines = await storage.getEnabledSearchEngines();
-        const userTavilyApiKey = await storage.getTavilyApiKey() || '';
+        const userTavilyApiKey = (await storage.getTavilyApiKey()) || '';
+        const userFilteredDomains = await storage.getFilteredDomains();
 
         setSelectedProvider(selectedProvider);
         await getModels(selectedProvider);
@@ -102,6 +115,7 @@ const App: React.FC = () => {
 
         setEnabledSearchEngines(userEnabledSearchEngines);
         setTavilyApiKey(userTavilyApiKey);
+        setFilteredDomains(userFilteredDomains);
 
         form.setFieldsValue({
             provider: selectedProvider,
@@ -185,6 +199,7 @@ const App: React.FC = () => {
                 storage.setUseWebpageContext(useWebpageContext),
                 storage.setEnabledSearchEngines(enabledSearchEngines),
                 storage.setTavilyApiKey(values.tavilyApiKey || ''),
+                storage.setFilteredDomains(filteredDomains),
             ]);
 
             message.success(t('configSaved'));
@@ -277,10 +292,23 @@ const App: React.FC = () => {
     // 处理搜索引擎选择变化
     const handleSearchEngineChange = (engine: string, checked: boolean) => {
         if (checked) {
-            setEnabledSearchEngines(prev => [...prev, engine]);
+            setEnabledSearchEngines((prev) => [...prev, engine]);
         } else {
-            setEnabledSearchEngines(prev => prev.filter(e => e !== engine));
+            setEnabledSearchEngines((prev) => prev.filter((e) => e !== engine));
         }
+    };
+
+    // 处理添加新过滤域名
+    const handleAddFilterDomain = () => {
+        if (newFilterDomain && !filteredDomains.includes(newFilterDomain)) {
+            setFilteredDomains([...filteredDomains, newFilterDomain]);
+            setNewFilterDomain('');
+        }
+    };
+
+    // 处理删除过滤域名
+    const handleRemoveFilterDomain = (domain: string) => {
+        setFilteredDomains(filteredDomains.filter((d) => d !== domain));
     };
 
     return (
@@ -431,32 +459,82 @@ const App: React.FC = () => {
                         />
                     </Form.Item>
 
-                    <Form.Item
-                        className="form-item"
-                        label={t('tavilyApiKey')}
-                        name="tavilyApiKey"
-                    >
-                        <Input value={tavilyApiKey} onChange={(e) => setTavilyApiKey(e.target.value)} placeholder={t('enterTavilyApiKey')} />
+                    <Form.Item className="form-item" label={t('tavilyApiKey')} name="tavilyApiKey">
+                        <Input
+                            value={tavilyApiKey}
+                            onChange={(e) => setTavilyApiKey(e.target.value)}
+                            placeholder={t('enterTavilyApiKey')}
+                        />
                     </Form.Item>
 
                     {form.getFieldValue('webSearchEnabled') && (
-                        <Form.Item
-                            className="form-item"
-                            label={t('searchEngines')}
-                        >
-                            <div className="search-engines-container">
-                                {Object.entries(SEARCH_ENGINE_NAMES).map(([engine, name]) => (
-                                    <div key={engine} className="search-engine-item">
-                                        <Checkbox
-                                            checked={enabledSearchEngines.includes(engine)}
-                                            onChange={(e) => handleSearchEngineChange(engine, e.target.checked)}
-                                        >
-                                            {name}
-                                        </Checkbox>
-                                    </div>
-                                ))}
-                            </div>
-                        </Form.Item>
+                        <>
+                            <Form.Item className="form-item" label={t('searchEngines')}>
+                                <div className="search-engines-container">
+                                    {Object.entries(SEARCH_ENGINE_NAMES).map(([engine, name]) => (
+                                        <div key={engine} className="search-engine-item">
+                                            <Checkbox
+                                                checked={enabledSearchEngines.includes(engine)}
+                                                onChange={(e) =>
+                                                    handleSearchEngineChange(
+                                                        engine,
+                                                        e.target.checked,
+                                                    )
+                                                }
+                                            >
+                                                {name}
+                                            </Checkbox>
+                                        </div>
+                                    ))}
+                                </div>
+                            </Form.Item>
+
+                            <Form.Item className="form-item" label={t('filteredDomains')}>
+                                <div className="filtered-domains-container">
+                                    <Space direction="vertical" style={{ width: '100%' }}>
+                                        <div className="filtered-domains-list">
+                                            {filteredDomains.length > 0 ? (
+                                                filteredDomains.map((domain) => (
+                                                    <Tag
+                                                        key={domain}
+                                                        closable
+                                                        onClose={() =>
+                                                            handleRemoveFilterDomain(domain)
+                                                        }
+                                                        style={{ marginBottom: '8px' }}
+                                                    >
+                                                        {domain}
+                                                    </Tag>
+                                                ))
+                                            ) : (
+                                                <div className="no-domains-message">
+                                                    {t('noFilteredDomains') || '无过滤域名'}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="add-domain-container">
+                                            <Input
+                                                placeholder={
+                                                    t('enterDomainToFilter') ||
+                                                    '输入要过滤的域名 (例如: zhihu.com)'
+                                                }
+                                                value={newFilterDomain}
+                                                onChange={(e) => setNewFilterDomain(e.target.value)}
+                                                onPressEnter={handleAddFilterDomain}
+                                                style={{ width: 'calc(100% - 80px)' }}
+                                            />
+                                            <Button
+                                                type="primary"
+                                                onClick={handleAddFilterDomain}
+                                                disabled={!newFilterDomain}
+                                            >
+                                                {t('add') || '添加'}
+                                            </Button>
+                                        </div>
+                                    </Space>
+                                </div>
+                            </Form.Item>
+                        </>
                     )}
 
                     <Divider />

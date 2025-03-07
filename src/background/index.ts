@@ -3,16 +3,21 @@ import { fetchData, handleMessage, isLocalhost } from '@/utils';
 import { MODIFY_HEADERS_RULE_ID, URL_MAP, SEARCH_ENGINES } from '@/utils/constant';
 import storage from '@/utils/storage';
 import { load } from 'cheerio';
+import { tavily } from '@tavily/core';
 
 // 用于网页搜索的函数，支持多个搜索引擎
 async function searchWeb(query: string): Promise<SearchResult[]> {
     try {
         console.log('执行多搜索引擎搜索:', query);
-
-        // 获取启用的搜索引擎列表
-        const enabledEngines = await storage.getEnabledSearchEngines();
+        
+        // 获取配置
+        const [enabledEngines, filteredDomains] = await Promise.all([
+            storage.getEnabledSearchEngines(),
+            storage.getFilteredDomains(),
+        ]);
+        
         console.log('启用的搜索引擎:', enabledEngines);
-
+        
         // 创建搜索引擎函数映射
         const searchFunctions: Record<string, (query: string) => Promise<SearchResult[]>> = {
             [SEARCH_ENGINES.BAIDU]: searchBaidu,
@@ -23,32 +28,47 @@ async function searchWeb(query: string): Promise<SearchResult[]> {
             [SEARCH_ENGINES.SEARXNG]: searchSearxng,
             [SEARCH_ENGINES.TAVILY]: searchTavily,
         };
-
+        
         // 获取启用的搜索函数
         const enabledSearchFunctions = enabledEngines
             .filter((engine) => searchFunctions[engine])
             .map((engine) => searchFunctions[engine]);
-
+        
         if (enabledSearchFunctions.length === 0) {
             console.log('没有启用的搜索引擎');
             return [];
         }
-
+        
         // 并行执行启用的搜索引擎的请求
         const results = await Promise.allSettled(enabledSearchFunctions.map((fn) => fn(query)));
-
+        
         // 合并结果
-        const combinedResults: SearchResult[] = [];
-
+        let combinedResults: SearchResult[] = [];
+        
         results.forEach((result) => {
             if (result.status === 'fulfilled' && result.value.length > 0) {
                 combinedResults.push(...result.value);
             }
         });
+        
+        // 过滤掉来自特定域名的结果（如知乎）
+        if (filteredDomains.length > 0) {
+            const beforeFilterCount = combinedResults.length;
+            
+            combinedResults = combinedResults.filter(result => {
+                // 检查结果链接是否包含要过滤的域名
+                return !filteredDomains.some(domain => result.link.includes(domain));
+            });
+            
+            const filteredCount = beforeFilterCount - combinedResults.length;
+            if (filteredCount > 0) {
+                console.log(`已过滤掉 ${filteredCount} 个来自以下域名的结果: ${filteredDomains.join(', ')}`);
+            }
+        }
 
         // 如果所有搜索引擎都没有返回结果
         if (combinedResults.length === 0) {
-            console.log('所有搜索引擎均未返回结果');
+            console.log('所有搜索引擎均未返回结果或结果已被过滤');
         }
 
         return combinedResults;
@@ -457,7 +477,7 @@ async function searchSearxng(query: string): Promise<SearchResult[]> {
     }
 }
 
-// Tavily搜索函数
+// Tavily搜索函数 - 使用 @tavily/core 库
 async function searchTavily(query: string): Promise<SearchResult[]> {
     try {
         console.log('执行Tavily搜索:', query);
@@ -469,41 +489,27 @@ async function searchTavily(query: string): Promise<SearchResult[]> {
             return [];
         }
 
-        // 请求Tavily API
-        const searchUrl = 'https://api.tavily.com/search';
+        // 创建 Tavily 客户端
+        const tvly = tavily({ apiKey });
 
-        const response = await fetch(searchUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`,
-            },
-            body: JSON.stringify({
-                query: query,
-                search_depth: 'basic',
-                include_domains: [],
-                exclude_domains: [],
-                max_results: 5,
-            }),
+        // 执行搜索
+        const response = await tvly.search(query, {
+            searchDepth: 'basic',
+            maxResults: 5
         });
+        console.log('Tavily搜索结果:', response);
 
-        if (!response.ok) {
-            throw new Error(`Tavily搜索请求失败，状态码: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        // 解析Tavily API返回的结果
+        // 将 Tavily 返回的结果转换为应用所需的 SearchResult 格式
         const results: SearchResult[] = [];
-
-        if (data.results && Array.isArray(data.results)) {
-            data.results.forEach((item: any) => {
+        
+        if (response.results && Array.isArray(response.results)) {
+            response.results.forEach((item) => {
                 if (item.title && item.url) {
                     results.push({
                         title: item.title,
                         link: item.url,
                         snippet: item.content || '',
-                        source: 'Tavily',
+                        source: 'Tavily'
                     });
                 }
             });
