@@ -83,8 +83,11 @@
         padding: 24px;
         overflow-y: auto;
         overflow-x: hidden;
-        background-image: 
-            radial-gradient(circle at 25% 10%, rgba(71, 118, 230, 0.03) 0%, transparent 60%),
+        background-image: radial-gradient(
+                circle at 25% 10%,
+                rgba(71, 118, 230, 0.03) 0%,
+                transparent 60%
+            ),
             radial-gradient(circle at 75% 75%, rgba(142, 84, 233, 0.03) 0%, transparent 60%);
 
         &::-webkit-scrollbar {
@@ -376,7 +379,7 @@
                     box-shadow: 0 4px 12px rgba(78, 88, 222, 0.15);
                     position: relative;
                     overflow: hidden;
-                    
+
                     // 气泡尾巴效果
                     &::before {
                         content: '';
@@ -388,7 +391,7 @@
                         background: linear-gradient(135deg, transparent, #8e54e9);
                         clip-path: polygon(0 0, 0 100%, 100% 100%);
                     }
-                    
+
                     // 光晕效果
                     &::after {
                         content: '';
@@ -397,15 +400,50 @@
                         left: 0;
                         right: 0;
                         bottom: 0;
-                        background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
+                        background: radial-gradient(
+                            circle at top right,
+                            rgba(255, 255, 255, 0.1) 0%,
+                            transparent 60%
+                        );
                         pointer-events: none;
                     }
-                    
+
                     // 代码样式调整
-                    pre, code {
+                    pre,
+                    code {
                         background-color: rgba(255, 255, 255, 0.15);
                         border: 1px solid rgba(255, 255, 255, 0.2);
                         color: #fff;
+                    }
+                }
+
+                // 用户消息的操作按钮样式
+                .message-actions {
+                    justify-content: flex-start;
+                    opacity: 0;
+                    visibility: hidden;
+                    transform: translateY(10px);
+                    transition: all 0.2s ease;
+
+                    button {
+                        background-color: rgba(255, 255, 255, 0.2);
+                        color: white;
+                        border: 1px solid rgba(255, 255, 255, 0.3);
+
+                        &:hover {
+                            background-color: rgba(255, 255, 255, 0.3);
+                            transform: translateY(-2px);
+                            box-shadow: 0 2px 6px rgba(255, 255, 255, 0.2);
+                            color: white;
+                        }
+                    }
+                }
+
+                &:hover {
+                    .message-actions {
+                        opacity: 1;
+                        visibility: visible;
+                        transform: translateY(0);
                     }
                 }
             }
@@ -413,7 +451,7 @@
             &.ai-message {
                 justify-content: flex-start;
                 animation: slide-in-left 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-                
+
                 .message-avatar {
                     order: 1;
                     margin-right: 16px;
@@ -437,7 +475,7 @@
                     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
                     position: relative;
                     border-left: 3px solid #06b6d4;
-                    
+
                     // 气泡尾巴效果
                     &::before {
                         content: '';
@@ -449,7 +487,7 @@
                         background-color: #fff;
                         clip-path: polygon(100% 0, 100% 100%, 0 100%);
                     }
-                    
+
                     // 轻微渐变效果
                     &::after {
                         content: '';
@@ -463,14 +501,14 @@
                         border-radius: 14px 14px 14px 0;
                     }
                 }
-                
+
                 // 修改复制和重新生成按钮在AI消息下的样式
                 .message-actions {
                     button {
                         background-color: #f5f7fa;
                         color: #4776e6;
                         border: 1px solid #e6e8f0;
-                        
+
                         &:hover {
                             background-color: #e6f7ff;
                             transform: translateY(-2px);
@@ -541,35 +579,43 @@
                 bottom: 14px;
                 display: flex;
                 gap: 10px;
-                
+
                 .send-button {
                     background: linear-gradient(135deg, #4776e6 0%, #8e54e9 100%);
                     border: none;
                     box-shadow: 0 4px 12px rgba(78, 88, 222, 0.15);
                     transition: all 0.3s ease;
-                    
-                    &:hover, &:focus {
+
+                    &:hover,
+                    &:focus {
                         background: linear-gradient(135deg, #5784ec 0%, #9a66ed 100%);
                         transform: translateY(-2px);
                         box-shadow: 0 6px 16px rgba(78, 88, 222, 0.25);
                     }
-                    
+
                     &:active {
                         transform: translateY(0);
                     }
                 }
-                
+
                 .stop-button {
-                    background-color: #f8f9fb;
-                    border: 1px solid #e2e8f0;
-                    color: #666;
-                    
+                    background-color: #f54242;
+                    border: none;
+                    color: white;
+                    transition: all 0.3s ease;
+                    box-shadow: 0 4px 12px rgba(245, 66, 66, 0.15);
+
                     &:hover {
-                        background-color: #f1f5f9;
-                        color: #4776e6;
+                        background-color: #ff5a5a;
+                        transform: translateY(-2px);
+                        box-shadow: 0 6px 16px rgba(245, 66, 66, 0.25);
+                    }
+
+                    &:active {
+                        transform: translateY(0);
                     }
                 }
-                
+
                 button {
                     height: 36px;
                     display: flex;
@@ -579,7 +625,7 @@
                     padding: 0 16px;
                     border-radius: 8px;
                     font-size: 14px;
-                    
+
                     .anticon {
                         font-size: 14px;
                         margin-right: 0;
@@ -770,8 +816,13 @@
 
 // 输入提示动画
 @keyframes blink-cursor {
-    from, to { border-color: transparent; }
-    50% { border-color: #4776e6; }
+    from,
+    to {
+        border-color: transparent;
+    }
+    50% {
+        border-color: #4776e6;
+    }
 }
 
 // 更新消息动画
@@ -779,11 +830,11 @@
     &.user-message {
         animation: slide-in-right 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
-    
+
     &.ai-message {
         animation: slide-in-left 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
-    
+
     // 消息悬停效果
     &:hover {
         .message-actions {
@@ -792,17 +843,18 @@
             visibility: visible;
         }
     }
-    
+
     .message-text {
         transition: box-shadow 0.3s ease, transform 0.2s ease;
-        
+
         &:hover {
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
             transform: translateY(-2px);
         }
     }
-    
-    .message-actions {
+
+    // 仅对AI消息操作按钮隐藏，用户消息已在用户消息类中单独定义
+    &.ai-message .message-actions {
         opacity: 0.6;
         transform: translateY(5px);
         transition: all 0.3s ease;
@@ -813,7 +865,7 @@
 // 思考中的消息样式
 .ai-message.typing .message-text {
     position: relative;
-    
+
     &::after {
         content: '';
         position: absolute;

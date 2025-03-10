@@ -8,6 +8,13 @@ export const zhCN = {
     regenerate: '重新生成',
     settings: '设置',
     stop: '停止',
+    edit: '修改',
+
+    // Add suggested prompts
+    suggestedPrompt1: '解释一下深度学习和机器学习的区别',
+    suggestedPrompt2: '帮我优化一段Python代码',
+    suggestedPrompt3: '如何提高英语口语水平',
+    suggestedPrompt4: '推荐几本经典科幻小说',
 
     // App settings
     appTitle: 'AI 工具',
@@ -120,4 +127,5 @@ export const zhCN = {
     searchEngines: '启用的搜索引擎',
     openSettings: '打开设置',
     openChat: '打开聊天',
+    pressTip: '按回车键发送，Shift+回车换行',
 };
