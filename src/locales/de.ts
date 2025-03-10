@@ -1,5 +1,5 @@
 // 自动生成的翻译文件，请勿直接修改
-// Generated on: 2025-03-03T03:59:23.000Z
+// Generated on: 2025-03-10T09:31:36.322Z
 
 export const de = {
   "ok": "Bestätigen",
@@ -55,5 +55,65 @@ export const de = {
   "languageZhTW": "Traditionelles Chinesisch",
   "languageJa": "Japanisch",
   "languageKo": "Koreanisch",
-  "languageChanged": "Sprache wurde erfolgreich geändert."
+  "languageChanged": "Sprache wurde erfolgreich geändert.",
+  "stop": "Stopp",
+  "edit": "Ändern",
+  "suggestedPrompt1": "Erklären Sie den Unterschied zwischen Deep Learning und maschinellem Lernen.",
+  "suggestedPrompt2": "当然，请提供您想要优化的Python代码，我会尽力帮助您优化它。",
+  "suggestedPrompt3": "Wie kann man das Niveau der englischen Konversation verbessern?",
+  "suggestedPrompt4": "Empfehlen Sie einige klassische Science-Fiction-Romane.",
+  "savingConfigError": "Speichern der Konfiguration fehlgeschlagen, bitte versuchen Sie es erneut.",
+  "think": "Ich habe es mir reiflich überlegt.",
+  "copyMessage": "Erfolg kopieren",
+  "includeWebpageTooltip": "Nach der Aktivierung antwortet die KI basierend auf dem Inhalt der aktuellen Webseite.",
+  "translate": "Übersetzung",
+  "translatePrompt": "请提供需要翻译的文本。",
+  "summarize": "Zusammenfassung",
+  "summarizePrompt": "Bitte fassen Sie den folgenden Text kurz zusammen:",
+  "explain": "Erklärung",
+  "explainPrompt": "Erklären Sie die folgenden Konzepte in einfachen Begriffen:",
+  "codeReview": "Code-Review",
+  "codeReviewPrompt": "Überprüfen Sie den folgenden Code und geben Sie Verbesserungsvorschläge:",
+  "rewrite": "Neu schreiben",
+  "rewritePrompt": "Bitte geben Sie den Text an, den Sie umschreiben möchten, damit ich Ihnen eine professionelle Version anbieten kann.",
+  "webSearch": "Netzsuche aktivieren?",
+  "webSearchTooltip": "Aktivieren Sie die Internetsuche, um aktuelle Informationen zu erhalten.",
+  "on": "Starten",
+  "off": "Schließen",
+  "searchingWeb": "Suche nach Netzwerkinformationen...",
+  "searchComplete": "Suche abgeschlossen, verarbeite die Ergebnisse mit KI...",
+  "noSearchResults": "Keine Suchergebnisse gefunden, nur AI-Wissen verwendet...",
+  "exclusiveFeatureError": "Websuche und die aktuelle Webseitenantwort können nicht gleichzeitig aktiviert werden. Bitte aktivieren Sie nur eines davon.",
+  "webSearchResultsTips1": "Hier sind einige aktuelle Informationen aus dem Internet, die bei der Beantwortung dieser Frage hilfreich sein könnten.",
+  "webSearchResultsTips2": "Bitte beantworten Sie diese Frage basierend auf diesen Informationen und Ihrem Wissen.",
+  "Source": "Quelle",
+  "webpageContent": "Hier ist der Inhalt der aktuellen Webseite:",
+  "webpagePrompt": "Bitte beantworten Sie meine Fragen basierend auf dieser Webseite.",
+  "fetchWebpageContent": "Aktuelle Webseiteninhalte werden abgerufen...",
+  "fetchWebpageContentSuccess": "Die Webseiteninhalte wurden erfolgreich abgerufen, die Ergebnisse werden gerade mit KI verarbeitet...",
+  "fetchWebpageContentFailed": "Fehler beim Abrufen der Webseiteninhalte, verwenden Sie nur das KI-Wissen zur Beantwortung...",
+  "pleaseInputApiKey": "Bitte geben Sie den API-Schlüssel auf der Konfigurationsseite ein.",
+  "REFERENCE_PROMPT": "Bitte beantworten Sie die Frage anhand der Referenzen
+
+## Anmerkungsregeln:
+- Bitte zitieren Sie den Kontext am Ende des Satzes, falls zutreffend.
+- Bitte verwenden Sie das Format der Zitiernummer [number], um im Antwortteil auf die entsprechenden Abschnitte zu verweisen.
+- Wenn ein Satz aus mehreren Kontexten stammt, listen Sie bitte alle relevanten Zitiernummern auf, z.B. [1][2]. Achten Sie darauf, die Zitate nicht am Ende zu sammeln, sondern im entsprechenden Antwortteil aufzulisten.
+
+## Meine Frage ist:
+
+{question}
+
+## Referenzen:
+
+{references}
+
+Bitte antworten Sie in derselben Sprache wie die Benutzerfrage.",
+  "filteredDomains": "Gefilterte Domains",
+  "searchEngines": "Aktivierte Suchmaschinen",
+  "openSettings": "Einstellungen öffnen",
+  "openChat": "Chat öffnen.",
+  "pressTip": "Drücken Sie die Eingabetaste zum Senden, Umschalt+Eingabetaste für einen Zeilenumbruch.",
+  "welcomeMessage": "Willkommen bei Ihrem KI-Assistenten! Wie kann ich Ihnen helfen?",
+  "tryAsking": "Fragen Sie mich:"
 };

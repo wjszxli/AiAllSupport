@@ -1,5 +1,5 @@
 // 自动生成的翻译文件，请勿直接修改
-// Generated on: 2025-03-03T03:50:04.908Z
+// Generated on: 2025-03-10T09:23:59.317Z
 
 export const fr = {
   "ok": "Confirmer",
@@ -55,5 +55,65 @@ export const fr = {
   "languageZhTW": "Chinois traditionnel",
   "languageJa": "Japonais",
   "languageKo": "Coréen",
-  "languageChanged": "La langue a été changée avec succès."
+  "languageChanged": "La langue a été changée avec succès.",
+  "stop": "Arrêt",
+  "edit": "modifier",
+  "suggestedPrompt1": "Expliquez la différence entre l'apprentissage profond et l'apprentissage automatique.",
+  "suggestedPrompt2": "Bien sûr ! Veuillez fournir le code Python que vous souhaitez optimiser, et je vous aiderai à l'améliorer.",
+  "suggestedPrompt3": "Comment améliorer son niveau d'expression orale en anglais",
+  "suggestedPrompt4": "Voici quelques classiques de la science-fiction à recommander :",
+  "savingConfigError": "Échec de la sauvegarde de la configuration, veuillez réessayer.",
+  "think": "J'ai longuement réfléchi.",
+  "copyMessage": "Copie réussie",
+  "includeWebpageTooltip": "Une fois activé, l'IA répondra en fonction du contenu actuel de la page web.",
+  "translate": "Traduction",
+  "translatePrompt": "请提供需要翻译的文本。",
+  "summarize": "Résumé",
+  "summarizePrompt": "Résumez brièvement le texte suivant :",
+  "explain": "Explication",
+  "explainPrompt": "Expliquez les concepts suivants en termes simples :",
+  "codeReview": "Revue de code",
+  "codeReviewPrompt": "Examinez le code suivant et proposez des suggestions d'amélioration :",
+  "rewrite": "Réécrire",
+  "rewritePrompt": "Veuillez reformuler le texte suivant pour le rendre plus professionnel :",
+  "webSearch": "Activer la recherche sur Internet",
+  "webSearchTooltip": "Activer la recherche sur Internet pour obtenir les informations les plus récentes.",
+  "on": "Début",
+  "off": "Fermer",
+  "searchingWeb": "Recherche d'informations sur le réseau en cours...",
+  "searchComplete": "Recherche terminée, traitement des résultats en cours avec l'IA...",
+  "noSearchResults": "Aucun résultat de recherche trouvé, uniquement des connaissances en IA utilisées pour répondre...",
+  "exclusiveFeatureError": "La recherche sur Internet et les réponses de la page Web actuelle ne peuvent pas être activées simultanément. Veuillez n'en activer qu'une seule.",
+  "webSearchResultsTips1": "Voici quelques informations récentes provenant d'Internet qui pourraient aider à répondre à cette question.",
+  "webSearchResultsTips2": "Sur la base de ces informations et de vos connaissances, veuillez répondre à cette question.",
+  "Source": "Source",
+  "webpageContent": "Voici le contenu actuel de la page web :",
+  "webpagePrompt": "Selon cette page web, veuillez répondre à ma question.",
+  "fetchWebpageContent": "Récupération du contenu actuel de la page en cours...",
+  "fetchWebpageContentSuccess": "Le contenu de la page web a été récupéré avec succès, en train de traiter les résultats avec l'IA...",
+  "fetchWebpageContentFailed": "Échec de l'obtention du contenu de la page web, utilisez uniquement les connaissances de l'IA pour répondre...",
+  "pleaseInputApiKey": "Veuillez entrer votre clé API sur la page de configuration.",
+  "REFERENCE_PROMPT": `Veuillez répondre à la question en fonction des références fournies.
+
+## Règles d'annotation :
+- Veuillez citer le contexte à la fin de la phrase lorsque cela est approprié.
+- Veuillez utiliser le format de numéro de référence [number] pour citer les parties correspondantes dans la réponse.
+- Si une phrase provient de plusieurs contextes, veuillez lister tous les numéros de référence pertinents, par exemple [1][2], en veillant à ne pas regrouper les références à la fin mais à les lister dans les parties correspondantes de la réponse.
+
+## Ma question est :
+
+{question}
+
+## Références :
+
+{references}
+
+Veuillez répondre dans la même langue que la question de l'utilisateur.`,
+  "filteredDomains": "domaine filtré",
+  "searchEngines": "Moteur de recherche activé",
+  "openSettings": "Ouvrir les paramètres",
+  "openChat": "Ouvrir la discussion",
+  "pressTip": "Appuyez sur Entrée pour envoyer, Shift+Entrée pour aller à la ligne.",
+  "welcomeMessage": "Bienvenue à l'assistant IA ! En quoi puis-je vous aider ?",
+  "tryAsking": "Essayez de me demander :"
 };

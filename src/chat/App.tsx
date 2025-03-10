@@ -135,6 +135,11 @@ const App: React.FC = () => {
         };
     }, []);
 
+    // 更新页面标题
+    useEffect(() => {
+        document.title = t('appTitle');
+    }, [currentLocale, t]);
+
     const handleLanguageChange = async (locale: LocaleType) => {
         await setLocale(locale);
         setCurrentLocale(locale);

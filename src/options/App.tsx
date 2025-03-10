@@ -12,9 +12,20 @@ import {
     Space,
     Checkbox,
     Tag,
+    Layout,
+    Tabs,
 } from 'antd';
 import React, { useEffect, useState } from 'react';
-import { GlobalOutlined, SettingOutlined, GithubOutlined, RocketOutlined } from '@ant-design/icons';
+import {
+    GlobalOutlined,
+    SettingOutlined,
+    GithubOutlined,
+    RocketOutlined,
+    ApiOutlined,
+    SearchOutlined,
+    ControlOutlined,
+    InfoCircleOutlined,
+} from '@ant-design/icons';
 
 import { modelList, validateApiKey } from '@/services';
 import { t, getLocale, setLocale } from '@/services/i18n';
@@ -37,6 +48,8 @@ import { featureSettings } from '@/utils/featureSettings';
 import './App.scss';
 
 const { Option } = Select;
+const { TabPane } = Tabs;
+const { Content } = Layout;
 
 const App: React.FC = () => {
     const [form] = Form.useForm();
@@ -54,6 +67,7 @@ const App: React.FC = () => {
     const [tavilyApiKey, setTavilyApiKey] = useState<string>('');
     const [filteredDomains, setFilteredDomains] = useState<string[]>(FILTERED_DOMAINS);
     const [newFilterDomain, setNewFilterDomain] = useState<string>('');
+    const [activeTab, setActiveTab] = useState('api');
 
     useEffect(() => {
         const init = async () => {
@@ -143,6 +157,11 @@ const App: React.FC = () => {
         };
     }, [form]);
 
+    // 更新页面标题
+    useEffect(() => {
+        document.title = `${t('appTitle')} - ${t('settings')}`;
+    }, [currentLocale, t]);
+
     const getModels = async (selectedProvider: string | null) => {
         if (!selectedProvider) {
             setModels([]);
@@ -170,8 +189,13 @@ const App: React.FC = () => {
     const onFinish = async (values: any) => {
         try {
             // If web search is enabled but no search engines are selected, prevent submission
-            if (values.webSearchEnabled && (!enabledSearchEngines || enabledSearchEngines.length === 0)) {
-                message.error('Please select at least one search engine when web search is enabled');
+            if (
+                values.webSearchEnabled &&
+                (!enabledSearchEngines || enabledSearchEngines.length === 0)
+            ) {
+                message.error(
+                    'Please select at least one search engine when web search is enabled',
+                );
                 return;
             }
 
@@ -311,9 +335,241 @@ const App: React.FC = () => {
         setFilteredDomains(filteredDomains.filter((d) => d !== domain));
     };
 
+    // Render API Settings Tab
+    const renderApiSettings = () => (
+        <>
+            <Form.Item
+                className="form-item"
+                label={t('serviceProvider')}
+                name="provider"
+                rules={[{ required: true, message: t('selectProvider') }]}
+            >
+                <Select
+                    placeholder={t('selectProvider')}
+                    onChange={(value) => onProviderChange(value)}
+                    allowClear
+                    style={{ fontSize: '16px' }}
+                >
+                    {(Object.keys(PROVIDERS_DATA) as Array<keyof typeof PROVIDERS_DATA>).map(
+                        (key) => (
+                            <Option key={key} value={key}>
+                                {PROVIDERS_DATA[key].name}
+                            </Option>
+                        ),
+                    )}
+                </Select>
+            </Form.Item>
+
+            {!isLocalhost(selectedProvider) && (
+                <Form.Item className="form-item" label={t('apiKey')} name="ApiKey">
+                    <>
+                        <Form.Item
+                            name="apiKey"
+                            noStyle
+                            rules={[{ required: true, message: t('enterApiKey') }]}
+                        >
+                            <Input placeholder={t('enterApiKey')} />
+                        </Form.Item>
+                        <div className="api-link">
+                            <Tooltip title={t('getApiKey')}>
+                                <Typography.Link
+                                    href={PROVIDERS_DATA[selectedProvider].apiKeyUrl || ''}
+                                    target="_blank"
+                                >
+                                    {t('getApiKey')}
+                                </Typography.Link>
+                            </Tooltip>
+                        </div>
+                    </>
+                </Form.Item>
+            )}
+
+            <Form.Item
+                className="form-item"
+                label={t('modelSelection')}
+                name="model"
+                rules={[{ required: true, message: t('selectModel') }]}
+            >
+                <Select
+                    placeholder={t('selectModel')}
+                    onChange={(value) => onModelChange(value)}
+                    options={models}
+                    allowClear
+                />
+            </Form.Item>
+        </>
+    );
+
+    // Render Interface Settings Tab
+    const renderInterfaceSettings = () => (
+        <>
+            <Form.Item
+                className="form-item"
+                label={t('showIcon')}
+                name="isIcon"
+                valuePropName="checked"
+                initialValue={true}
+            >
+                <Switch />
+            </Form.Item>
+
+            <Form.Item
+                className="form-item"
+                label={t('includeWebpage')}
+                name="useWebpageContext"
+                valuePropName="checked"
+                initialValue={true}
+                tooltip={t('includeWebpageTooltip')}
+            >
+                <Switch
+                    onChange={(checked) => {
+                        if (checked && form.getFieldValue('webSearchEnabled')) {
+                            message.warning(t('exclusiveFeatureWarning'));
+                            form.setFieldsValue({ useWebpageContext: false });
+                        }
+                    }}
+                />
+            </Form.Item>
+        </>
+    );
+
+    // Render Search Settings Tab
+    const renderSearchSettings = () => (
+        <>
+            <Form.Item
+                name="webSearchEnabled"
+                valuePropName="checked"
+                label={t('webSearch')}
+                tooltip={t('webSearchTooltip')}
+            >
+                <Switch
+                    checked={form.getFieldValue('webSearchEnabled')}
+                    onChange={(checked) => {
+                        if (checked && form.getFieldValue('useWebpageContext')) {
+                            message.warning(t('exclusiveFeatureWarning'));
+                            form.setFieldsValue({ webSearchEnabled: false });
+                        }
+                    }}
+                />
+            </Form.Item>
+            
+            <Form.Item
+                shouldUpdate={(prevValues, currentValues) =>
+                    prevValues.webSearchEnabled !== currentValues.webSearchEnabled
+                }
+            >
+                {({ getFieldValue }) =>
+                    getFieldValue('webSearchEnabled') ? (
+                        <>
+                            <Form.Item
+                                label={t('tavilyApiKey')}
+                                name="tavilyApiKey"
+                                rules={[
+                                    { required: false, message: t('enterTavilyApiKey') },
+                                ]}
+                            >
+                                <Input.Password
+                                    value={tavilyApiKey}
+                                    onChange={(e) => setTavilyApiKey(e.target.value)}
+                                    placeholder={t('enterTavilyApiKey')}
+                                />
+                            </Form.Item>
+
+                            <Form.Item
+                                label={t('searchEngines')}
+                                name="searchEngines"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: t('selectAtLeastOneSearchEngine'),
+                                    },
+                                    {
+                                        validator: (_, value) => {
+                                            if (!value || value.length === 0) {
+                                                return Promise.reject(
+                                                    t('selectAtLeastOneSearchEngine'),
+                                                );
+                                            }
+                                            return Promise.resolve();
+                                        },
+                                    },
+                                ]}
+                            >
+                                <div className="search-engines-container">
+                                    <Checkbox.Group
+                                        value={enabledSearchEngines}
+                                        onChange={(value) => {
+                                            setEnabledSearchEngines(value as string[]);
+                                            form.setFieldsValue({ searchEngines: value });
+                                        }}
+                                    >
+                                        {Object.entries(SEARCH_ENGINES).map(([_, value]) => (
+                                            <Checkbox value={value} key={value}>
+                                                {SEARCH_ENGINE_NAMES[value] || value}
+                                            </Checkbox>
+                                        ))}
+                                    </Checkbox.Group>
+                                </div>
+                            </Form.Item>
+
+                            <Form.Item label={t('filteredDomains')}>
+                                <div className="filtered-domains-container">
+                                    <div className="filtered-domains-list">
+                                        {filteredDomains.length > 0 ? (
+                                            filteredDomains.map((domain, index) => (
+                                                <Tag
+                                                    closable
+                                                    key={index}
+                                                    onClose={() =>
+                                                        handleRemoveFilterDomain(domain)
+                                                    }
+                                                >
+                                                    {domain}
+                                                </Tag>
+                                            ))
+                                        ) : (
+                                            <div className="no-domains-message">
+                                                {t('noFilteredDomains')}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="add-domain-container">
+                                        <Input
+                                            placeholder={t('enterDomainToFilter')}
+                                            value={newFilterDomain}
+                                            onChange={(e) =>
+                                                setNewFilterDomain(e.target.value)
+                                            }
+                                            onPressEnter={handleAddFilterDomain}
+                                            style={{ width: '70%' }}
+                                        />
+                                        <Button
+                                            type="primary"
+                                            onClick={handleAddFilterDomain}
+                                            style={{ marginLeft: '8px' }}
+                                        >
+                                            {t('add')}
+                                        </Button>
+                                    </div>
+                                </div>
+                            </Form.Item>
+                        </>
+                    ) : (
+                        <div className="search-disabled-message">
+                            <Typography.Text type="secondary">
+                                {t('enableWebSearchMessage')}
+                            </Typography.Text>
+                        </div>
+                    )
+                }
+            </Form.Item>
+        </>
+    );
+
+    // Main render method
     return (
-        <div className="app">
-            <Card className="app-container">
+        <Layout className="app">
+            <Layout className="app-layout">
                 <div className="app-header">
                     <Typography.Title level={2} className="app-title">
                         <RocketOutlined /> {t('appTitle')} - {t('settings')}
@@ -344,243 +600,134 @@ const App: React.FC = () => {
 
                 <Divider />
 
-                <Form
-                    form={form}
-                    name="setting"
-                    className="form"
-                    onFinish={onFinish}
-                    layout="vertical"
-                    requiredMark={false}
-                    size="large"
-                >
-                    <Form.Item
-                        className="form-item"
-                        label={t('serviceProvider')}
-                        name="provider"
-                        rules={[{ required: true, message: t('selectProvider') }]}
-                    >
-                        <Select
-                            placeholder={t('selectProvider')}
-                            onChange={(value) => onProviderChange(value)}
-                            allowClear
-                            style={{ fontSize: '16px' }}
+                <Content className="app-content">
+                    <Card className="settings-card">
+                        <Tabs
+                            activeKey={activeTab}
+                            onChange={setActiveTab}
+                            tabPosition="left"
+                            className="settings-tabs"
                         >
-                            {(
-                                Object.keys(PROVIDERS_DATA) as Array<keyof typeof PROVIDERS_DATA>
-                            ).map((key) => (
-                                <Option key={key} value={key}>
-                                    {PROVIDERS_DATA[key].name}
-                                </Option>
-                            ))}
-                        </Select>
-                    </Form.Item>
-
-                    {!isLocalhost(selectedProvider) && (
-                        <Form.Item className="form-item" label={t('apiKey')} name="ApiKey">
-                            <>
-                                <Form.Item
-                                    name="apiKey"
-                                    noStyle
-                                    rules={[{ required: true, message: t('enterApiKey') }]}
+                            <TabPane 
+                                tab={<span><ApiOutlined /> {t('apiSettings')}</span>} 
+                                key="api"
+                            >
+                                <Form
+                                    form={form}
+                                    name="setting"
+                                    className="form"
+                                    onFinish={onFinish}
+                                    layout="vertical"
+                                    requiredMark={false}
+                                    size="large"
                                 >
-                                    <Input placeholder={t('enterApiKey')} />
-                                </Form.Item>
-                                <div className="api-link">
-                                    <Tooltip title={t('getApiKey')}>
-                                        <Typography.Link
-                                            href={PROVIDERS_DATA[selectedProvider].apiKeyUrl || ''}
-                                            target="_blank"
+                                    {renderApiSettings()}
+                                    <Form.Item className="form-actions">
+                                        <Button
+                                            type="primary"
+                                            htmlType="submit"
+                                            loading={loadingState !== LOADING_STATE.SAVE}
+                                            block
+                                            size="large"
                                         >
-                                            {t('getApiKey')}
+                                            {loadingState === LOADING_STATE.VALIDATING
+                                                ? t('validatingApi')
+                                                : loadingState === LOADING_STATE.SAVING
+                                                ? t('savingConfig')
+                                                : t('saveConfig')}
+                                        </Button>
+                                    </Form.Item>
+                                </Form>
+                            </TabPane>
+                            
+                            <TabPane 
+                                tab={<span><ControlOutlined /> {t('interface')}</span>} 
+                                key="interface"
+                            >
+                                <Form
+                                    form={form}
+                                    name="setting"
+                                    className="form"
+                                    onFinish={onFinish}
+                                    layout="vertical"
+                                    requiredMark={false}
+                                    size="large"
+                                >
+                                    {renderInterfaceSettings()}
+                                    <Form.Item className="form-actions">
+                                        <Button
+                                            type="primary"
+                                            htmlType="submit"
+                                            loading={loadingState !== LOADING_STATE.SAVE}
+                                            block
+                                            size="large"
+                                        >
+                                            {loadingState === LOADING_STATE.VALIDATING
+                                                ? t('validatingApi')
+                                                : loadingState === LOADING_STATE.SAVING
+                                                ? t('savingConfig')
+                                                : t('saveConfig')}
+                                        </Button>
+                                    </Form.Item>
+                                </Form>
+                            </TabPane>
+                            
+                            <TabPane 
+                                tab={<span><SearchOutlined /> {t('search')}</span>} 
+                                key="search"
+                            >
+                                <Form
+                                    form={form}
+                                    name="setting"
+                                    className="form"
+                                    onFinish={onFinish}
+                                    layout="vertical"
+                                    requiredMark={false}
+                                    size="large"
+                                >
+                                    {renderSearchSettings()}
+                                    <Form.Item className="form-actions">
+                                        <Button
+                                            type="primary"
+                                            htmlType="submit"
+                                            loading={loadingState !== LOADING_STATE.SAVE}
+                                            block
+                                            size="large"
+                                        >
+                                            {loadingState === LOADING_STATE.VALIDATING
+                                                ? t('validatingApi')
+                                                : loadingState === LOADING_STATE.SAVING
+                                                ? t('savingConfig')
+                                                : t('saveConfig')}
+                                        </Button>
+                                    </Form.Item>
+                                </Form>
+                            </TabPane>
+                            
+                            <TabPane 
+                                tab={<span><InfoCircleOutlined /> {t('about')}</span>} 
+                                key="about"
+                            >
+                                <div className="about-section">
+                                    <Typography.Title level={4}>
+                                        {t('appTitle')}
+                                    </Typography.Title>
+                                    <Typography.Paragraph>
+                                        {t('aboutDescription')}
+                                    </Typography.Paragraph>
+                                    <div className="app-links">
+                                        <Typography.Link onClick={onSetShortcuts} className="link-item">
+                                            <SettingOutlined /> {t('setShortcuts')}
                                         </Typography.Link>
-                                    </Tooltip>
+                                        <Typography.Link href={GIT_URL} target="_blank" className="link-item">
+                                            <GithubOutlined /> {t('starAuthor')}
+                                        </Typography.Link>
+                                    </div>
                                 </div>
-                            </>
-                        </Form.Item>
-                    )}
-
-                    <Form.Item
-                        className="form-item"
-                        label={t('modelSelection')}
-                        name="model"
-                        rules={[{ required: true, message: t('selectModel') }]}
-                    >
-                        <Select
-                            placeholder={t('selectModel')}
-                            onChange={(value) => onModelChange(value)}
-                            options={models}
-                            allowClear
-                        />
-                    </Form.Item>
-
-                    <Form.Item
-                        className="form-item"
-                        label={t('showIcon')}
-                        name="isIcon"
-                        valuePropName="checked"
-                        initialValue={true}
-                    >
-                        <Switch />
-                    </Form.Item>
-
-                    <Form.Item
-                        name="webSearchEnabled"
-                        valuePropName="checked"
-                        label={t('webSearch')}
-                        tooltip={t('webSearchTooltip')}
-                    >
-                        <Switch
-                            checked={form.getFieldValue('webSearchEnabled')}
-                            onChange={(checked) => {
-                                if (checked && form.getFieldValue('useWebpageContext')) {
-                                    message.warning(t('exclusiveFeatureWarning'));
-                                    form.setFieldsValue({ webSearchEnabled: false });
-                                }
-                            }}
-                        />
-                    </Form.Item>
-
-                    <Form.Item
-                        className="form-item"
-                        label={t('includeWebpage')}
-                        name="useWebpageContext"
-                        valuePropName="checked"
-                        initialValue={true}
-                        tooltip={t('includeWebpageTooltip')}
-                    >
-                        <Switch
-                            onChange={(checked) => {
-                                if (checked && form.getFieldValue('webSearchEnabled')) {
-                                    message.warning(t('exclusiveFeatureWarning'));
-                                    form.setFieldsValue({ useWebpageContext: false });
-                                }
-                            }}
-                        />
-                    </Form.Item>
-
-                    <Form.Item
-                        shouldUpdate={(prevValues, currentValues) =>
-                            prevValues.webSearchEnabled !== currentValues.webSearchEnabled
-                        }
-                    >
-                        {({ getFieldValue }) =>
-                            getFieldValue('webSearchEnabled') ? (
-                                <>
-                                    <Form.Item
-                                        label="Tavily API Key"
-                                        name="tavilyApiKey"
-                                        rules={[
-                                            { required: false, message: 'Please enter Tavily API Key' },
-                                        ]}
-                                    >
-                                        <Input.Password
-                                            value={tavilyApiKey}
-                                            onChange={(e) => setTavilyApiKey(e.target.value)}
-                                            placeholder="Please enter Tavily API Key"
-                                        />
-                                    </Form.Item>
-
-                                    <Form.Item
-                                        label="Search Engines"
-                                        name="searchEngines"
-                                        rules={[
-                                            {
-                                                required: true,
-                                                message: 'Please select at least one search engine when web search is enabled',
-                                            },
-                                            {
-                                                validator: (_, value) => {
-                                                    if (!value || value.length === 0) {
-                                                        return Promise.reject(
-                                                            'Please select at least one search engine when web search is enabled',
-                                                        );
-                                                    }
-                                                    return Promise.resolve();
-                                                },
-                                            },
-                                        ]}
-                                    >
-                                        <div className="search-engines-container">
-                                            <Checkbox.Group
-                                                value={enabledSearchEngines}
-                                                onChange={(value) => {
-                                                    setEnabledSearchEngines(value as string[]);
-                                                    form.setFieldsValue({ searchEngines: value });
-                                                }}
-                                            >
-                                                {Object.entries(SEARCH_ENGINES).map(([_, value]) => (
-                                                    <Checkbox value={value} key={value}>
-                                                        {SEARCH_ENGINE_NAMES[value] || value}
-                                                    </Checkbox>
-                                                ))}
-                                            </Checkbox.Group>
-                                        </div>
-                                    </Form.Item>
-
-                                    <Form.Item label="Filtered Domains">
-                                        <div className="filtered-domains-container">
-                                            <div className="filtered-domains-list">
-                                                {filteredDomains.length > 0 ? (
-                                                    filteredDomains.map((domain, index) => (
-                                                        <Tag
-                                                            closable
-                                                            key={index}
-                                                            onClose={() =>
-                                                                handleRemoveFilterDomain(domain)
-                                                            }
-                                                        >
-                                                            {domain}
-                                                        </Tag>
-                                                    ))
-                                                ) : (
-                                                    <div className="no-domains-message">
-                                                        No filtered domains
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="add-domain-container">
-                                                <Input
-                                                    placeholder="Enter domain to filter"
-                                                    value={newFilterDomain}
-                                                    onChange={(e) =>
-                                                        setNewFilterDomain(e.target.value)
-                                                    }
-                                                    onPressEnter={handleAddFilterDomain}
-                                                    style={{ width: '70%' }}
-                                                />
-                                                <Button
-                                                    type="primary"
-                                                    onClick={handleAddFilterDomain}
-                                                    style={{ marginLeft: '8px' }}
-                                                >
-                                                    Add
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </Form.Item>
-                                </>
-                            ) : null
-                        }
-                    </Form.Item>
-
-                    <Divider />
-
-                    <Form.Item className="form-actions">
-                        <Button
-                            type="primary"
-                            htmlType="submit"
-                            loading={loadingState !== LOADING_STATE.SAVE}
-                            block
-                            size="large"
-                        >
-                            {loadingState === LOADING_STATE.VALIDATING
-                                ? t('validatingApi')
-                                : loadingState === LOADING_STATE.SAVING
-                                ? t('savingConfig')
-                                : t('saveConfig')}
-                        </Button>
-                    </Form.Item>
-                </Form>
+                            </TabPane>
+                        </Tabs>
+                    </Card>
+                </Content>
 
                 <div className="app-footer">
                     <Space split={<Divider type="vertical" />}>
@@ -592,8 +739,8 @@ const App: React.FC = () => {
                         </Typography.Link>
                     </Space>
                 </div>
-            </Card>
-        </div>
+            </Layout>
+        </Layout>
     );
 };
 

@@ -71,6 +71,7 @@ export const en = {
   "searchComplete": "Search complete. Processing results with AI...",
   "noSearchResults": "No search results found. Using AI knowledge only...",
   "exclusiveFeatureError": "Web search and webpage context cannot be enabled at the same time. Please enable only one of them.",
+  "exclusiveFeatureWarning": "Web search and webpage context cannot be enabled at the same time. Please enable only one of them.",
   "think": "Thinking content",
   "translate": "Translate",
   "translatePrompt": "Translate the following text to English: ",
@@ -115,5 +116,19 @@ export const en = {
 Please answer in the same language as the user's question.`,
   "filteredDomains": "Filtered Domain Names",
   "searchEngines": "Enabled search engines",
-  "pressTip": "Press Enter to send, Shift+Enter to create a new line."
+  "pressTip": "Press Enter to send, Shift+Enter to create a new line.",
+  
+  // New translation keys for the updated interface
+  "apiSettings": "API Settings",
+  "interface": "Interface",
+  "search": "Search",
+  "about": "About",
+  "tavilyApiKey": "Tavily API Key",
+  "enterTavilyApiKey": "Please enter Tavily API Key",
+  "selectAtLeastOneSearchEngine": "Please select at least one search engine when web search is enabled",
+  "noFilteredDomains": "No filtered domains",
+  "enterDomainToFilter": "Enter domain to filter",
+  "add": "Add",
+  "enableWebSearchMessage": "Enable Web Search to configure search settings.",
+  "aboutDescription": "A powerful browser extension that integrates DeepSeek and other AI models into your browsing experience."
 };
