@@ -128,4 +128,6 @@ export const zhCN = {
     openSettings: '打开设置',
     openChat: '打开聊天',
     pressTip: '按回车键发送，Shift+回车换行',
+    welcomeMessage: '欢迎使用 AI 助手！有什么可以帮助您？',
+    tryAsking: '试试问我：',
 };

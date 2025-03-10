@@ -1,5 +1,5 @@
 // 自动生成的翻译文件，请勿直接修改
-// Generated on: 2025-03-03T03:40:30.088Z
+// Generated on: 2025-03-10T09:12:28.652Z
 
 export const zhTW = {
   "ok": "確定",
@@ -9,7 +9,6 @@ export const zhTW = {
   "copy": "複製",
   "regenerate": "重新生成",
   "settings": "設置",
-  "close": "關閉",
   "appTitle": "AI 工具",
   "saveConfig": "保存配置",
   "savingConfig": "保存配置中",
@@ -55,5 +54,66 @@ export const zhTW = {
   "exampleHowToUse": "如何使用這個信息？",
   "typeMessage": "輸入您的訊息...",
   "unpinWindow": "取消固定視窗",
-  "pinWindow": "固定視窗"
+  "pinWindow": "固定視窗",
+  "stop": "Stop",
+  "edit": "Edit",
+  "suggestedPrompt1": "Explain the difference between deep learning and machine learning",
+  "suggestedPrompt2": "Help me optimize a Python code",
+  "suggestedPrompt3": "How to improve English speaking skills",
+  "suggestedPrompt4": "Recommend some classic science fiction novels",
+  "savingConfigError": "Failed to save configuration. Please try again.",
+  "includeWebpageTooltip": "Enable this feature to allow AI to use the content of the current webpage for answers",
+  "webSearch": "Web Search",
+  "webSearchTooltip": "Enable web search for real-time information",
+  "on": "On",
+  "off": "Off",
+  "searchingWeb": "Searching the web for information...",
+  "searchComplete": "Search complete. Processing results with AI...",
+  "noSearchResults": "No search results found. Using AI knowledge only...",
+  "exclusiveFeatureError": "Web search and webpage context cannot be enabled at the same time. Please enable only one of them.",
+  "think": "Thinking content",
+  "translate": "Translate",
+  "translatePrompt": "Translate the following text to English: ",
+  "summarize": "Summarize",
+  "summarizePrompt": "Summarize the following text in a concise manner: ",
+  "explain": "Explain",
+  "explainPrompt": "Explain the following concept in simple terms: ",
+  "codeReview": "Code Review",
+  "codeReviewPrompt": "Review the following code and suggest improvements: ",
+  "rewrite": "Rewrite",
+  "rewritePrompt": "Rewrite the following text to make it more professional: ",
+  "webSearchResultsTips1": "Here are some recent information from the web that might help answer this query:",
+  "webSearchResultsTips2": "Based on this information and your knowledge, please answer this question",
+  "Source": "Source",
+  "webpageContent": "The following is the content of the webpage I'm currently viewing:",
+  "webpagePrompt": "Based on this webpage, please respond to my question",
+  "fetchWebpageContent": "Fetching the content of the current webpage...",
+  "fetchWebpageContentSuccess": "Successfully fetched the webpage content, processing with AI...",
+  "fetchWebpageContentFailed": "Failed to fetch webpage content. Using AI knowledge only...",
+  "openSettings": "Open Settings",
+  "openChat": "Open Chat",
+  "copyMessage": "複製成功",
+  "close": "關閉",
+  "pleaseInputApiKey": "請在配置頁輸入 API Key 哦",
+  "REFERENCE_PROMPT": `请根据参考资料回答问题
+
+## 标注规则：
+- 请在适当的情况下在句子末尾引用上下文。
+- 请按照引用编号[number]的格式在答案中对应部分引用上下文。
+- 如果一句话源自多个上下文，请列出所有相关的引用编号，例如[1][2]，切记不要将引用集中在最后返回引用编号，而是在答案对应部分列出。
+
+## 我的问题是：
+
+{question}
+
+## 参考资料：
+
+{references}
+
+请使用同用戶問題相同的語言進行回答。`,
+  "filteredDomains": "過濾的域名",
+  "searchEngines": "啟用的搜尋引擎",
+  "pressTip": "按回車鍵發送，Shift+回車換行",
+  "welcomeMessage": "歡迎使用 AI 助手！有什麼可以幫助您？",
+  "tryAsking": "試試問我："
 };

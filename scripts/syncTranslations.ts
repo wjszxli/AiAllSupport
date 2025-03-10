@@ -6,7 +6,7 @@ import { execSync } from 'node:child_process';
 // DeepSeek API 配置
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
-const BASE_LANGUAGE = 'en';
+const BASE_LANGUAGE = 'zh-CN';
 
 // 支持的语言列表
 const SUPPORTED_LANGUAGES = [

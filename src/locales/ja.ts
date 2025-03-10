@@ -1,5 +1,5 @@
 // 自动生成的翻译文件，请勿直接修改
-// Generated on: 2025-03-03T03:40:43.708Z
+// Generated on: 2025-03-10T09:14:02.725Z
 
 export const ja = {
   "ok": "OK",
@@ -9,7 +9,6 @@ export const ja = {
   "copy": "コピー",
   "regenerate": "再生成",
   "settings": "設定",
-  "close": "閉じる",
   "appTitle": "AIツール",
   "saveConfig": "設定を保存",
   "savingConfig": "設定を保存中",
@@ -55,5 +54,66 @@ export const ja = {
   "exampleMainPoints": "このページで議論されている主なポイントは何ですか？",
   "exampleHowToUse": "この情報をどのように活用できますか？",
   "unpinWindow": "固定ウィンドウを解除",
-  "pinWindow": "固定ウィンドウ"
+  "pinWindow": "固定ウィンドウ",
+  "stop": "Stop",
+  "edit": "Edit",
+  "suggestedPrompt1": "Explain the difference between deep learning and machine learning",
+  "suggestedPrompt2": "Help me optimize a Python code",
+  "suggestedPrompt3": "How to improve English speaking skills",
+  "suggestedPrompt4": "Recommend some classic science fiction novels",
+  "savingConfigError": "Failed to save configuration. Please try again.",
+  "includeWebpageTooltip": "Enable this feature to allow AI to use the content of the current webpage for answers",
+  "webSearch": "Web Search",
+  "webSearchTooltip": "Enable web search for real-time information",
+  "on": "On",
+  "off": "Off",
+  "searchingWeb": "Searching the web for information...",
+  "searchComplete": "Search complete. Processing results with AI...",
+  "noSearchResults": "No search results found. Using AI knowledge only...",
+  "exclusiveFeatureError": "Web search and webpage context cannot be enabled at the same time. Please enable only one of them.",
+  "think": "Thinking content",
+  "translate": "Translate",
+  "translatePrompt": "Translate the following text to English: ",
+  "summarize": "Summarize",
+  "summarizePrompt": "Summarize the following text in a concise manner: ",
+  "explain": "Explain",
+  "explainPrompt": "Explain the following concept in simple terms: ",
+  "codeReview": "Code Review",
+  "codeReviewPrompt": "Review the following code and suggest improvements: ",
+  "rewrite": "Rewrite",
+  "rewritePrompt": "Rewrite the following text to make it more professional: ",
+  "webSearchResultsTips1": "Here are some recent information from the web that might help answer this query:",
+  "webSearchResultsTips2": "Based on this information and your knowledge, please answer this question",
+  "Source": "Source",
+  "webpageContent": "The following is the content of the webpage I'm currently viewing:",
+  "webpagePrompt": "Based on this webpage, please respond to my question",
+  "fetchWebpageContent": "Fetching the content of the current webpage...",
+  "fetchWebpageContentSuccess": "Successfully fetched the webpage content, processing with AI...",
+  "fetchWebpageContentFailed": "Failed to fetch webpage content. Using AI knowledge only...",
+  "openSettings": "Open Settings",
+  "openChat": "Open Chat",
+  "copyMessage": "成功をコピーする",
+  "close": "閉じる",
+  "pleaseInputApiKey": "設定ページにAPIキーを入力してくださいね。",
+  "REFERENCE_PROMPT": `以下の資料を参照して質問に答えてください
+
+## 注釈ルール：
+- 適切な場合、文末に文脈を引用してください。
+- 引用番号[number]の形式で、回答の対応部分に引用してください。
+- 一文が複数の文脈に由来する場合は、関連するすべての引用番号を列記してください。例えば[1][2]、引用番号を最後にまとめて返さず、回答の対応部分に列記してください。
+
+## 私の質問は：
+
+{question}
+
+## 参考資料：
+
+{references}
+
+ユーザーの質問と同じ言語で回答してください。`,
+  "filteredDomains": "フィルタリングされたドメイン",
+  "searchEngines": "有効化された検索エンジン",
+  "pressTip": "Enterキーで送信、Shift+Enterで改行",
+  "welcomeMessage": "AIアシスタントをご利用いただきありがとうございます！何かお手伝いできることはありますか？",
+  "tryAsking": "試しに私に聞いてみて："
 };

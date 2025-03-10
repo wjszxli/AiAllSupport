@@ -46,7 +46,6 @@ const App: React.FC = () => {
     const inputRef = useRef<any>(null);
     const [typingMessageId, setTypingMessageId] = useState<number | null>(null);
 
-    // Define suggestedPrompts as a constant that uses t() function for translations
     const suggestedPrompts = useMemo(
         () => [
             t('suggestedPrompt1') || '解释一下深度学习和机器学习的区别',
@@ -54,10 +53,9 @@ const App: React.FC = () => {
             t('suggestedPrompt3') || '如何提高英语口语水平',
             t('suggestedPrompt4') || '推荐几本经典科幻小说',
         ],
-        [t],
+        [t, currentLocale],
     );
 
-    // Use the useChatMessages hook
     const {
         messages,
         setMessages,
@@ -79,6 +77,8 @@ const App: React.FC = () => {
                     setCurrentLocale(savedLocale as LocaleType);
                     console.log('Initialized locale from storage:', savedLocale);
                 }
+                const selectedProvider = await storage.getSelectedProvider();
+                setSelectedProvider(selectedProvider || 'DeepSeek');
             } catch (error) {
                 console.error('Failed to initialize locale:', error);
             }
@@ -87,7 +87,6 @@ const App: React.FC = () => {
         init();
     }, []);
 
-    // Add event listener for copy code buttons
     useEffect(() => {
         const handleCopyButtonClick = (event: MouseEvent) => {
             const target = event.target as HTMLElement;
@@ -100,7 +99,6 @@ const App: React.FC = () => {
                     navigator.clipboard
                         .writeText(code)
                         .then(() => {
-                            // Update button text temporarily
                             const buttonText = copyButton.querySelector('span');
                             if (buttonText) {
                                 const originalText = buttonText.textContent;
@@ -228,7 +226,6 @@ const App: React.FC = () => {
         return <div dangerouslySetInnerHTML={{ __html: md.render(msg.text) }} />;
     };
 
-    // Add a function to handle editing user messages
     const handleEditMessage = (messageText: string) => {
         setUserInput(messageText);
         if (inputRef.current) {
@@ -236,7 +233,6 @@ const App: React.FC = () => {
         }
     };
 
-    // Add a new function to open the options page
     const openOptionsPage = () => {
         if (chrome.runtime.openOptionsPage) {
             chrome.runtime.openOptionsPage();
@@ -297,14 +293,13 @@ const App: React.FC = () => {
                                     }
                                     description={
                                         <Typography.Text strong>
-                                            {t('welcomeMessage') ||
-                                                '欢迎使用DeepSeek聊天！有什么可以帮助您？'}
+                                            {t('welcomeMessage')}
                                         </Typography.Text>
                                     }
                                 />
                                 <div className="prompt-suggestions">
                                     <Typography.Title level={5}>
-                                        <BulbOutlined /> {t('tryAsking') || '尝试提问：'}
+                                        <BulbOutlined /> {t('tryAsking')}
                                     </Typography.Title>
                                     <div className="suggestion-items">
                                         {suggestedPrompts.map((prompt, index) => (
