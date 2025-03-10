@@ -1,7 +1,7 @@
 @import url('~@/styles/reset.scss');
 
 .app {
-    width: 600px;
+    width: 500px;
     height: auto;
     padding: 20px;
     margin: 0 auto;
@@ -36,21 +36,15 @@
         }
     }
 
-    .form {
-        margin-top: 20px;
-
-        .form-item {
-            margin-bottom: 20px;
-        }
-
-        .api-link {
-            margin-top: 8px;
-            text-align: right;
-        }
-
-        .form-actions {
-            margin-top: 30px;
-            margin-bottom: 20px;
+    .popup-content {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        padding: 20px 0;
+        
+        button {
+            height: 50px;
+            font-size: 16px;
         }
     }
 
@@ -69,65 +63,5 @@
                 color: #1677ff;
             }
         }
-    }
-}
-
-.search-engines-container {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-
-    .ant-checkbox-group {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        gap: 12px;
-    }
-
-    .ant-checkbox-wrapper {
-        margin-right: 8px;
-        margin-left: 0 !important;
-
-        &:hover {
-            color: #1890ff;
-        }
-    }
-}
-
-.filtered-domains-container {
-    width: 100%;
-
-    .filtered-domains-list {
-        min-height: 50px;
-        max-height: 150px;
-        overflow-y: auto;
-        padding: 10px;
-        margin-bottom: 10px;
-        border: 1px solid #e8e8e8;
-        border-radius: 4px;
-        background-color: #fafafa;
-    }
-
-    .no-domains-message {
-        color: #888;
-        font-style: italic;
-        text-align: center;
-        padding: 10px;
-    }
-
-    .add-domain-container {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-
-        button {
-            margin-left: 10px;
-        }
-    }
-
-    .ant-tag {
-        margin-right: 8px;
-        margin-bottom: 8px;
-        padding: 4px 8px;
-        font-size: 14px;
     }
 }
