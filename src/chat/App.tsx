@@ -8,13 +8,34 @@ import {
     Tooltip,
     Typography,
     Divider,
-    Card,
     Space,
     Checkbox,
     Tag,
+    Avatar,
+    Spin,
+    Empty,
+    Drawer,
+    Modal,
+    Rate,
 } from 'antd';
-import React, { useEffect, useState } from 'react';
-import { GlobalOutlined, SettingOutlined, GithubOutlined, RocketOutlined } from '@ant-design/icons';
+import React, { useEffect, useState, useRef } from 'react';
+import {
+    GlobalOutlined,
+    SettingOutlined,
+    GithubOutlined,
+    RocketOutlined,
+    SendOutlined,
+    ReloadOutlined,
+    CopyOutlined,
+    CloseCircleOutlined,
+    RobotOutlined,
+    UserOutlined,
+    BulbOutlined,
+    QuestionCircleOutlined,
+    LikeOutlined,
+    DislikeOutlined,
+} from '@ant-design/icons';
+import { md } from '@/utils/markdownRenderer';
 
 import { modelList, validateApiKey } from '@/services';
 import { t, getLocale, setLocale } from '@/services/i18n';
@@ -33,10 +54,13 @@ import {
 } from '@/utils/constant';
 import storage from '@/utils/storage';
 import { featureSettings } from '@/utils/featureSettings';
+import { useChatMessages } from '@/hooks/useChatMessages';
+import type { ChatMessage } from '@/typings';
 
 import './App.scss';
 
 const { Option } = Select;
+const { TextArea } = Input;
 
 const App: React.FC = () => {
     const [form] = Form.useForm();
@@ -54,6 +78,25 @@ const App: React.FC = () => {
     const [tavilyApiKey, setTavilyApiKey] = useState<string>('');
     const [filteredDomains, setFilteredDomains] = useState<string[]>(FILTERED_DOMAINS);
     const [newFilterDomain, setNewFilterDomain] = useState<string>('');
+    const [settingsVisible, setSettingsVisible] = useState(false);
+    const [userInput, setUserInput] = useState('');
+    const [activeTab, setActiveTab] = useState('chat');
+    const inputRef = useRef<any>(null);
+    const [feedbackVisible, setFeedbackVisible] = useState(false);
+    const [currentFeedbackMessageId, setCurrentFeedbackMessageId] = useState<number | null>(null);
+
+    // Use the useChatMessages hook
+    const {
+        messages,
+        setMessages,
+        isLoading,
+        streamingMessageId,
+        messagesWrapperRef,
+        copyToClipboard,
+        cancelStreamingResponse,
+        sendChatMessage,
+        regenerateResponse,
+    } = useChatMessages({ t });
 
     useEffect(() => {
         const init = async () => {
@@ -73,6 +116,44 @@ const App: React.FC = () => {
 
         init();
     }, []);
+
+    // Add event listener for copy code buttons
+    useEffect(() => {
+        const handleCopyButtonClick = (event: MouseEvent) => {
+            const target = event.target as HTMLElement;
+            const copyButton = target.closest('.copy-button') as HTMLButtonElement;
+
+            if (copyButton) {
+                const encodedCode = copyButton.getAttribute('data-code');
+                if (encodedCode) {
+                    const code = decodeURIComponent(encodedCode);
+                    navigator.clipboard
+                        .writeText(code)
+                        .then(() => {
+                            // Update button text temporarily
+                            const buttonText = copyButton.querySelector('span');
+                            if (buttonText) {
+                                const originalText = buttonText.textContent;
+                                buttonText.textContent = t('copied');
+                                setTimeout(() => {
+                                    buttonText.textContent = originalText;
+                                }, 2000);
+                            }
+                            message.success(t('copied'), 2);
+                        })
+                        .catch(() => {
+                            message.error(t('failedCopy'));
+                        });
+                }
+            }
+        };
+
+        document.addEventListener('click', handleCopyButtonClick);
+
+        return () => {
+            document.removeEventListener('click', handleCopyButtonClick);
+        };
+    }, [t]);
 
     const initData = async () => {
         const { selectedProvider, selectedModel } = await storage.getConfig();
@@ -218,6 +299,7 @@ const App: React.FC = () => {
 
             message.success(t('configSaved'));
             setLoadingState(LOADING_STATE.VALIDATING);
+            setSettingsVisible(false);
             onValidateApiKey();
         } catch (error) {
             console.error('Failed to save configuration:', error);
@@ -316,294 +398,592 @@ const App: React.FC = () => {
         setFilteredDomains(filteredDomains.filter((d) => d !== domain));
     };
 
-    return (
-        <div className="app">
-            <Card className="app-container">
-                <div className="app-header">
-                    <Typography.Title level={2} className="app-title">
-                        <RocketOutlined /> {t('appTitle')} - {t('settings')}
-                    </Typography.Title>
-                    <Select
-                        value={currentLocale}
-                        onChange={handleLanguageChange}
-                        className="language-selector"
-                        dropdownMatchSelectWidth={false}
-                        bordered={true}
-                        suffixIcon={<GlobalOutlined />}
-                        style={{ width: '150px' }}
-                    >
-                        {(Object.keys(locales) as LocaleType[]).map((locale) => {
-                            const localeWithoutHyphen = locale.replace('-', '');
-                            const value =
-                                localeWithoutHyphen.charAt(0).toUpperCase() +
-                                localeWithoutHyphen.slice(1);
-                            const key = `language${value}` as keyof typeof locales[typeof locale];
-                            return (
-                                <Option key={locale} value={locale}>
-                                    {t(key as string)}
-                                </Option>
-                            );
-                        })}
-                    </Select>
+    const handleSendMessage = () => {
+        if (userInput.trim() && !isLoading) {
+            sendChatMessage(userInput.trim());
+            setUserInput('');
+            // Focus the input after sending
+            setTimeout(() => {
+                if (inputRef.current) {
+                    inputRef.current.focus();
+                }
+            }, 0);
+        }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSendMessage();
+        }
+    };
+
+    const clearChat = () => {
+        Modal.confirm({
+            title: t('clearConfirmTitle'),
+            content: t('clearConfirmContent'),
+            okText: t('confirm'),
+            cancelText: t('cancel'),
+            onOk: () => {
+                setMessages([]);
+                message.success(t('chatCleared'));
+            },
+        });
+    };
+
+    const renderMessageContent = (msg: ChatMessage) => {
+        if (msg.sender === 'system') {
+            return <div className="system-message">{msg.text}</div>;
+        }
+
+        if (msg.thinking) {
+            return (
+                <div className="thinking-message">
+                    <div className="thinking-indicator">{msg.thinking}</div>
+                    <div dangerouslySetInnerHTML={{ __html: md.render(msg.text || '') }} />
                 </div>
+            );
+        }
 
-                <Divider />
+        return <div dangerouslySetInnerHTML={{ __html: md.render(msg.text) }} />;
+    };
 
-                <Form
-                    form={form}
-                    name="setting"
-                    className="form"
-                    onFinish={onFinish}
-                    layout="vertical"
-                    requiredMark={false}
-                    size="large"
+    const renderSettingsDrawer = () => (
+        <Drawer
+            title={
+                <Typography.Title level={4}>
+                    <SettingOutlined /> {t('settings')}
+                </Typography.Title>
+            }
+            placement="right"
+            width={480}
+            onClose={() => setSettingsVisible(false)}
+            open={settingsVisible}
+        >
+            <Form
+                form={form}
+                name="setting"
+                className="form"
+                onFinish={onFinish}
+                layout="vertical"
+                requiredMark={false}
+                size="middle"
+            >
+                <Form.Item
+                    className="form-item"
+                    label={t('serviceProvider')}
+                    name="provider"
+                    rules={[{ required: true, message: t('selectProvider') }]}
                 >
-                    <Form.Item
-                        className="form-item"
-                        label={t('serviceProvider')}
-                        name="provider"
-                        rules={[{ required: true, message: t('selectProvider') }]}
+                    <Select
+                        placeholder={t('selectProvider')}
+                        onChange={(value) => onProviderChange(value)}
+                        allowClear
                     >
-                        <Select
-                            placeholder={t('selectProvider')}
-                            onChange={(value) => onProviderChange(value)}
-                            allowClear
-                            style={{ fontSize: '16px' }}
-                        >
-                            {(
-                                Object.keys(PROVIDERS_DATA) as Array<keyof typeof PROVIDERS_DATA>
-                            ).map((key) => (
+                        {(Object.keys(PROVIDERS_DATA) as Array<keyof typeof PROVIDERS_DATA>).map(
+                            (key) => (
                                 <Option key={key} value={key}>
                                     {PROVIDERS_DATA[key].name}
                                 </Option>
-                            ))}
-                        </Select>
-                    </Form.Item>
+                            ),
+                        )}
+                    </Select>
+                </Form.Item>
 
-                    {!isLocalhost(selectedProvider) && (
-                        <Form.Item className="form-item" label={t('apiKey')} name="ApiKey">
+                {!isLocalhost(selectedProvider) && (
+                    <Form.Item className="form-item" label={t('apiKey')} name="ApiKey">
+                        <>
+                            <Form.Item
+                                name="apiKey"
+                                noStyle
+                                rules={[{ required: true, message: t('enterApiKey') }]}
+                            >
+                                <Input.Password placeholder={t('enterApiKey')} />
+                            </Form.Item>
+                            <div className="api-link">
+                                <Tooltip title={t('getApiKey')}>
+                                    <Typography.Link
+                                        href={PROVIDERS_DATA[selectedProvider].apiKeyUrl || ''}
+                                        target="_blank"
+                                    >
+                                        {t('getApiKey')}
+                                    </Typography.Link>
+                                </Tooltip>
+                            </div>
+                        </>
+                    </Form.Item>
+                )}
+
+                <Form.Item
+                    className="form-item"
+                    label={t('modelSelection')}
+                    name="model"
+                    rules={[{ required: true, message: t('selectModel') }]}
+                >
+                    <Select
+                        placeholder={t('selectModel')}
+                        onChange={(value) => onModelChange(value)}
+                        options={models}
+                        allowClear
+                    />
+                </Form.Item>
+
+                <Form.Item
+                    className="form-item"
+                    label={t('showIcon')}
+                    name="isIcon"
+                    valuePropName="checked"
+                    initialValue={true}
+                >
+                    <Switch />
+                </Form.Item>
+
+                <Form.Item
+                    name="webSearchEnabled"
+                    valuePropName="checked"
+                    label={t('webSearch')}
+                    tooltip={t('webSearchTooltip')}
+                >
+                    <Switch
+                        checked={form.getFieldValue('webSearchEnabled')}
+                        onChange={(checked) => {
+                            if (checked && form.getFieldValue('useWebpageContext')) {
+                                message.warning(t('exclusiveFeatureWarning'));
+                                form.setFieldsValue({ webSearchEnabled: false });
+                            }
+                        }}
+                    />
+                </Form.Item>
+
+                <Form.Item
+                    className="form-item"
+                    label={t('includeWebpage')}
+                    name="useWebpageContext"
+                    valuePropName="checked"
+                    initialValue={true}
+                    tooltip={t('includeWebpageTooltip')}
+                >
+                    <Switch
+                        onChange={(checked) => {
+                            if (checked && form.getFieldValue('webSearchEnabled')) {
+                                message.warning(t('exclusiveFeatureWarning'));
+                                form.setFieldsValue({ useWebpageContext: false });
+                            }
+                        }}
+                    />
+                </Form.Item>
+
+                <Form.Item
+                    shouldUpdate={(prevValues, currentValues) =>
+                        prevValues.webSearchEnabled !== currentValues.webSearchEnabled
+                    }
+                >
+                    {({ getFieldValue }) =>
+                        getFieldValue('webSearchEnabled') ? (
                             <>
                                 <Form.Item
-                                    name="apiKey"
-                                    noStyle
-                                    rules={[{ required: true, message: t('enterApiKey') }]}
+                                    label="Tavily API Key"
+                                    name="tavilyApiKey"
+                                    rules={[
+                                        {
+                                            required: false,
+                                            message: 'Please enter Tavily API Key',
+                                        },
+                                    ]}
                                 >
-                                    <Input placeholder={t('enterApiKey')} />
+                                    <Input.Password
+                                        value={tavilyApiKey}
+                                        onChange={(e) => setTavilyApiKey(e.target.value)}
+                                        placeholder="Please enter Tavily API Key"
+                                    />
                                 </Form.Item>
-                                <div className="api-link">
-                                    <Tooltip title={t('getApiKey')}>
-                                        <Typography.Link
-                                            href={PROVIDERS_DATA[selectedProvider].apiKeyUrl || ''}
-                                            target="_blank"
+
+                                <Form.Item
+                                    label="Search Engines"
+                                    name="searchEngines"
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message:
+                                                'Please select at least one search engine when web search is enabled',
+                                        },
+                                        {
+                                            validator: (_, value) => {
+                                                if (!value || value.length === 0) {
+                                                    return Promise.reject(
+                                                        'Please select at least one search engine when web search is enabled',
+                                                    );
+                                                }
+                                                return Promise.resolve();
+                                            },
+                                        },
+                                    ]}
+                                >
+                                    <div className="search-engines-container">
+                                        <Checkbox.Group
+                                            value={enabledSearchEngines}
+                                            onChange={(value) => {
+                                                setEnabledSearchEngines(value as string[]);
+                                                form.setFieldsValue({ searchEngines: value });
+                                            }}
                                         >
-                                            {t('getApiKey')}
-                                        </Typography.Link>
-                                    </Tooltip>
-                                </div>
+                                            {Object.entries(SEARCH_ENGINES).map(([_, value]) => (
+                                                <Checkbox value={value} key={value}>
+                                                    {SEARCH_ENGINE_NAMES[value] || value}
+                                                </Checkbox>
+                                            ))}
+                                        </Checkbox.Group>
+                                    </div>
+                                </Form.Item>
+
+                                <Form.Item label="Filtered Domains">
+                                    <div className="filtered-domains-container">
+                                        <div className="filtered-domains-list">
+                                            {filteredDomains.length > 0 ? (
+                                                filteredDomains.map((domain, index) => (
+                                                    <Tag
+                                                        closable
+                                                        key={index}
+                                                        onClose={() =>
+                                                            handleRemoveFilterDomain(domain)
+                                                        }
+                                                    >
+                                                        {domain}
+                                                    </Tag>
+                                                ))
+                                            ) : (
+                                                <div className="no-domains-message">
+                                                    No filtered domains
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="add-domain-container">
+                                            <Input
+                                                placeholder="Enter domain to filter"
+                                                value={newFilterDomain}
+                                                onChange={(e) => setNewFilterDomain(e.target.value)}
+                                                onPressEnter={handleAddFilterDomain}
+                                                style={{ width: '70%' }}
+                                            />
+                                            <Button
+                                                type="primary"
+                                                onClick={handleAddFilterDomain}
+                                                style={{ marginLeft: '8px' }}
+                                            >
+                                                Add
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </Form.Item>
                             </>
-                        </Form.Item>
-                    )}
+                        ) : null
+                    }
+                </Form.Item>
 
-                    <Form.Item
-                        className="form-item"
-                        label={t('modelSelection')}
-                        name="model"
-                        rules={[{ required: true, message: t('selectModel') }]}
+                <Divider />
+
+                <Form.Item className="form-actions">
+                    <Button
+                        type="primary"
+                        htmlType="submit"
+                        loading={loadingState !== LOADING_STATE.SAVE}
+                        block
                     >
+                        {loadingState === LOADING_STATE.VALIDATING
+                            ? t('validatingApi')
+                            : loadingState === LOADING_STATE.SAVING
+                            ? t('savingConfig')
+                            : t('saveConfig')}
+                    </Button>
+                </Form.Item>
+            </Form>
+
+            <div className="drawer-footer">
+                <Space split={<Divider type="vertical" />}>
+                    <Typography.Link onClick={onSetShortcuts} className="footer-link">
+                        <SettingOutlined /> {t('setShortcuts')}
+                    </Typography.Link>
+                    <Typography.Link href={GIT_URL} target="_blank" className="footer-link">
+                        <GithubOutlined /> {t('starAuthor')}
+                    </Typography.Link>
+                </Space>
+            </div>
+        </Drawer>
+    );
+
+    // 处理消息反馈
+    const handleMessageFeedback = (messageId: number, isPositive: boolean) => {
+        setCurrentFeedbackMessageId(messageId);
+        setFeedbackVisible(true);
+    };
+
+    // 提交反馈
+    const submitFeedback = (rating: number, feedbackText?: string) => {
+        message.success(t('feedbackReceived') || '感谢您的反馈！');
+        setFeedbackVisible(false);
+        setCurrentFeedbackMessageId(null);
+
+        // 这里可以添加发送反馈到服务器的逻辑
+    };
+
+    return (
+        <div className="app">
+            <div className="chat-container">
+                <div className="chat-header">
+                    <div className="chat-title">
+                        <RocketOutlined /> {t('appTitle')}
+                    </div>
+                    <div className="header-actions">
                         <Select
-                            placeholder={t('selectModel')}
-                            onChange={(value) => onModelChange(value)}
-                            options={models}
-                            allowClear
+                            value={currentLocale}
+                            onChange={handleLanguageChange}
+                            className="language-selector"
+                            dropdownMatchSelectWidth={false}
+                            bordered={false}
+                            suffixIcon={<GlobalOutlined />}
+                            style={{ width: 'auto' }}
+                        >
+                            {(Object.keys(locales) as LocaleType[]).map((locale) => {
+                                const localeWithoutHyphen = locale.replace('-', '');
+                                const value =
+                                    localeWithoutHyphen.charAt(0).toUpperCase() +
+                                    localeWithoutHyphen.slice(1);
+                                const key =
+                                    `language${value}` as keyof typeof locales[typeof locale];
+                                return (
+                                    <Option key={locale} value={locale}>
+                                        {t(key as string)}
+                                    </Option>
+                                );
+                            })}
+                        </Select>
+                        <Button
+                            type="text"
+                            icon={<SettingOutlined />}
+                            onClick={() => setSettingsVisible(true)}
+                            className="settings-button"
                         />
-                    </Form.Item>
+                    </div>
+                </div>
 
-                    <Form.Item
-                        className="form-item"
-                        label={t('showIcon')}
-                        name="isIcon"
-                        valuePropName="checked"
-                        initialValue={true}
-                    >
-                        <Switch />
-                    </Form.Item>
-
-                    <Form.Item
-                        name="webSearchEnabled"
-                        valuePropName="checked"
-                        label={t('webSearch')}
-                        tooltip={t('webSearchTooltip')}
-                    >
-                        <Switch
-                            checked={form.getFieldValue('webSearchEnabled')}
-                            onChange={(checked) => {
-                                if (checked && form.getFieldValue('useWebpageContext')) {
-                                    message.warning(t('exclusiveFeatureWarning'));
-                                    form.setFieldsValue({ webSearchEnabled: false });
-                                }
-                            }}
-                        />
-                    </Form.Item>
-
-                    <Form.Item
-                        className="form-item"
-                        label={t('includeWebpage')}
-                        name="useWebpageContext"
-                        valuePropName="checked"
-                        initialValue={true}
-                        tooltip={t('includeWebpageTooltip')}
-                    >
-                        <Switch
-                            onChange={(checked) => {
-                                if (checked && form.getFieldValue('webSearchEnabled')) {
-                                    message.warning(t('exclusiveFeatureWarning'));
-                                    form.setFieldsValue({ useWebpageContext: false });
-                                }
-                            }}
-                        />
-                    </Form.Item>
-
-                    <Form.Item
-                        shouldUpdate={(prevValues, currentValues) =>
-                            prevValues.webSearchEnabled !== currentValues.webSearchEnabled
-                        }
-                    >
-                        {({ getFieldValue }) =>
-                            getFieldValue('webSearchEnabled') ? (
-                                <>
-                                    <Form.Item
-                                        label="Tavily API Key"
-                                        name="tavilyApiKey"
-                                        rules={[
-                                            {
-                                                required: false,
-                                                message: 'Please enter Tavily API Key',
-                                            },
-                                        ]}
-                                    >
-                                        <Input.Password
-                                            value={tavilyApiKey}
-                                            onChange={(e) => setTavilyApiKey(e.target.value)}
-                                            placeholder="Please enter Tavily API Key"
+                <div className="chat-body">
+                    <div className="messages-container" ref={messagesWrapperRef}>
+                        {messages.length === 0 ? (
+                            <div className="welcome-container">
+                                <Empty
+                                    image={
+                                        <RocketOutlined
+                                            style={{ fontSize: '64px', color: '#1890ff' }}
                                         />
-                                    </Form.Item>
-
-                                    <Form.Item
-                                        label="Search Engines"
-                                        name="searchEngines"
-                                        rules={[
-                                            {
-                                                required: true,
-                                                message:
-                                                    'Please select at least one search engine when web search is enabled',
-                                            },
-                                            {
-                                                validator: (_, value) => {
-                                                    if (!value || value.length === 0) {
-                                                        return Promise.reject(
-                                                            'Please select at least one search engine when web search is enabled',
-                                                        );
-                                                    }
-                                                    return Promise.resolve();
-                                                },
-                                            },
-                                        ]}
-                                    >
-                                        <div className="search-engines-container">
-                                            <Checkbox.Group
-                                                value={enabledSearchEngines}
-                                                onChange={(value) => {
-                                                    setEnabledSearchEngines(value as string[]);
-                                                    form.setFieldsValue({ searchEngines: value });
+                                    }
+                                    description={
+                                        <Typography.Text strong>
+                                            {t('welcomeMessage') ||
+                                                '欢迎使用DeepSeek聊天！有什么可以帮助您？'}
+                                        </Typography.Text>
+                                    }
+                                />
+                                <div className="prompt-suggestions">
+                                    <Typography.Title level={5}>
+                                        <BulbOutlined /> {t('tryAsking') || '尝试提问：'}
+                                    </Typography.Title>
+                                    <div className="suggestion-items">
+                                        {[
+                                            '解释一下深度学习和机器学习的区别',
+                                            '帮我优化一段Python代码',
+                                            '如何提高英语口语水平',
+                                            '推荐几本经典科幻小说',
+                                        ].map((prompt, index) => (
+                                            <Button
+                                                key={index}
+                                                className="suggestion-item"
+                                                onClick={() => {
+                                                    setUserInput(prompt);
+                                                    setTimeout(() => {
+                                                        if (inputRef.current) {
+                                                            inputRef.current.focus();
+                                                        }
+                                                    }, 0);
                                                 }}
                                             >
-                                                {Object.entries(SEARCH_ENGINES).map(
-                                                    ([_, value]) => (
-                                                        <Checkbox value={value} key={value}>
-                                                            {SEARCH_ENGINE_NAMES[value] || value}
-                                                        </Checkbox>
-                                                    ),
-                                                )}
-                                            </Checkbox.Group>
-                                        </div>
-                                    </Form.Item>
-
-                                    <Form.Item label="Filtered Domains">
-                                        <div className="filtered-domains-container">
-                                            <div className="filtered-domains-list">
-                                                {filteredDomains.length > 0 ? (
-                                                    filteredDomains.map((domain, index) => (
-                                                        <Tag
-                                                            closable
-                                                            key={index}
-                                                            onClose={() =>
-                                                                handleRemoveFilterDomain(domain)
+                                                {prompt}
+                                            </Button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            messages.map((msg) => (
+                                <div
+                                    key={msg.id}
+                                    className={`message ${
+                                        msg.sender === 'user' ? 'user-message' : 'ai-message'
+                                    }`}
+                                >
+                                    <div className="message-avatar">
+                                        {msg.sender === 'user' ? (
+                                            <Avatar icon={<UserOutlined />} />
+                                        ) : (
+                                            <Avatar
+                                                icon={<RobotOutlined />}
+                                                style={{ backgroundColor: '#1890ff' }}
+                                            />
+                                        )}
+                                    </div>
+                                    <div className="message-content">
+                                        <div className="message-header">
+                                            <div className="message-sender">
+                                                {msg.sender === 'user'
+                                                    ? t('you')
+                                                    : selectedProvider}
+                                            </div>
+                                            <div className="message-actions">
+                                                {msg.sender === 'ai' && (
+                                                    <>
+                                                        <Button
+                                                            type="text"
+                                                            icon={<CopyOutlined />}
+                                                            size="small"
+                                                            onClick={() =>
+                                                                copyToClipboard(msg.text)
                                                             }
-                                                        >
-                                                            {domain}
-                                                        </Tag>
-                                                    ))
-                                                ) : (
-                                                    <div className="no-domains-message">
-                                                        No filtered domains
-                                                    </div>
+                                                            title={t('copy')}
+                                                        />
+                                                        <Button
+                                                            type="text"
+                                                            icon={<LikeOutlined />}
+                                                            size="small"
+                                                            onClick={() =>
+                                                                handleMessageFeedback(msg.id, true)
+                                                            }
+                                                            title={t('helpful') || '有帮助'}
+                                                        />
+                                                        <Button
+                                                            type="text"
+                                                            icon={<DislikeOutlined />}
+                                                            size="small"
+                                                            onClick={() =>
+                                                                handleMessageFeedback(msg.id, false)
+                                                            }
+                                                            title={t('notHelpful') || '没帮助'}
+                                                        />
+                                                    </>
                                                 )}
                                             </div>
-                                            <div className="add-domain-container">
-                                                <Input
-                                                    placeholder="Enter domain to filter"
-                                                    value={newFilterDomain}
-                                                    onChange={(e) =>
-                                                        setNewFilterDomain(e.target.value)
-                                                    }
-                                                    onPressEnter={handleAddFilterDomain}
-                                                    style={{ width: '70%' }}
-                                                />
-                                                <Button
-                                                    type="primary"
-                                                    onClick={handleAddFilterDomain}
-                                                    style={{ marginLeft: '8px' }}
-                                                >
-                                                    Add
-                                                </Button>
-                                            </div>
                                         </div>
-                                    </Form.Item>
+                                        <div className="message-text">
+                                            {renderMessageContent(msg)}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                        {isLoading && streamingMessageId === null && (
+                            <div className="loading-indicator">
+                                <Spin size="small" /> <span>{t('thinking')}</span>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="chat-footer">
+                        <div className="input-container">
+                            <TextArea
+                                ref={inputRef}
+                                value={userInput}
+                                onChange={(e) => setUserInput(e.target.value)}
+                                onKeyDown={handleKeyDown}
+                                placeholder={t('typeMessage') || '输入您的问题...'}
+                                autoSize={{ minRows: 1, maxRows: 5 }}
+                                disabled={isLoading}
+                            />
+                            <div className="input-actions">
+                                {streamingMessageId !== null && (
+                                    <Button
+                                        type="text"
+                                        icon={<CloseCircleOutlined />}
+                                        onClick={cancelStreamingResponse}
+                                        title={t('stop')}
+                                    />
+                                )}
+                                <Tooltip
+                                    title={
+                                        userInput.trim()
+                                            ? t('sendMessage') || '发送'
+                                            : t('enterQuestion') || '请输入问题'
+                                    }
+                                >
+                                    <Button
+                                        type="primary"
+                                        icon={<SendOutlined />}
+                                        onClick={handleSendMessage}
+                                        disabled={!userInput.trim() || isLoading}
+                                    />
+                                </Tooltip>
+                            </div>
+                        </div>
+                        <div className="footer-actions">
+                            {messages.length > 0 ? (
+                                <>
+                                    <Button
+                                        type="text"
+                                        icon={<ReloadOutlined />}
+                                        onClick={regenerateResponse}
+                                        disabled={messages.length < 2 || isLoading}
+                                        title={t('regenerate')}
+                                    >
+                                        {t('regenerate')}
+                                    </Button>
+                                    <Button
+                                        type="text"
+                                        onClick={clearChat}
+                                        disabled={messages.length === 0 || isLoading}
+                                        title={t('clear')}
+                                    >
+                                        {t('clear')}
+                                    </Button>
                                 </>
-                            ) : null
-                        }
-                    </Form.Item>
-
-                    <Divider />
-
-                    <Form.Item className="form-actions">
-                        <Button
-                            type="primary"
-                            htmlType="submit"
-                            loading={loadingState !== LOADING_STATE.SAVE}
-                            block
-                            size="large"
-                        >
-                            {loadingState === LOADING_STATE.VALIDATING
-                                ? t('validatingApi')
-                                : loadingState === LOADING_STATE.SAVING
-                                ? t('savingConfig')
-                                : t('saveConfig')}
-                        </Button>
-                    </Form.Item>
-                </Form>
-
-                <div className="app-footer">
-                    <Space split={<Divider type="vertical" />}>
-                        <Typography.Link onClick={onSetShortcuts} className="footer-link">
-                            <SettingOutlined /> {t('setShortcuts')}
-                        </Typography.Link>
-                        <Typography.Link href={GIT_URL} target="_blank" className="footer-link">
-                            <GithubOutlined /> {t('starAuthor')}
-                        </Typography.Link>
-                    </Space>
+                            ) : (
+                                <div className="footer-tips">
+                                    <QuestionCircleOutlined />{' '}
+                                    {t('pressTip') || '按回车键发送，Shift+回车换行'}
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
-            </Card>
+            </div>
+
+            {renderSettingsDrawer()}
+
+            <Modal
+                title={t('provideFeedback') || '提供反馈'}
+                open={feedbackVisible}
+                onCancel={() => setFeedbackVisible(false)}
+                footer={[
+                    <Button key="cancel" onClick={() => setFeedbackVisible(false)}>
+                        {t('cancel') || '取消'}
+                    </Button>,
+                    <Button key="submit" type="primary" onClick={() => submitFeedback(0)}>
+                        {t('submit') || '提交'}
+                    </Button>,
+                ]}
+            >
+                <div className="feedback-container">
+                    <div className="feedback-rating">
+                        <Typography.Text>{t('rateResponse') || '请评价这个回答：'}</Typography.Text>
+                        <Rate allowHalf defaultValue={3} />
+                    </div>
+                    <div className="feedback-comment">
+                        <Typography.Text>
+                            {t('additionalFeedback') || '附加反馈（可选）：'}
+                        </Typography.Text>
+                        <Input.TextArea
+                            rows={4}
+                            placeholder={t('feedbackPlaceholder') || '请告诉我们如何改进...'}
+                        />
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 };
