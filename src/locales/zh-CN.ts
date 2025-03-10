@@ -27,7 +27,7 @@ export const zhCN = {
     getApiKey: '获取 API Key',
     modelSelection: '模型选择',
     selectModel: '请选择您要使用的模型',
-    showIcon: '是否选中文本出现图标',
+    showIcon: '划词工具栏',
     setShortcuts: '设置快捷键',
     starAuthor: '给作者点赞 ｜ 联系作者',
     configSaved: '配置已保存',
@@ -135,5 +135,10 @@ export const zhCN = {
     enterDomainToFilter: '输入要过滤的域名',
     add: '添加',
     enableWebSearchMessage: '启用网络搜索以配置搜索设置。',
-    aboutDescription: '一个强大的浏览器扩展，将 DeepSeek 和其他 AI 模型集成到您的浏览体验中。',
+    aboutDescription: '一个强大的浏览器扩展，将 AI 大模型模型集成到您的浏览体验中。',
+    
+    // 自动保存相关翻译
+    autoSaving: '正在保存...',
+    autoSaved: '已保存更改',
+    autoSaveError: '保存更改时出错'
 };

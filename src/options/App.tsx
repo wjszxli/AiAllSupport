@@ -69,6 +69,9 @@ const App: React.FC = () => {
     const [newFilterDomain, setNewFilterDomain] = useState<string>('');
     const [activeTab, setActiveTab] = useState('api');
 
+    // Add an auto-save debounce timer
+    const [autoSaveTimer, setAutoSaveTimer] = useState<NodeJS.Timeout | null>(null);
+
     useEffect(() => {
         const init = async () => {
             try {
@@ -186,63 +189,86 @@ const App: React.FC = () => {
         }
     };
 
-    const onFinish = async (values: any) => {
-        try {
-            // If web search is enabled but no search engines are selected, prevent submission
-            if (
-                values.webSearchEnabled &&
-                (!enabledSearchEngines || enabledSearchEngines.length === 0)
-            ) {
-                message.error(
-                    'Please select at least one search engine when web search is enabled',
-                );
-                return;
-            }
-
-            setLoadingState(LOADING_STATE.SAVING);
-
-            const isValid = await featureSettings.validateAndSubmitSettings(values, t);
-            if (!isValid) {
-                setLoadingState(LOADING_STATE.SAVE);
-                return;
-            }
-
-            const { provider, apiKey, model, isIcon, webSearchEnabled, useWebpageContext } = values;
-
-            let providersData = await storage.getProviders();
-            if (!providersData) {
-                providersData = PROVIDERS_DATA;
-            }
-
-            providersData[provider] = {
-                ...PROVIDERS_DATA[provider],
-                apiKey,
-                selected: true,
-                selectedModel: model,
-            };
-            console.log('values', values);
-
-            await Promise.all([
-                storage.setProviders(providersData),
-                storage.setSelectedProvider(provider),
-                storage.setSelectedModel(model),
-                storage.updateApiKey(provider, apiKey),
-                storage.setIsChatBoxIcon(isIcon),
-                storage.setWebSearchEnabled(webSearchEnabled),
-                storage.setUseWebpageContext(useWebpageContext),
-                storage.setEnabledSearchEngines(enabledSearchEngines || []),
-                storage.setTavilyApiKey(values.tavilyApiKey || ''),
-                storage.setFilteredDomains(filteredDomains),
-            ]);
-
-            message.success(t('configSaved'));
-            setLoadingState(LOADING_STATE.VALIDATING);
-            onValidateApiKey();
-        } catch (error) {
-            console.error('Failed to save configuration:', error);
-            message.error(t('savingConfigError'));
-            setLoadingState(LOADING_STATE.SAVE);
+    // Modify the onFinish function to a handleValuesChange function
+    const handleValuesChange = async (changedValues: any, allValues: any) => {
+        // Clear any existing timer
+        if (autoSaveTimer) {
+            clearTimeout(autoSaveTimer);
         }
+
+        // Set a new timer to save after a short delay (500ms)
+        const timer = setTimeout(async () => {
+            try {
+                // If web search is enabled but no search engines are selected, prevent submission
+                if (
+                    allValues.webSearchEnabled &&
+                    (!enabledSearchEngines || enabledSearchEngines.length === 0)
+                ) {
+                    message.error(t('selectAtLeastOneSearchEngine'));
+                    return;
+                }
+
+                setLoadingState(LOADING_STATE.SAVING);
+                message.loading({
+                    content: t('savingConfig'),
+                    key: 'saveConfig',
+                    duration: 0,
+                });
+
+                const isValid = await featureSettings.validateAndSubmitSettings(allValues, t);
+                if (!isValid) {
+                    setLoadingState(LOADING_STATE.SAVE);
+                    message.error({
+                        content: t('savingConfigError'),
+                        key: 'saveConfig',
+                    });
+                    return;
+                }
+
+                const { provider, apiKey, model, isIcon, webSearchEnabled, useWebpageContext } =
+                    allValues;
+
+                let providersData = await storage.getProviders();
+                if (!providersData) {
+                    providersData = PROVIDERS_DATA;
+                }
+
+                providersData[provider] = {
+                    ...PROVIDERS_DATA[provider],
+                    apiKey,
+                    selected: true,
+                    selectedModel: model,
+                };
+
+                await Promise.all([
+                    storage.setProviders(providersData),
+                    storage.setSelectedProvider(provider),
+                    storage.setSelectedModel(model),
+                    storage.updateApiKey(provider, apiKey),
+                    storage.setIsChatBoxIcon(isIcon),
+                    storage.setWebSearchEnabled(webSearchEnabled),
+                    storage.setUseWebpageContext(useWebpageContext),
+                    storage.setEnabledSearchEngines(enabledSearchEngines || []),
+                    storage.setTavilyApiKey(allValues.tavilyApiKey || ''),
+                    storage.setFilteredDomains(filteredDomains),
+                ]);
+
+                message.success({
+                    content: t('configSaved'),
+                    key: 'saveConfig',
+                });
+                setLoadingState(LOADING_STATE.SAVE);
+            } catch (error) {
+                console.error('Failed to save configuration:', error);
+                message.error({
+                    content: t('savingConfigError'),
+                    key: 'saveConfig',
+                });
+                setLoadingState(LOADING_STATE.SAVE);
+            }
+        }, 500);
+
+        setAutoSaveTimer(timer);
     };
 
     const onProviderChange = async (value: string) => {
@@ -368,7 +394,7 @@ const App: React.FC = () => {
                             noStyle
                             rules={[{ required: true, message: t('enterApiKey') }]}
                         >
-                            <Input placeholder={t('enterApiKey')} />
+                            <Input.Password placeholder={t('enterApiKey')} />
                         </Form.Item>
                         <div className="api-link">
                             <Tooltip title={t('getApiKey')}>
@@ -452,7 +478,7 @@ const App: React.FC = () => {
                     }}
                 />
             </Form.Item>
-            
+
             <Form.Item
                 shouldUpdate={(prevValues, currentValues) =>
                     prevValues.webSearchEnabled !== currentValues.webSearchEnabled
@@ -464,9 +490,7 @@ const App: React.FC = () => {
                             <Form.Item
                                 label={t('tavilyApiKey')}
                                 name="tavilyApiKey"
-                                rules={[
-                                    { required: false, message: t('enterTavilyApiKey') },
-                                ]}
+                                rules={[{ required: false, message: t('enterTavilyApiKey') }]}
                             >
                                 <Input.Password
                                     value={tavilyApiKey}
@@ -520,9 +544,7 @@ const App: React.FC = () => {
                                                 <Tag
                                                     closable
                                                     key={index}
-                                                    onClose={() =>
-                                                        handleRemoveFilterDomain(domain)
-                                                    }
+                                                    onClose={() => handleRemoveFilterDomain(domain)}
                                                 >
                                                     {domain}
                                                 </Tag>
@@ -537,9 +559,7 @@ const App: React.FC = () => {
                                         <Input
                                             placeholder={t('enterDomainToFilter')}
                                             value={newFilterDomain}
-                                            onChange={(e) =>
-                                                setNewFilterDomain(e.target.value)
-                                            }
+                                            onChange={(e) => setNewFilterDomain(e.target.value)}
                                             onPressEnter={handleAddFilterDomain}
                                             style={{ width: '70%' }}
                                         />
@@ -608,118 +628,94 @@ const App: React.FC = () => {
                             tabPosition="left"
                             className="settings-tabs"
                         >
-                            <TabPane 
-                                tab={<span><ApiOutlined /> {t('apiSettings')}</span>} 
+                            <TabPane
+                                tab={
+                                    <span>
+                                        <ApiOutlined /> {t('apiSettings')}
+                                    </span>
+                                }
                                 key="api"
                             >
                                 <Form
                                     form={form}
                                     name="setting"
                                     className="form"
-                                    onFinish={onFinish}
                                     layout="vertical"
                                     requiredMark={false}
                                     size="large"
+                                    onValuesChange={handleValuesChange}
                                 >
                                     {renderApiSettings()}
-                                    <Form.Item className="form-actions">
-                                        <Button
-                                            type="primary"
-                                            htmlType="submit"
-                                            loading={loadingState !== LOADING_STATE.SAVE}
-                                            block
-                                            size="large"
-                                        >
-                                            {loadingState === LOADING_STATE.VALIDATING
-                                                ? t('validatingApi')
-                                                : loadingState === LOADING_STATE.SAVING
-                                                ? t('savingConfig')
-                                                : t('saveConfig')}
-                                        </Button>
-                                    </Form.Item>
                                 </Form>
                             </TabPane>
-                            
-                            <TabPane 
-                                tab={<span><ControlOutlined /> {t('interface')}</span>} 
+
+                            <TabPane
+                                tab={
+                                    <span>
+                                        <ControlOutlined /> {t('interface')}
+                                    </span>
+                                }
                                 key="interface"
                             >
                                 <Form
                                     form={form}
                                     name="setting"
                                     className="form"
-                                    onFinish={onFinish}
                                     layout="vertical"
                                     requiredMark={false}
                                     size="large"
+                                    onValuesChange={handleValuesChange}
                                 >
                                     {renderInterfaceSettings()}
-                                    <Form.Item className="form-actions">
-                                        <Button
-                                            type="primary"
-                                            htmlType="submit"
-                                            loading={loadingState !== LOADING_STATE.SAVE}
-                                            block
-                                            size="large"
-                                        >
-                                            {loadingState === LOADING_STATE.VALIDATING
-                                                ? t('validatingApi')
-                                                : loadingState === LOADING_STATE.SAVING
-                                                ? t('savingConfig')
-                                                : t('saveConfig')}
-                                        </Button>
-                                    </Form.Item>
                                 </Form>
                             </TabPane>
-                            
-                            <TabPane 
-                                tab={<span><SearchOutlined /> {t('search')}</span>} 
+
+                            <TabPane
+                                tab={
+                                    <span>
+                                        <SearchOutlined /> {t('search')}
+                                    </span>
+                                }
                                 key="search"
                             >
                                 <Form
                                     form={form}
                                     name="setting"
                                     className="form"
-                                    onFinish={onFinish}
                                     layout="vertical"
                                     requiredMark={false}
                                     size="large"
+                                    onValuesChange={handleValuesChange}
                                 >
                                     {renderSearchSettings()}
-                                    <Form.Item className="form-actions">
-                                        <Button
-                                            type="primary"
-                                            htmlType="submit"
-                                            loading={loadingState !== LOADING_STATE.SAVE}
-                                            block
-                                            size="large"
-                                        >
-                                            {loadingState === LOADING_STATE.VALIDATING
-                                                ? t('validatingApi')
-                                                : loadingState === LOADING_STATE.SAVING
-                                                ? t('savingConfig')
-                                                : t('saveConfig')}
-                                        </Button>
-                                    </Form.Item>
                                 </Form>
                             </TabPane>
-                            
-                            <TabPane 
-                                tab={<span><InfoCircleOutlined /> {t('about')}</span>} 
+
+                            <TabPane
+                                tab={
+                                    <span>
+                                        <InfoCircleOutlined /> {t('about')}
+                                    </span>
+                                }
                                 key="about"
                             >
                                 <div className="about-section">
-                                    <Typography.Title level={4}>
-                                        {t('appTitle')}
-                                    </Typography.Title>
+                                    <Typography.Title level={4}>{t('appTitle')}</Typography.Title>
                                     <Typography.Paragraph>
                                         {t('aboutDescription')}
                                     </Typography.Paragraph>
                                     <div className="app-links">
-                                        <Typography.Link onClick={onSetShortcuts} className="link-item">
+                                        <Typography.Link
+                                            onClick={onSetShortcuts}
+                                            className="link-item"
+                                        >
                                             <SettingOutlined /> {t('setShortcuts')}
                                         </Typography.Link>
-                                        <Typography.Link href={GIT_URL} target="_blank" className="link-item">
+                                        <Typography.Link
+                                            href={GIT_URL}
+                                            target="_blank"
+                                            className="link-item"
+                                        >
                                             <GithubOutlined /> {t('starAuthor')}
                                         </Typography.Link>
                                     </div>

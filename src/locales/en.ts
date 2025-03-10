@@ -130,5 +130,10 @@ Please answer in the same language as the user's question.`,
   "enterDomainToFilter": "Enter domain to filter",
   "add": "Add",
   "enableWebSearchMessage": "Enable Web Search to configure search settings.",
-  "aboutDescription": "A powerful browser extension that integrates DeepSeek and other AI models into your browsing experience."
+  "aboutDescription": "A powerful browser extension that integrates DeepSeek and other AI models into your browsing experience.",
+  
+  // Auto-save related translations
+  "autoSaving": "Saving...",
+  "autoSaved": "Changes saved",
+  "autoSaveError": "Error saving changes"
 };

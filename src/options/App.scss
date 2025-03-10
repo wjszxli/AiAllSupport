@@ -99,6 +99,7 @@
 
     .form {
         margin-top: 20px;
+        position: relative;
 
         .form-item {
             margin-bottom: 24px;
@@ -109,9 +110,38 @@
             text-align: right;
         }
 
-        .form-actions {
-            margin-top: 30px;
-            margin-bottom: 20px;
+        .save-status {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 16px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 100;
+            
+            &.saving {
+                color: #1677ff;
+            }
+            
+            &.saved {
+                color: #52c41a;
+            }
+            
+            &.error {
+                color: #f5222d;
+            }
+            
+            .status-icon {
+                font-size: 16px;
+            }
+            
+            .status-text {
+                font-size: 14px;
+            }
         }
     }
 
