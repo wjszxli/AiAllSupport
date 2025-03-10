@@ -11,18 +11,21 @@ const backgroundPath = resolveSrc('background/index.ts');
 const optionsPath = resolveSrc('options/index.tsx');
 const popupPath = resolveSrc('popup/index.tsx');
 const installPath = resolveSrc('install/index.tsx');
+const chatPath = resolveSrc('chat/index.tsx');
 
 const devEntry: Record<string, string[]> = {
     background: [backgroundPath],
     options: [HMRClientScript, optionsPath],
     popup: [HMRClientScript, popupPath],
     install: [HMRClientScript, installPath],
+    chat: [HMRClientScript, chatPath],
 };
 const prodEntry: Record<string, string[]> = {
     background: [backgroundPath],
     options: [optionsPath],
     popup: [popupPath],
     install: [installPath],
+    chat: [chatPath],
 };
 const entry = __DEV__ ? devEntry : prodEntry;
 

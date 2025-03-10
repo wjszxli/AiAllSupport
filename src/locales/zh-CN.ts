@@ -119,4 +119,5 @@ export const zhCN = {
     filteredDomains: '过滤的域名',
     searchEngines: '启用的搜索引擎',
     openSettings: '打开设置',
+    openChat: '打开聊天',
 };

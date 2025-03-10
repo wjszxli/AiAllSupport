@@ -1,6 +1,6 @@
 import { Button, Card, Typography, Divider, Space, Select } from 'antd';
 import React, { useEffect, useState } from 'react';
-import { SettingOutlined, GithubOutlined, RocketOutlined, GlobalOutlined } from '@ant-design/icons';
+import { SettingOutlined, GithubOutlined, RocketOutlined, GlobalOutlined, MessageOutlined } from '@ant-design/icons';
 
 import { t, getLocale, setLocale } from '@/services/i18n';
 import type { LocaleType } from '@/locales';
@@ -73,6 +73,12 @@ const App: React.FC = () => {
         }
     };
 
+    const openChatPage = () => {
+        chrome.tabs.create({
+            url: chrome.runtime.getURL('chat.html')
+        });
+    };
+
     return (
         <div className="app">
             <Card className="app-container">
@@ -109,6 +115,15 @@ const App: React.FC = () => {
                 <div className="popup-content">
                     <Button
                         type="primary"
+                        icon={<MessageOutlined />}
+                        onClick={openChatPage}
+                        size="large"
+                        block
+                    >
+                        {t('openChat')}
+                    </Button>
+                    <Button
+                        type="default"
                         icon={<SettingOutlined />}
                         onClick={openOptionsPage}
                         size="large"

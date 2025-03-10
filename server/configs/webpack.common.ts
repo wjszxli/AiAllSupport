@@ -80,9 +80,15 @@ const commonConfig: Configuration = {
             template: resolvePublic('popup.html'),
         }),
         new HtmlWebpackPlugin({
+            chunks: ['chat'],
+            filename: 'chat.html',
+            title: 'chat page',
+            template: resolvePublic('chat.html'),
+        }),
+        new HtmlWebpackPlugin({
             chunks: ['install'],
             filename: 'install.html',
-            title: '使用说明',
+            title: 'install page',
             template: resolvePublic('install.html'),
         }),
         new MiniCssExtractPlugin({

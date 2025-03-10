@@ -92,4 +92,5 @@ export const en = {
     fetchWebpageContentSuccess: 'Successfully fetched the webpage content, processing with AI...',
     fetchWebpageContentFailed: 'Failed to fetch webpage content. Using AI knowledge only...',
     openSettings: 'Open Settings',
+    openChat: 'Open Chat',
 };
