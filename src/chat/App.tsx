@@ -8,15 +8,16 @@ import {
     Tooltip,
     Typography,
     Divider,
+    Card,
     Space,
     Checkbox,
     Tag,
     Avatar,
     Spin,
     Empty,
+    Tabs,
     Drawer,
     Modal,
-    Rate,
 } from 'antd';
 import React, { useEffect, useState, useRef } from 'react';
 import {
@@ -30,10 +31,9 @@ import {
     CloseCircleOutlined,
     RobotOutlined,
     UserOutlined,
+    MenuUnfoldOutlined,
     BulbOutlined,
     QuestionCircleOutlined,
-    LikeOutlined,
-    DislikeOutlined,
 } from '@ant-design/icons';
 import { md } from '@/utils/markdownRenderer';
 
@@ -82,8 +82,12 @@ const App: React.FC = () => {
     const [userInput, setUserInput] = useState('');
     const [activeTab, setActiveTab] = useState('chat');
     const inputRef = useRef<any>(null);
-    const [feedbackVisible, setFeedbackVisible] = useState(false);
-    const [currentFeedbackMessageId, setCurrentFeedbackMessageId] = useState<number | null>(null);
+    const [suggestedPrompts, setSuggestedPrompts] = useState([
+        "解释一下深度学习和机器学习的区别",
+        "帮我优化一段Python代码",
+        "如何提高英语口语水平",
+        "推荐几本经典科幻小说"
+    ]);
 
     // Use the useChatMessages hook
     const {
@@ -711,21 +715,6 @@ const App: React.FC = () => {
         </Drawer>
     );
 
-    // 处理消息反馈
-    const handleMessageFeedback = (messageId: number, isPositive: boolean) => {
-        setCurrentFeedbackMessageId(messageId);
-        setFeedbackVisible(true);
-    };
-
-    // 提交反馈
-    const submitFeedback = (rating: number, feedbackText?: string) => {
-        message.success(t('feedbackReceived') || '感谢您的反馈！');
-        setFeedbackVisible(false);
-        setCurrentFeedbackMessageId(null);
-
-        // 这里可以添加发送反馈到服务器的逻辑
-    };
-
     return (
         <div className="app">
             <div className="chat-container">
@@ -788,12 +777,7 @@ const App: React.FC = () => {
                                         <BulbOutlined /> {t('tryAsking') || '尝试提问：'}
                                     </Typography.Title>
                                     <div className="suggestion-items">
-                                        {[
-                                            '解释一下深度学习和机器学习的区别',
-                                            '帮我优化一段Python代码',
-                                            '如何提高英语口语水平',
-                                            '推荐几本经典科幻小说',
-                                        ].map((prompt, index) => (
+                                        {suggestedPrompts.map((prompt, index) => (
                                             <Button
                                                 key={index}
                                                 className="suggestion-item"
@@ -814,66 +798,48 @@ const App: React.FC = () => {
                             </div>
                         ) : (
                             messages.map((msg) => (
-                                <div
-                                    key={msg.id}
-                                    className={`message ${
-                                        msg.sender === 'user' ? 'user-message' : 'ai-message'
-                                    }`}
+                                <div 
+                                    key={msg.id} 
+                                    className={`message ${msg.sender === 'user' ? 'user-message' : 'ai-message'}`}
                                 >
                                     <div className="message-avatar">
                                         {msg.sender === 'user' ? (
                                             <Avatar icon={<UserOutlined />} />
                                         ) : (
-                                            <Avatar
-                                                icon={<RobotOutlined />}
-                                                style={{ backgroundColor: '#1890ff' }}
-                                            />
+                                            <Avatar icon={<RobotOutlined />} style={{ backgroundColor: '#1890ff' }} />
                                         )}
                                     </div>
                                     <div className="message-content">
                                         <div className="message-header">
                                             <div className="message-sender">
-                                                {msg.sender === 'user'
-                                                    ? t('you')
-                                                    : selectedProvider}
-                                            </div>
-                                            <div className="message-actions">
-                                                {msg.sender === 'ai' && (
-                                                    <>
-                                                        <Button
-                                                            type="text"
-                                                            icon={<CopyOutlined />}
-                                                            size="small"
-                                                            onClick={() =>
-                                                                copyToClipboard(msg.text)
-                                                            }
-                                                            title={t('copy')}
-                                                        />
-                                                        <Button
-                                                            type="text"
-                                                            icon={<LikeOutlined />}
-                                                            size="small"
-                                                            onClick={() =>
-                                                                handleMessageFeedback(msg.id, true)
-                                                            }
-                                                            title={t('helpful') || '有帮助'}
-                                                        />
-                                                        <Button
-                                                            type="text"
-                                                            icon={<DislikeOutlined />}
-                                                            size="small"
-                                                            onClick={() =>
-                                                                handleMessageFeedback(msg.id, false)
-                                                            }
-                                                            title={t('notHelpful') || '没帮助'}
-                                                        />
-                                                    </>
-                                                )}
+                                                {msg.sender === 'user' ? t('you') : selectedProvider}
                                             </div>
                                         </div>
                                         <div className="message-text">
                                             {renderMessageContent(msg)}
                                         </div>
+                                        {msg.sender === 'ai' && streamingMessageId !== msg.id && (
+                                            <div className="message-actions">
+                                                <Button 
+                                                    type="text" 
+                                                    icon={<CopyOutlined />} 
+                                                    size="small"
+                                                    onClick={() => copyToClipboard(msg.text)}
+                                                    title={t('copy')}
+                                                >
+                                                    {t('copy') || '复制'}
+                                                </Button>
+                                                <Button 
+                                                    type="text" 
+                                                    icon={<ReloadOutlined />} 
+                                                    size="small"
+                                                    onClick={() => regenerateResponse()}
+                                                    title={t('regenerate')}
+                                                >
+                                                    {t('regenerate') || '重新生成'}
+                                                </Button>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             ))
@@ -924,17 +890,8 @@ const App: React.FC = () => {
                         <div className="footer-actions">
                             {messages.length > 0 ? (
                                 <>
-                                    <Button
-                                        type="text"
-                                        icon={<ReloadOutlined />}
-                                        onClick={regenerateResponse}
-                                        disabled={messages.length < 2 || isLoading}
-                                        title={t('regenerate')}
-                                    >
-                                        {t('regenerate')}
-                                    </Button>
-                                    <Button
-                                        type="text"
+                                    <Button 
+                                        type="text" 
                                         onClick={clearChat}
                                         disabled={messages.length === 0 || isLoading}
                                         title={t('clear')}
@@ -944,8 +901,7 @@ const App: React.FC = () => {
                                 </>
                             ) : (
                                 <div className="footer-tips">
-                                    <QuestionCircleOutlined />{' '}
-                                    {t('pressTip') || '按回车键发送，Shift+回车换行'}
+                                    <QuestionCircleOutlined /> {t('pressTip') || "按回车键发送，Shift+回车换行"}
                                 </div>
                             )}
                         </div>
@@ -954,36 +910,6 @@ const App: React.FC = () => {
             </div>
 
             {renderSettingsDrawer()}
-
-            <Modal
-                title={t('provideFeedback') || '提供反馈'}
-                open={feedbackVisible}
-                onCancel={() => setFeedbackVisible(false)}
-                footer={[
-                    <Button key="cancel" onClick={() => setFeedbackVisible(false)}>
-                        {t('cancel') || '取消'}
-                    </Button>,
-                    <Button key="submit" type="primary" onClick={() => submitFeedback(0)}>
-                        {t('submit') || '提交'}
-                    </Button>,
-                ]}
-            >
-                <div className="feedback-container">
-                    <div className="feedback-rating">
-                        <Typography.Text>{t('rateResponse') || '请评价这个回答：'}</Typography.Text>
-                        <Rate allowHalf defaultValue={3} />
-                    </div>
-                    <div className="feedback-comment">
-                        <Typography.Text>
-                            {t('additionalFeedback') || '附加反馈（可选）：'}
-                        </Typography.Text>
-                        <Input.TextArea
-                            rows={4}
-                            placeholder={t('feedbackPlaceholder') || '请告诉我们如何改进...'}
-                        />
-                    </div>
-                </div>
-            </Modal>
         </div>
     );
 };
