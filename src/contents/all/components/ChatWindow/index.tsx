@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useCallback, useReducer, useMemo, memo } from 'react';
-import { CloseOutlined, PushpinOutlined, PushpinFilled } from '@ant-design/icons';
+import { CloseOutlined, PushpinOutlined, PushpinFilled, CommentOutlined } from '@ant-design/icons';
 import { Alert, Tooltip, Typography } from 'antd';
 import storage from '@/utils/storage';
 
@@ -40,6 +40,8 @@ const HighZIndexTooltip: React.FC<React.ComponentProps<typeof Tooltip>> = ({
     </Tooltip>
 );
 
+const FEEDBACK_SURVEY_URL = 'https://wj.qq.com/s2/18763807/74b5/';
+
 const HeaderActions = memo(
     ({
         isPinned,
@@ -47,14 +49,27 @@ const HeaderActions = memo(
         onCancel,
         pinTooltip,
         closeTooltip,
+        feedbackTooltip,
     }: {
         isPinned: boolean;
         togglePin: () => void;
         onCancel: () => void;
         pinTooltip: string;
         closeTooltip: string;
+        feedbackTooltip: string;
     }) => (
         <div className="chat-window-actions">
+            <HighZIndexTooltip title={feedbackTooltip} placement="bottom">
+                <div
+                    className="header-action-button feedback-button"
+                    onClick={() => window.open(FEEDBACK_SURVEY_URL, '_blank')}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={feedbackTooltip}
+                >
+                    <CommentOutlined style={{ fontSize: 16 }} />
+                </div>
+            </HighZIndexTooltip>
             <HighZIndexTooltip title={pinTooltip} placement="bottom">
                 <div
                     className="header-action-button pin-button"
@@ -157,6 +172,7 @@ const ChatWindow = ({ x, y, text }: { x: number; y: number; text?: string }) => 
 
     const pinTooltip = useMemo(() => (isPinned ? t('unpinWindow') : t('pinWindow')), [isPinned, t]);
     const closeTooltip = useMemo(() => t('close'), [t]);
+    const feedbackTooltip = useMemo(() => t('feedback'), [t]);
     const assistantLabel = useMemo(() => t('assistant'), [t]);
     const selectProviderText = useMemo(() => t('selectProviderFirst'), [t]);
 
@@ -368,6 +384,7 @@ const ChatWindow = ({ x, y, text }: { x: number; y: number; text?: string }) => 
                     }}
                     pinTooltip={pinTooltip}
                     closeTooltip={closeTooltip}
+                    feedbackTooltip={feedbackTooltip}
                 />
             </div>
             {chatContent}

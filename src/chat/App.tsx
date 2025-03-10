@@ -24,6 +24,7 @@ import {
     BulbOutlined,
     QuestionCircleOutlined,
     EditOutlined,
+    CommentOutlined,
 } from '@ant-design/icons';
 import { md } from '@/utils/markdownRenderer';
 
@@ -35,6 +36,9 @@ import { useChatMessages } from '@/hooks/useChatMessages';
 import type { ChatMessage } from '@/typings';
 
 import './App.scss';
+
+// Add feedback survey URL constant
+const FEEDBACK_SURVEY_URL = 'https://wj.qq.com/s2/18763807/74b5/';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -236,6 +240,11 @@ const App: React.FC = () => {
         }
     };
 
+    // Function to open feedback survey
+    const openFeedbackSurvey = () => {
+        window.open(FEEDBACK_SURVEY_URL, '_blank');
+    };
+
     return (
         <div className="app">
             <div className="chat-container">
@@ -244,6 +253,14 @@ const App: React.FC = () => {
                         <RocketOutlined /> {t('appTitle')}
                     </div>
                     <div className="header-actions">
+                        <Tooltip title={t('feedback')}>
+                            <Button
+                                type="text"
+                                icon={<CommentOutlined />}
+                                onClick={openFeedbackSurvey}
+                                className="feedback-button"
+                            />
+                        </Tooltip>
                         <Select
                             value={currentLocale}
                             onChange={handleLanguageChange}

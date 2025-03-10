@@ -146,5 +146,8 @@ export const zhCN = {
     // Tavily API 验证相关翻译
     validatingTavilyApi: '正在验证 Tavily API 密钥...',
     tavilyApiValidSuccess: 'Tavily API 密钥验证成功',
-    tavilyApiValidError: 'Tavily API 密钥验证失败'
+    tavilyApiValidError: 'Tavily API 密钥验证失败',
+    
+    // 反馈按钮翻译
+    feedback: '提供反馈'
 };

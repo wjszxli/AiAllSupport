@@ -14,6 +14,7 @@ import {
     Tag,
     Layout,
     Tabs,
+    Menu,
 } from 'antd';
 import React, { useEffect, useState } from 'react';
 import {
@@ -25,6 +26,7 @@ import {
     SearchOutlined,
     ControlOutlined,
     InfoCircleOutlined,
+    CommentOutlined,
 } from '@ant-design/icons';
 
 import { modelList, validateApiKey } from '@/services';
@@ -50,6 +52,9 @@ import './App.scss';
 const { Option } = Select;
 const { TabPane } = Tabs;
 const { Content } = Layout;
+
+// Add feedback survey URL constant
+const FEEDBACK_SURVEY_URL = 'https://wj.qq.com/s2/18763807/74b5/';
 
 const App: React.FC = () => {
     const [form] = Form.useForm();
@@ -692,6 +697,11 @@ const App: React.FC = () => {
         </>
     );
 
+    // Function to open feedback form
+    const openFeedbackSurvey = () => {
+        window.open(FEEDBACK_SURVEY_URL, '_blank');
+    };
+
     // Main render method
     return (
         <Layout className="app">
@@ -806,23 +816,21 @@ const App: React.FC = () => {
                                 key="about"
                             >
                                 <div className="about-section">
-                                    <Typography.Title level={4}>{t('appTitle')}</Typography.Title>
+                                    <Typography.Title level={4}>
+                                        {t('appTitle')}
+                                    </Typography.Title>
                                     <Typography.Paragraph>
                                         {t('aboutDescription')}
                                     </Typography.Paragraph>
                                     <div className="app-links">
-                                        <Typography.Link
-                                            onClick={onSetShortcuts}
-                                            className="link-item"
-                                        >
+                                        <Typography.Link onClick={onSetShortcuts} className="link-item">
                                             <SettingOutlined /> {t('setShortcuts')}
                                         </Typography.Link>
-                                        <Typography.Link
-                                            href={GIT_URL}
-                                            target="_blank"
-                                            className="link-item"
-                                        >
+                                        <Typography.Link href={GIT_URL} target="_blank" className="link-item">
                                             <GithubOutlined /> {t('starAuthor')}
+                                        </Typography.Link>
+                                        <Typography.Link onClick={openFeedbackSurvey} className="link-item">
+                                            <CommentOutlined /> {t('feedback')}
                                         </Typography.Link>
                                     </div>
                                 </div>
@@ -838,6 +846,9 @@ const App: React.FC = () => {
                         </Typography.Link>
                         <Typography.Link href={GIT_URL} target="_blank" className="footer-link">
                             <GithubOutlined /> {t('starAuthor')}
+                        </Typography.Link>
+                        <Typography.Link onClick={openFeedbackSurvey} className="footer-link">
+                            <CommentOutlined /> {t('feedback')}
                         </Typography.Link>
                     </Space>
                 </div>

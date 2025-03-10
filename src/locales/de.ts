@@ -93,7 +93,7 @@ export const de = {
   "fetchWebpageContentSuccess": "Die Webseiteninhalte wurden erfolgreich abgerufen, die Ergebnisse werden gerade mit KI verarbeitet...",
   "fetchWebpageContentFailed": "Fehler beim Abrufen der Webseiteninhalte, verwenden Sie nur das KI-Wissen zur Beantwortung...",
   "pleaseInputApiKey": "Bitte geben Sie den API-Schlüssel auf der Konfigurationsseite ein.",
-  "REFERENCE_PROMPT": "Bitte beantworten Sie die Frage anhand der Referenzen
+  "REFERENCE_PROMPT": `Bitte beantworten Sie die Frage anhand der Referenzen
 
 ## Anmerkungsregeln:
 - Bitte zitieren Sie den Kontext am Ende des Satzes, falls zutreffend.
@@ -108,7 +108,7 @@ export const de = {
 
 {references}
 
-Bitte antworten Sie in derselben Sprache wie die Benutzerfrage.",
+Bitte antworten Sie in derselben Sprache wie die Benutzerfrage.`,
   "filteredDomains": "Gefilterte Domains",
   "searchEngines": "Aktivierte Suchmaschinen",
   "openSettings": "Einstellungen öffnen",

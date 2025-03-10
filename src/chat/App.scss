@@ -57,6 +57,18 @@
                 }
             }
 
+            .feedback-button {
+                padding: 4px 8px;
+                font-size: 16px;
+                transition: all 0.3s;
+                color: #38a169;
+
+                &:hover {
+                    color: #2f855a;
+                    background-color: rgba(56, 161, 105, 0.1);
+                }
+            }
+
             .settings-button {
                 padding: 4px 8px;
                 font-size: 16px;
