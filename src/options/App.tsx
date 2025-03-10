@@ -490,13 +490,27 @@ const App: React.FC = () => {
                             <Form.Item
                                 label={t('tavilyApiKey')}
                                 name="tavilyApiKey"
-                                rules={[{ required: false, message: t('enterTavilyApiKey') }]}
+                                rules={[
+                                    { required: false, message: t('enterTavilyApiKey') },
+                                ]}
                             >
-                                <Input.Password
-                                    value={tavilyApiKey}
-                                    onChange={(e) => setTavilyApiKey(e.target.value)}
-                                    placeholder={t('enterTavilyApiKey')}
-                                />
+                                <>
+                                    <Input.Password
+                                        value={tavilyApiKey}
+                                        onChange={(e) => setTavilyApiKey(e.target.value)}
+                                        placeholder={t('enterTavilyApiKey')}
+                                    />
+                                    <div className="api-link">
+                                        <Tooltip title={t('getTavilyApiKey')}>
+                                            <Typography.Link
+                                                href="https://app.tavily.com/home"
+                                                target="_blank"
+                                            >
+                                                {t('getTavilyApiKey')}
+                                            </Typography.Link>
+                                        </Tooltip>
+                                    </div>
+                                </>
                             </Form.Item>
 
                             <Form.Item

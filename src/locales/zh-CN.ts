@@ -130,6 +130,7 @@ export const zhCN = {
     about: '关于',
     tavilyApiKey: 'Tavily API 密钥',
     enterTavilyApiKey: '请输入 Tavily API 密钥',
+    getTavilyApiKey: '获取 Tavily API 密钥',
     selectAtLeastOneSearchEngine: '启用网络搜索时请至少选择一个搜索引擎',
     noFilteredDomains: '没有过滤的域名',
     enterDomainToFilter: '输入要过滤的域名',
