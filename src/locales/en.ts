@@ -136,5 +136,10 @@ Please answer in the same language as the user's question.`,
   // Auto-save related translations
   "autoSaving": "Saving...",
   "autoSaved": "Changes saved",
-  "autoSaveError": "Error saving changes"
+  "autoSaveError": "Error saving changes",
+  
+  // Tavily API validation translations
+  "validatingTavilyApi": "Validating Tavily API Key...",
+  "tavilyApiValidSuccess": "Tavily API Key validation successful",
+  "tavilyApiValidError": "Tavily API Key validation failed"
 };

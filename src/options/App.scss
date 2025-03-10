@@ -110,6 +110,26 @@
             text-align: right;
         }
 
+        .validating-input {
+            border-color: #1677ff;
+            animation: pulse-border 1.5s infinite;
+        }
+
+        @keyframes pulse-border {
+            0% {
+                border-color: #1677ff;
+                box-shadow: 0 0 0 0 rgba(22, 119, 255, 0.2);
+            }
+            70% {
+                border-color: #1677ff;
+                box-shadow: 0 0 0 5px rgba(22, 119, 255, 0);
+            }
+            100% {
+                border-color: #1677ff;
+                box-shadow: 0 0 0 0 rgba(22, 119, 255, 0);
+            }
+        }
+
         .save-status {
             position: fixed;
             bottom: 20px;

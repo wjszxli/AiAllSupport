@@ -141,5 +141,10 @@ export const zhCN = {
     // 自动保存相关翻译
     autoSaving: '正在保存...',
     autoSaved: '已保存更改',
-    autoSaveError: '保存更改时出错'
+    autoSaveError: '保存更改时出错',
+    
+    // Tavily API 验证相关翻译
+    validatingTavilyApi: '正在验证 Tavily API 密钥...',
+    tavilyApiValidSuccess: 'Tavily API 密钥验证成功',
+    tavilyApiValidError: 'Tavily API 密钥验证失败'
 };
