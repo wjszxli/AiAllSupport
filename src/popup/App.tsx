@@ -26,9 +26,10 @@ import {
     PROVIDERS_DATA,
     SHORTCUTS_URL,
     isFirefox,
-    SEARCH_ENGINE_NAMES,
     DEFAULT_SEARCH_ENGINES,
     FILTERED_DOMAINS,
+    SEARCH_ENGINES,
+    SEARCH_ENGINE_NAMES,
 } from '@/utils/constant';
 import storage from '@/utils/storage';
 import { featureSettings } from '@/utils/featureSettings';
@@ -125,6 +126,7 @@ const App: React.FC = () => {
             webSearchEnabled: isWebSearchEnabled,
             useWebpageContext: isUseWebpageContext,
             tavilyApiKey: userTavilyApiKey,
+            searchEngines: userEnabledSearchEngines,
         });
     };
 
@@ -168,10 +170,7 @@ const App: React.FC = () => {
     const onFinish = async (values: any) => {
         try {
             // 如果网络搜索开启，但没有选择搜索引擎，则阻止提交
-            if (
-                values.webSearchEnabled &&
-                (!values.searchEngines || values.searchEngines.length === 0)
-            ) {
+            if (values.webSearchEnabled && (!enabledSearchEngines || enabledSearchEngines.length === 0)) {
                 message.error('启用网络搜索时至少选择一个搜索引擎');
                 return;
             }
@@ -197,6 +196,7 @@ const App: React.FC = () => {
                 selected: true,
                 selectedModel: model,
             };
+            console.log('values', values);
 
             await Promise.all([
                 storage.setProviders(providersData),
@@ -206,7 +206,7 @@ const App: React.FC = () => {
                 storage.setIsChatBoxIcon(isIcon),
                 storage.setWebSearchEnabled(webSearchEnabled),
                 storage.setUseWebpageContext(useWebpageContext),
-                storage.setEnabledSearchEngines(values.searchEngines || []),
+                storage.setEnabledSearchEngines(enabledSearchEngines || []),
                 storage.setTavilyApiKey(values.tavilyApiKey || ''),
                 storage.setFilteredDomains(filteredDomains),
             ]);
@@ -501,11 +501,19 @@ const App: React.FC = () => {
                                         ]}
                                     >
                                         <div className="search-engines-container">
-                                            {Object.values(SEARCH_ENGINE_NAMES).map((engine) => (
-                                                <Checkbox value={engine} key={engine}>
-                                                    {PROVIDERS_DATA[engine]?.name || engine}
-                                                </Checkbox>
-                                            ))}
+                                            <Checkbox.Group
+                                                value={enabledSearchEngines}
+                                                onChange={(value) => {
+                                                    setEnabledSearchEngines(value as string[]);
+                                                    form.setFieldsValue({ searchEngines: value });
+                                                }}
+                                            >
+                                                {Object.entries(SEARCH_ENGINES).map(([_, value]) => (
+                                                    <Checkbox value={value} key={value}>
+                                                        {SEARCH_ENGINE_NAMES[value] || value}
+                                                    </Checkbox>
+                                                ))}
+                                            </Checkbox.Group>
                                         </div>
                                     </Form.Item>
 

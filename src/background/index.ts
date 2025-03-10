@@ -9,15 +9,15 @@ import { tavily } from '@tavily/core';
 async function searchWeb(query: string): Promise<SearchResult[]> {
     try {
         console.log('执行多搜索引擎搜索:', query);
-        
+
         // 获取配置
         const [enabledEngines, filteredDomains] = await Promise.all([
             storage.getEnabledSearchEngines(),
             storage.getFilteredDomains(),
         ]);
-        
+
         console.log('启用的搜索引擎:', enabledEngines);
-        
+
         // 创建搜索引擎函数映射
         const searchFunctions: Record<string, (query: string) => Promise<SearchResult[]>> = {
             [SEARCH_ENGINES.BAIDU]: searchBaidu,
@@ -28,41 +28,43 @@ async function searchWeb(query: string): Promise<SearchResult[]> {
             [SEARCH_ENGINES.SEARXNG]: searchSearxng,
             [SEARCH_ENGINES.TAVILY]: searchTavily,
         };
-        
+
         // 获取启用的搜索函数
         const enabledSearchFunctions = enabledEngines
             .filter((engine) => searchFunctions[engine])
             .map((engine) => searchFunctions[engine]);
-        
+
         if (enabledSearchFunctions.length === 0) {
             console.log('没有启用的搜索引擎');
             return [];
         }
-        
+
         // 并行执行启用的搜索引擎的请求
         const results = await Promise.allSettled(enabledSearchFunctions.map((fn) => fn(query)));
-        
+
         // 合并结果
         let combinedResults: SearchResult[] = [];
-        
+
         results.forEach((result) => {
             if (result.status === 'fulfilled' && result.value.length > 0) {
                 combinedResults.push(...result.value);
             }
         });
-        
+
         // 过滤掉来自特定域名的结果（如知乎）
         if (filteredDomains.length > 0) {
             const beforeFilterCount = combinedResults.length;
-            
-            combinedResults = combinedResults.filter(result => {
+
+            combinedResults = combinedResults.filter((result) => {
                 // 检查结果链接是否包含要过滤的域名
-                return !filteredDomains.some(domain => result.link.includes(domain));
+                return !filteredDomains.some((domain) => result.link.includes(domain));
             });
-            
+
             const filteredCount = beforeFilterCount - combinedResults.length;
             if (filteredCount > 0) {
-                console.log(`已过滤掉 ${filteredCount} 个来自以下域名的结果: ${filteredDomains.join(', ')}`);
+                console.log(
+                    `已过滤掉 ${filteredCount} 个来自以下域名的结果: ${filteredDomains.join(', ')}`,
+                );
             }
         }
 
@@ -495,13 +497,13 @@ async function searchTavily(query: string): Promise<SearchResult[]> {
         // 执行搜索
         const response = await tvly.search(query, {
             searchDepth: 'basic',
-            maxResults: 5
+            maxResults: 5,
         });
         console.log('Tavily搜索结果:', response);
 
         // 将 Tavily 返回的结果转换为应用所需的 SearchResult 格式
         const results: SearchResult[] = [];
-        
+
         if (response.results && Array.isArray(response.results)) {
             response.results.forEach((item) => {
                 if (item.title && item.url) {
@@ -509,7 +511,7 @@ async function searchTavily(query: string): Promise<SearchResult[]> {
                         title: item.title,
                         link: item.url,
                         snippet: item.content || '',
-                        source: 'Tavily'
+                        source: 'Tavily',
                     });
                 }
             });
