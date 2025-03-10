@@ -9,7 +9,7 @@
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
         sans-serif;
     overflow: hidden;
-    background-color: #f5f5f5;
+    background-color: #f8fafc;
 
     .chat-container {
         display: flex;
@@ -17,8 +17,8 @@
         width: 100%;
         height: 100%;
         background-color: #fff;
-        border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
         overflow: hidden;
     }
 
@@ -36,7 +36,7 @@
             align-items: center;
             font-size: 18px;
             font-weight: 600;
-            color: #1677ff;
+            color: #4776e6;
 
             .anticon {
                 margin-right: 10px;
@@ -53,7 +53,7 @@
                 min-width: 100px;
 
                 &:hover {
-                    color: #1677ff;
+                    color: #4776e6;
                 }
             }
 
@@ -63,8 +63,8 @@
                 transition: all 0.3s;
 
                 &:hover {
-                    color: #1677ff;
-                    background-color: rgba(22, 119, 255, 0.1);
+                    color: #4776e6;
+                    background-color: rgba(71, 118, 230, 0.1);
                 }
             }
         }
@@ -75,14 +75,17 @@
         flex-direction: column;
         flex: 1;
         overflow: hidden;
-        background-color: #f8f9fa;
+        background-color: #f8fafc;
     }
 
     .messages-container {
         flex: 1;
-        padding: 20px;
+        padding: 24px;
         overflow-y: auto;
         overflow-x: hidden;
+        background-image: 
+            radial-gradient(circle at 25% 10%, rgba(71, 118, 230, 0.03) 0%, transparent 60%),
+            radial-gradient(circle at 75% 75%, rgba(142, 84, 233, 0.03) 0%, transparent 60%);
 
         &::-webkit-scrollbar {
             width: 6px;
@@ -150,7 +153,7 @@
 
         .message {
             display: flex;
-            margin-bottom: 24px;
+            margin-bottom: 28px;
             animation: fadeIn 0.3s ease-in-out;
 
             .message-avatar {
@@ -211,6 +214,13 @@
                     border-radius: 50%;
                     margin-left: 6px;
                     animation: pulse 1.5s infinite;
+                }
+
+                .message-time {
+                    font-size: 11px;
+                    color: #999;
+                    font-weight: normal;
+                    margin-left: 8px;
                 }
             }
 
@@ -341,6 +351,7 @@
 
             &.user-message {
                 justify-content: flex-end;
+                animation: slide-in-right 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 
                 .message-avatar {
                     order: 2;
@@ -350,22 +361,123 @@
 
                 .message-content {
                     order: 1;
+                    align-items: flex-end;
                 }
 
                 .message-header {
                     flex-direction: row-reverse;
+                    width: 100%;
                 }
 
                 .message-text {
-                    background-color: #e6f4ff;
-                    color: #1677ff;
+                    background: linear-gradient(135deg, #4776e6 0%, #8e54e9 100%);
+                    color: white;
+                    border-radius: 14px 14px 0 14px;
+                    box-shadow: 0 4px 12px rgba(78, 88, 222, 0.15);
+                    position: relative;
+                    overflow: hidden;
+                    
+                    // 气泡尾巴效果
+                    &::before {
+                        content: '';
+                        position: absolute;
+                        bottom: 0;
+                        right: -6px;
+                        width: 12px;
+                        height: 12px;
+                        background: linear-gradient(135deg, transparent, #8e54e9);
+                        clip-path: polygon(0 0, 0 100%, 100% 100%);
+                    }
+                    
+                    // 光晕效果
+                    &::after {
+                        content: '';
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        bottom: 0;
+                        background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
+                        pointer-events: none;
+                    }
+                    
+                    // 代码样式调整
+                    pre, code {
+                        background-color: rgba(255, 255, 255, 0.15);
+                        border: 1px solid rgba(255, 255, 255, 0.2);
+                        color: #fff;
+                    }
                 }
             }
 
             &.ai-message {
+                justify-content: flex-start;
+                animation: slide-in-left 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                
+                .message-avatar {
+                    order: 1;
+                    margin-right: 16px;
+                    margin-left: 0;
+                }
+
+                .message-content {
+                    order: 2;
+                    align-items: flex-start;
+                }
+
+                .message-header {
+                    flex-direction: row;
+                    width: 100%;
+                }
+
                 .message-text {
-                    background-color: #f7f8fa;
+                    background-color: #fff;
                     color: #333;
+                    border-radius: 14px 14px 14px 0;
+                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+                    position: relative;
+                    border-left: 3px solid #06b6d4;
+                    
+                    // 气泡尾巴效果
+                    &::before {
+                        content: '';
+                        position: absolute;
+                        bottom: 0;
+                        left: -6px;
+                        width: 12px;
+                        height: 12px;
+                        background-color: #fff;
+                        clip-path: polygon(100% 0, 100% 100%, 0 100%);
+                    }
+                    
+                    // 轻微渐变效果
+                    &::after {
+                        content: '';
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        bottom: 0;
+                        background: linear-gradient(to right, rgba(6, 182, 212, 0.05), transparent);
+                        pointer-events: none;
+                        border-radius: 14px 14px 14px 0;
+                    }
+                }
+                
+                // 修改复制和重新生成按钮在AI消息下的样式
+                .message-actions {
+                    button {
+                        background-color: #f5f7fa;
+                        color: #4776e6;
+                        border: 1px solid #e6e8f0;
+                        
+                        &:hover {
+                            background-color: #e6f7ff;
+                            transform: translateY(-2px);
+                            box-shadow: 0 2px 6px rgba(71, 118, 230, 0.15);
+                            color: #4776e6;
+                        }
+                    }
                 }
             }
         }
@@ -400,7 +512,7 @@
     }
 
     .chat-footer {
-        padding: 16px 24px;
+        padding: 20px 24px;
         background-color: #fff;
         border-top: 1px solid rgba(0, 0, 0, 0.06);
 
@@ -409,30 +521,77 @@
             position: relative;
 
             .ant-input {
-                padding: 12px 16px;
-                border-radius: 8px;
+                padding: 14px 18px;
+                border-radius: 12px;
                 resize: none;
-                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
                 transition: all 0.3s;
+                font-size: 15px;
+                border: 1px solid #e2e8f0;
 
                 &:focus {
-                    box-shadow: 0 2px 12px rgba(22, 119, 255, 0.15);
+                    box-shadow: 0 4px 16px rgba(71, 118, 230, 0.15);
+                    border-color: #4776e6;
                 }
             }
 
             .input-actions {
                 position: absolute;
-                right: 12px;
-                bottom: 12px;
+                right: 14px;
+                bottom: 14px;
                 display: flex;
-                gap: 8px;
+                gap: 10px;
+                
+                .send-button {
+                    background: linear-gradient(135deg, #4776e6 0%, #8e54e9 100%);
+                    border: none;
+                    box-shadow: 0 4px 12px rgba(78, 88, 222, 0.15);
+                    transition: all 0.3s ease;
+                    
+                    &:hover, &:focus {
+                        background: linear-gradient(135deg, #5784ec 0%, #9a66ed 100%);
+                        transform: translateY(-2px);
+                        box-shadow: 0 6px 16px rgba(78, 88, 222, 0.25);
+                    }
+                    
+                    &:active {
+                        transform: translateY(0);
+                    }
+                }
+                
+                .stop-button {
+                    background-color: #f8f9fb;
+                    border: 1px solid #e2e8f0;
+                    color: #666;
+                    
+                    &:hover {
+                        background-color: #f1f5f9;
+                        color: #4776e6;
+                    }
+                }
+                
+                button {
+                    height: 36px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 6px;
+                    padding: 0 16px;
+                    border-radius: 8px;
+                    font-size: 14px;
+                    
+                    .anticon {
+                        font-size: 14px;
+                        margin-right: 0;
+                    }
+                }
             }
         }
 
         .footer-actions {
             display: flex;
             justify-content: center;
-            margin-top: 12px;
+            margin-top: 16px;
             gap: 16px;
 
             button {
@@ -440,7 +599,7 @@
                 font-size: 13px;
 
                 &:hover:not(:disabled) {
-                    color: #1677ff;
+                    color: #4776e6;
                 }
 
                 .anticon {
@@ -583,5 +742,87 @@
     100% {
         transform: scale(0.8);
         opacity: 0.5;
+    }
+}
+
+// 定义更平滑的过渡动画
+@keyframes slide-in-left {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slide-in-right {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+// 输入提示动画
+@keyframes blink-cursor {
+    from, to { border-color: transparent; }
+    50% { border-color: #4776e6; }
+}
+
+// 更新消息动画
+.message {
+    &.user-message {
+        animation: slide-in-right 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    
+    &.ai-message {
+        animation: slide-in-left 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    
+    // 消息悬停效果
+    &:hover {
+        .message-actions {
+            opacity: 1;
+            transform: translateY(0);
+            visibility: visible;
+        }
+    }
+    
+    .message-text {
+        transition: box-shadow 0.3s ease, transform 0.2s ease;
+        
+        &:hover {
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            transform: translateY(-2px);
+        }
+    }
+    
+    .message-actions {
+        opacity: 0.6;
+        transform: translateY(5px);
+        transition: all 0.3s ease;
+        visibility: visible;
+    }
+}
+
+// 思考中的消息样式
+.ai-message.typing .message-text {
+    position: relative;
+    
+    &::after {
+        content: '';
+        position: absolute;
+        right: -2px;
+        top: 0;
+        height: 100%;
+        width: 2px;
+        background: linear-gradient(to bottom, #4776e6, #8e54e9);
+        animation: blink-cursor 0.8s infinite;
+        border-radius: 2px;
     }
 }

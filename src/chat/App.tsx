@@ -88,6 +88,7 @@ const App: React.FC = () => {
         "如何提高英语口语水平",
         "推荐几本经典科幻小说"
     ]);
+    const [typingMessageId, setTypingMessageId] = useState<number | null>(null);
 
     // Use the useChatMessages hook
     const {
@@ -406,11 +407,22 @@ const App: React.FC = () => {
         if (userInput.trim() && !isLoading) {
             sendChatMessage(userInput.trim());
             setUserInput('');
+            // 模拟AI思考和打字状态
+            const responseTime = setTimeout(() => {
+                // 假设最新消息id为当前消息id+100 (简化示例)
+                const simulatedAiMessageId = Date.now() + 100;
+                setTypingMessageId(simulatedAiMessageId);
+                // 清除状态
+                setTimeout(() => setTypingMessageId(null), 3000);
+            }, 500);
+            
             // Focus the input after sending
             setTimeout(() => {
                 if (inputRef.current) {
                     inputRef.current.focus();
                 }
+                // 清除定时器
+                clearTimeout(responseTime);
             }, 0);
         }
     };
@@ -797,22 +809,27 @@ const App: React.FC = () => {
                                 </div>
                             </div>
                         ) : (
-                            messages.map((msg) => (
+                            messages.map((msg, index) => (
                                 <div 
                                     key={msg.id} 
-                                    className={`message ${msg.sender === 'user' ? 'user-message' : 'ai-message'}`}
+                                    className={`message ${msg.sender === 'user' ? 'user-message' : 'ai-message'} ${
+                                        typingMessageId === msg.id || streamingMessageId === msg.id ? 'typing' : ''
+                                    }`}
                                 >
                                     <div className="message-avatar">
                                         {msg.sender === 'user' ? (
-                                            <Avatar icon={<UserOutlined />} />
+                                            <Avatar icon={<UserOutlined />} style={{ backgroundColor: '#8e54e9', color: 'white' }} />
                                         ) : (
-                                            <Avatar icon={<RobotOutlined />} style={{ backgroundColor: '#1890ff' }} />
+                                            <Avatar icon={<RobotOutlined />} style={{ backgroundColor: '#fff', color: '#06b6d4', border: '1px solid #e1e4e8' }} />
                                         )}
                                     </div>
                                     <div className="message-content">
                                         <div className="message-header">
                                             <div className="message-sender">
                                                 {msg.sender === 'user' ? t('you') : selectedProvider}
+                                                <span className="message-time">
+                                                    {new Date(msg.id).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                                </span>
                                             </div>
                                         </div>
                                         <div className="message-text">
@@ -858,32 +875,32 @@ const App: React.FC = () => {
                                 value={userInput}
                                 onChange={(e) => setUserInput(e.target.value)}
                                 onKeyDown={handleKeyDown}
-                                placeholder={t('typeMessage') || '输入您的问题...'}
+                                placeholder={t('typeMessage') || "输入您的问题..."}
                                 autoSize={{ minRows: 1, maxRows: 5 }}
                                 disabled={isLoading}
                             />
                             <div className="input-actions">
                                 {streamingMessageId !== null && (
-                                    <Button
-                                        type="text"
-                                        icon={<CloseCircleOutlined />}
+                                    <Button 
+                                        className="stop-button"
+                                        type="default"
+                                        icon={<CloseCircleOutlined />} 
                                         onClick={cancelStreamingResponse}
                                         title={t('stop')}
-                                    />
+                                    >
+                                        {t('stop') || "停止"}
+                                    </Button>
                                 )}
-                                <Tooltip
-                                    title={
-                                        userInput.trim()
-                                            ? t('sendMessage') || '发送'
-                                            : t('enterQuestion') || '请输入问题'
-                                    }
-                                >
-                                    <Button
-                                        type="primary"
-                                        icon={<SendOutlined />}
+                                <Tooltip title={userInput.trim() ? t('sendMessage') || "发送" : t('enterQuestion') || "请输入问题"}>
+                                    <Button 
+                                        className="send-button"
+                                        type="primary" 
+                                        icon={<SendOutlined />} 
                                         onClick={handleSendMessage}
                                         disabled={!userInput.trim() || isLoading}
-                                    />
+                                    >
+                                        {t('send') || "发送"}
+                                    </Button>
                                 </Tooltip>
                             </div>
                         </div>
@@ -896,7 +913,7 @@ const App: React.FC = () => {
                                         disabled={messages.length === 0 || isLoading}
                                         title={t('clear')}
                                     >
-                                        {t('clear')}
+                                        {t('clear') || "清空对话"}
                                     </Button>
                                 </>
                             ) : (
