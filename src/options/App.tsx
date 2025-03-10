@@ -488,32 +488,6 @@ const App: React.FC = () => {
                     getFieldValue('webSearchEnabled') ? (
                         <>
                             <Form.Item
-                                label={t('tavilyApiKey')}
-                                name="tavilyApiKey"
-                                rules={[
-                                    { required: false, message: t('enterTavilyApiKey') },
-                                ]}
-                            >
-                                <>
-                                    <Input.Password
-                                        value={tavilyApiKey}
-                                        onChange={(e) => setTavilyApiKey(e.target.value)}
-                                        placeholder={t('enterTavilyApiKey')}
-                                    />
-                                    <div className="api-link">
-                                        <Tooltip title={t('getTavilyApiKey')}>
-                                            <Typography.Link
-                                                href="https://app.tavily.com/home"
-                                                target="_blank"
-                                            >
-                                                {t('getTavilyApiKey')}
-                                            </Typography.Link>
-                                        </Tooltip>
-                                    </div>
-                                </>
-                            </Form.Item>
-
-                            <Form.Item
                                 label={t('searchEngines')}
                                 name="searchEngines"
                                 rules={[
@@ -549,6 +523,35 @@ const App: React.FC = () => {
                                     </Checkbox.Group>
                                 </div>
                             </Form.Item>
+
+                            {/* Only show Tavily API Key input if Tavily is selected */}
+                            {enabledSearchEngines.includes(SEARCH_ENGINES.TAVILY) && (
+                                <Form.Item
+                                    label={t('tavilyApiKey')}
+                                    name="tavilyApiKey"
+                                    rules={[
+                                        { required: true, message: t('enterTavilyApiKey') },
+                                    ]}
+                                >
+                                    <>
+                                        <Input.Password
+                                            value={tavilyApiKey}
+                                            onChange={(e) => setTavilyApiKey(e.target.value)}
+                                            placeholder={t('enterTavilyApiKey')}
+                                        />
+                                        <div className="api-link">
+                                            <Tooltip title={t('getTavilyApiKey')}>
+                                                <Typography.Link
+                                                    href="https://tavily.com/#api"
+                                                    target="_blank"
+                                                >
+                                                    {t('getTavilyApiKey')}
+                                                </Typography.Link>
+                                            </Tooltip>
+                                        </div>
+                                    </>
+                                </Form.Item>
+                            )}
 
                             <Form.Item label={t('filteredDomains')}>
                                 <div className="filtered-domains-container">
