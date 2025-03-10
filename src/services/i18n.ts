@@ -116,16 +116,16 @@ export const i18n = {
     },
 };
 
-// Helper functions
+// 辅助函数
 export const t = (key: string): string => {
     const translation = i18n.translate(key as LocaleKey);
-    // If translation is missing and returns the key itself
+    // 如果翻译缺失并返回键名本身
     if (translation === key) {
-        // Provide fallbacks for specific keys
+        // 为特定键提供备选项
         const fallbacks: Record<string, string> = {
             pin: 'Pin',
             unpin: 'Unpin',
-            // Add other fallbacks as needed
+            // 根据需要添加其他备选项
         };
         return fallbacks[key] || key;
     }

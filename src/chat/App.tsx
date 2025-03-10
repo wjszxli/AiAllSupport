@@ -159,32 +159,22 @@ const App: React.FC = () => {
     };
 
     const handleSendMessage = () => {
-        // If streaming is active, stop it instead of sending a new message
+        // 如果正在流式传输，停止它而不是发送新消息
         if (streamingMessageId !== null) {
             cancelStreamingResponse();
             return;
         }
 
-        // Regular send message logic
+        // 常规发送消息逻辑
         if (userInput.trim() && !isLoading) {
             sendChatMessage(userInput.trim());
             setUserInput('');
-            // 模拟AI思考和打字状态
-            const responseTime = setTimeout(() => {
-                // 假设最新消息id为当前消息id+100 (简化示例)
-                const simulatedAiMessageId = Date.now() + 100;
-                setTypingMessageId(simulatedAiMessageId);
-                // 清除状态
-                setTimeout(() => setTypingMessageId(null), 3000);
-            }, 500);
 
-            // Focus the input after sending
+            // 发送后聚焦输入框
             setTimeout(() => {
                 if (inputRef.current) {
                     inputRef.current.focus();
                 }
-                // 清除定时器
-                clearTimeout(responseTime);
             }, 0);
         }
     };

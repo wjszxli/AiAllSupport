@@ -153,7 +153,7 @@ export const useChatMessages = ({ t }: UseChatMessagesProps) => {
         [messages, isLoading, streamingMessageId, t, createStreamUpdateHandler],
     );
 
-    // Regenerate last AI response
+    // 重新生成最后的AI响应
     const regenerateResponse = useCallback(async () => {
         if (messages.length < 2) return;
 

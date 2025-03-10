@@ -7,10 +7,10 @@ import React from 'react';
 import { updateMessage } from '@/utils/messageUtils';
 
 /**
- * Sends a message to the AI service
- * @param {string} message - The message to send
- * @param {(chunk: string) => void} onStreamUpdate - Optional callback for incremental updates
- * @returns {Promise<string>} The response from the AI
+ * 向AI服务发送消息
+ * @param {string} message - 要发送的消息
+ * @param {(chunk: string) => void} onStreamUpdate - 用于增量更新的可选回调
+ * @returns {Promise<string>} AI的响应
  */
 export async function sendMessage(
     message: string,
@@ -37,11 +37,11 @@ export async function sendMessage(
                     return;
                 }
 
-                console.log('Received chunk:', chunk);
+                console.log('收到数据块:', chunk);
                 const { data, done } = chunk;
 
                 if (!done && !data.startsWith('data: ')) {
-                    console.log('Adding direct text to response:', data);
+                    console.log('添加直接文本到响应:', data);
                     // 思考结束后，开始收集响应
                     if (data.includes('<think>')) {
                         isInThinkStartTag = true;
@@ -56,29 +56,29 @@ export async function sendMessage(
                     if (onStreamUpdate) onStreamUpdate(messageText, thinkingText);
                 } else if (!done) {
                     try {
-                        console.log('Parsing stream data:', data);
+                        console.log('解析流数据:', data);
                         const chunkStringData = data.slice(6);
                         const chunkData = JSON.parse(chunkStringData);
                         if (chunkData.choices?.[0]?.delta?.content) {
                             const content = chunkData.choices[0].delta.content;
-                            console.log('Adding content to response:', content);
+                            console.log('添加内容到响应:', content);
                             messageText += content;
                             if (onStreamUpdate) onStreamUpdate(messageText, thinkingText);
                         } else if (chunkData.choices?.[0]?.delta?.reasoning_content) {
                             const reasoning_content = chunkData.choices[0].delta.reasoning_content;
-                            console.log('Adding thinking to response:', thinkingText);
+                            console.log('添加思考到响应:', thinkingText);
                             thinkingText += reasoning_content
                             if (onStreamUpdate) onStreamUpdate(messageText, thinkingText);
                         } else {
-                            console.log('No content in chunk data:', chunkData);
+                            console.log('数据块中没有内容:', chunkData);
                         }
                     } catch (error) {
-                        console.error('Error parsing chunk data:', error);
+                        console.error('解析数据块时出错:', error);
                     }
                 }
 
                 if (done) {
-                    console.log('Stream complete. Final response:', messageText);
+                    console.log('流传输完成。最终响应:', messageText);
 
                     const updatedMessages = [
                         ...sendMessage,
@@ -92,24 +92,24 @@ export async function sendMessage(
                     resolve(messageText);
                 }
             }).catch((error) => {
-                console.error('Error in chatAIStream:', error);
+                console.error('chatAIStream中出错:', error);
                 if (!signal.aborted) {
                     reject(error);
                 }
             });
         });
     } catch (error) {
-        console.error('Error in sendMessage:', error);
+        console.error('发送消息时出错:', error);
         throw error;
     }
 }
 
 /**
- * Sends a message to the LLM with the current webpage context
- * @param {string} userMessage - The user's message
- * @param {boolean} includeWebpage - Whether to include the webpage content
- * @param {(chunk: string) => void} onStreamUpdate - Optional callback for incremental updates
- * @returns {Promise<string>} The response from the LLM
+ * 向LLM发送带有当前网页上下文的消息
+ * @param {string} userMessage - 用户的消息
+ * @param {boolean} includeWebpage - 是否包含网页内容
+ * @param {(chunk: string) => void} onStreamUpdate - 用于增量更新的可选回调
+ * @returns {Promise<string>} 来自LLM的响应
  */
 export async function sendMessageWithWebpageContext(
     messageId: number,
@@ -117,10 +117,10 @@ export async function sendMessageWithWebpageContext(
     setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>,
 ): Promise<string> {
     try {
-        console.log('sendMessageWithWebpageContext called with:', userMessage);
+        console.log('使用以下内容调用sendMessageWithWebpageContext:', userMessage);
         let contextMessage = userMessage;
 
-        console.log('Extracting webpage content...');
+        console.log('正在提取网页内容...');
 
         const fetchCurrentWebpage: ChatMessage = {
             id: messageId,
@@ -140,7 +140,7 @@ export async function sendMessageWithWebpageContext(
 
         updateMessage(setMessages, messageId, fetchCurrentWebpageSuccess);
 
-        console.log('Extracted webpage content length:', webpageContent.length);
+        console.log('提取的网页内容长度:', webpageContent.length);
 
         // 格式化消息与网页上下文
         contextMessage = `${t('webpageContent')}:${webpageContent}${t(
@@ -148,7 +148,7 @@ export async function sendMessageWithWebpageContext(
         )}: ${userMessage}`;
 
         // 调用sendMessage发送消息
-        console.log('Sending message with context of length:', contextMessage.length);
+        console.log('正在发送带有上下文的消息，长度:', contextMessage.length);
 
         return contextMessage;
     } catch (error) {
@@ -165,7 +165,7 @@ export async function sendMessageWithWebpageContext(
             }
             return [...prev, fetchWebpageContentFailed];
         });
-        console.error('Error sending message with webpage context:', error);
+        console.error('发送带有网页上下文的消息时出错:', error);
         throw error;
     }
 }
