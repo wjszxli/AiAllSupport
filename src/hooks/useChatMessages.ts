@@ -8,20 +8,76 @@ import storage from '@/utils/storage';
 import { localFetchWebContentWithContext } from '@/services/localChatService';
 import type { ChatMessage } from '@/typings';
 import { updateMessage } from '@/utils/messageUtils';
+import { 
+    saveChatAppMessages, 
+    getChatAppMessages,
+    saveChatInterfaceMessages, 
+    getChatInterfaceMessages,
+    deleteChatAppConversation,
+    deleteChatInterfaceConversation
+} from '@/utils/indexedDBStorage';
 
 export const markdownCache = new LRUCache<string, string>(50);
 
+export type StoreType = 'app' | 'interface';
+
 export interface UseChatMessagesProps {
     t: (key: TranslationKey) => string;
+    storeType: StoreType;
+    conversationId?: string;
 }
 
-export const useChatMessages = ({ t }: UseChatMessagesProps) => {
+export const useChatMessages = ({ t, storeType, conversationId = 'default' }: UseChatMessagesProps) => {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [streamingMessageId, setStreamingMessageId] = useState<number | null>(null);
+    const [isInitialized, setIsInitialized] = useState(false);
 
     const messagesWrapperRef = useRef<HTMLDivElement>(null);
     const previousMessagesLengthRef = useRef(0);
+
+    // Load messages from IndexedDB on init
+    useEffect(() => {
+        const loadMessages = async () => {
+            try {
+                let loadedMessages: ChatMessage[] = [];
+                if (storeType === 'app') {
+                    loadedMessages = await getChatAppMessages(conversationId);
+                } else {
+                    loadedMessages = await getChatInterfaceMessages(conversationId);
+                }
+                
+                if (loadedMessages && loadedMessages.length > 0) {
+                    setMessages(loadedMessages);
+                }
+                setIsInitialized(true);
+            } catch (error) {
+                console.error('Failed to load messages from IndexedDB:', error);
+                setIsInitialized(true);
+            }
+        };
+
+        loadMessages();
+    }, [storeType, conversationId]);
+
+    // Save messages to IndexedDB when they change
+    useEffect(() => {
+        if (!isInitialized) return;
+
+        const saveMessagesToIndexedDB = async () => {
+            try {
+                if (storeType === 'app') {
+                    await saveChatAppMessages(conversationId, messages);
+                } else {
+                    await saveChatInterfaceMessages(conversationId, messages);
+                }
+            } catch (error) {
+                console.error('Failed to save messages to IndexedDB:', error);
+            }
+        };
+
+        saveMessagesToIndexedDB();
+    }, [messages, storeType, conversationId, isInitialized]);
 
     const scrollToBottom = useThrottledCallback(
         () => {
@@ -181,6 +237,26 @@ export const useChatMessages = ({ t }: UseChatMessagesProps) => {
         sendChatMessage(lastUserMessage.text);
     }, [messages, isLoading, streamingMessageId, t, createStreamUpdateHandler]);
 
+    // Function to clear messages from both state and IndexedDB
+    const clearMessages = useCallback(async () => {
+        try {
+            // Clear messages from state
+            setMessages([]);
+            
+            // Clear messages from IndexedDB based on storeType
+            if (storeType === 'app') {
+                await deleteChatAppConversation(conversationId);
+            } else {
+                await deleteChatInterfaceConversation(conversationId);
+            }
+            
+            return true;
+        } catch (error) {
+            console.error('Failed to clear messages:', error);
+            return false;
+        }
+    }, [storeType, conversationId]);
+
     return {
         messages,
         setMessages,
@@ -192,6 +268,7 @@ export const useChatMessages = ({ t }: UseChatMessagesProps) => {
         cancelStreamingResponse,
         sendChatMessage,
         regenerateResponse,
+        clearMessages,
     };
 };
 

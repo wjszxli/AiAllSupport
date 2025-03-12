@@ -69,7 +69,12 @@ const App: React.FC = () => {
         cancelStreamingResponse,
         sendChatMessage,
         regenerateResponse,
-    } = useChatMessages({ t });
+        clearMessages,
+    } = useChatMessages({
+        t,
+        storeType: 'app',
+        conversationId: 'default',
+    });
 
     useEffect(() => {
         const init = async () => {
@@ -198,11 +203,13 @@ const App: React.FC = () => {
         Modal.confirm({
             title: t('clearConfirmTitle'),
             content: t('clearConfirmContent'),
-            okText: t('confirm'),
+            okText: t('ok'),
             cancelText: t('cancel'),
-            onOk: () => {
-                setMessages([]);
-                message.success(t('chatCleared'));
+            onOk: async () => {
+                await clearMessages();
+                if (inputRef.current) {
+                    inputRef.current.focus();
+                }
             },
         });
     };

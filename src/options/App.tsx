@@ -199,7 +199,7 @@ const App: React.FC = () => {
                 message.loading({
                     content: t('validatingApi'),
                     key: 'apiKeyValidation',
-                    duration: 0
+                    duration: 0,
                 });
             } else {
                 // Clear any previous validation messages if API key is now empty
@@ -207,7 +207,7 @@ const App: React.FC = () => {
                 setApiKeyValidating(false);
             }
         }
-        
+
         // Check if Tavily API key changed
         if (changedValues.tavilyApiKey !== undefined) {
             // Only validate if Tavily API key is not empty
@@ -216,7 +216,7 @@ const App: React.FC = () => {
                 message.loading({
                     content: t('validatingTavilyApi'),
                     key: 'tavilyApiKeyValidation',
-                    duration: 0
+                    duration: 0,
                 });
             } else {
                 // Clear any previous validation messages if Tavily API key is now empty
@@ -234,7 +234,10 @@ const App: React.FC = () => {
         const timer = setTimeout(async () => {
             try {
                 // If web search is enabled but no search engines are selected, prevent submission
-                if (allValues.webSearchEnabled && (!enabledSearchEngines || enabledSearchEngines.length === 0)) {
+                if (
+                    allValues.webSearchEnabled &&
+                    (!enabledSearchEngines || enabledSearchEngines.length === 0)
+                ) {
                     message.error(t('selectAtLeastOneSearchEngine'));
                     return;
                 }
@@ -242,19 +245,20 @@ const App: React.FC = () => {
                 message.loading({
                     content: t('savingConfig'),
                     key: 'saveConfig',
-                    duration: 0
+                    duration: 0,
                 });
 
                 const isValid = await featureSettings.validateAndSubmitSettings(allValues, t);
                 if (!isValid) {
                     message.error({
                         content: t('savingConfigError'),
-                        key: 'saveConfig'
+                        key: 'saveConfig',
                     });
                     return;
                 }
 
-                const { provider, apiKey, model, isIcon, webSearchEnabled, useWebpageContext } = allValues;
+                const { provider, apiKey, model, isIcon, webSearchEnabled, useWebpageContext } =
+                    allValues;
 
                 let providersData = await storage.getProviders();
                 if (!providersData) {
@@ -283,51 +287,55 @@ const App: React.FC = () => {
 
                 message.success({
                     content: t('configSaved'),
-                    key: 'saveConfig'
+                    key: 'saveConfig',
                 });
-                
+
                 // After save is complete, validate API keys if they were changed
                 if (apiKeyValidating && allValues.apiKey && allValues.apiKey.trim() !== '') {
                     try {
                         await validateApiKey();
                         message.success({
                             content: t('apiValidSuccess'),
-                            key: 'apiKeyValidation'
+                            key: 'apiKeyValidation',
                         });
                     } catch (error) {
                         console.error('API key validation error:', error);
                         if (error instanceof Error) {
                             message.error({
                                 content: error.message,
-                                key: 'apiKeyValidation'
+                                key: 'apiKeyValidation',
                             });
                         } else {
                             message.error({
                                 content: error as string,
-                                key: 'apiKeyValidation'
+                                key: 'apiKeyValidation',
                             });
                         }
                     } finally {
                         setApiKeyValidating(false);
                     }
                 }
-                
+
                 // Validate Tavily API key if it was changed
-                if (tavilyApiKeyValidating && allValues.tavilyApiKey && allValues.tavilyApiKey.trim() !== '') {
+                if (
+                    tavilyApiKeyValidating &&
+                    allValues.tavilyApiKey &&
+                    allValues.tavilyApiKey.trim() !== ''
+                ) {
                     try {
                         // Here you would call a validation function for Tavily API key
                         // For now, just show a success message after a delay to simulate validation
                         setTimeout(() => {
                             message.success({
                                 content: t('tavilyApiValidSuccess'),
-                                key: 'tavilyApiKeyValidation'
+                                key: 'tavilyApiKeyValidation',
                             });
                             setTavilyApiKeyValidating(false);
                         }, 1000);
                     } catch (error) {
                         message.error({
                             content: t('tavilyApiValidError'),
-                            key: 'tavilyApiKeyValidation'
+                            key: 'tavilyApiKeyValidation',
                         });
                         setTavilyApiKeyValidating(false);
                     }
@@ -336,7 +344,7 @@ const App: React.FC = () => {
                 console.error('Failed to save configuration:', error);
                 message.error({
                     content: t('savingConfigError'),
-                    key: 'saveConfig'
+                    key: 'saveConfig',
                 });
                 setApiKeyValidating(false);
                 setTavilyApiKeyValidating(false);
@@ -366,7 +374,6 @@ const App: React.FC = () => {
     const onModelChange = (value: string) => {
         form.setFieldsValue({ model: value });
     };
-
 
     const onSetShortcuts = () => {
         chrome.tabs.create({
@@ -437,13 +444,13 @@ const App: React.FC = () => {
                     allowClear
                     style={{ fontSize: '16px' }}
                 >
-                    {(
-                        Object.keys(PROVIDERS_DATA) as Array<keyof typeof PROVIDERS_DATA>
-                    ).map((key) => (
-                        <Option key={key} value={key}>
-                            {PROVIDERS_DATA[key].name}
-                        </Option>
-                    ))}
+                    {(Object.keys(PROVIDERS_DATA) as Array<keyof typeof PROVIDERS_DATA>).map(
+                        (key) => (
+                            <Option key={key} value={key}>
+                                {PROVIDERS_DATA[key].name}
+                            </Option>
+                        ),
+                    )}
                 </Select>
             </Form.Item>
 
@@ -455,8 +462,8 @@ const App: React.FC = () => {
                             noStyle
                             rules={[{ required: true, message: t('enterApiKey') }]}
                         >
-                            <Input 
-                                placeholder={t('enterApiKey')} 
+                            <Input.Password
+                                placeholder={t('enterApiKey')}
                                 className={apiKeyValidating ? 'validating-input' : ''}
                             />
                         </Form.Item>
@@ -499,6 +506,7 @@ const App: React.FC = () => {
                 name="isIcon"
                 valuePropName="checked"
                 initialValue={true}
+                tooltip={t('showIconTooltip')}
             >
                 <Switch />
             </Form.Item>
@@ -542,7 +550,7 @@ const App: React.FC = () => {
                     }}
                 />
             </Form.Item>
-            
+
             <Form.Item
                 shouldUpdate={(prevValues, currentValues) =>
                     prevValues.webSearchEnabled !== currentValues.webSearchEnabled
@@ -593,16 +601,16 @@ const App: React.FC = () => {
                                 <Form.Item
                                     label={t('tavilyApiKey')}
                                     name="tavilyApiKey"
-                                    rules={[
-                                        { required: true, message: t('enterTavilyApiKey') },
-                                    ]}
+                                    rules={[{ required: true, message: t('enterTavilyApiKey') }]}
                                 >
                                     <>
                                         <Input.Password
                                             value={tavilyApiKey}
                                             onChange={(e) => setTavilyApiKey(e.target.value)}
                                             placeholder={t('enterTavilyApiKey')}
-                                            className={tavilyApiKeyValidating ? 'validating-input' : ''}
+                                            className={
+                                                tavilyApiKeyValidating ? 'validating-input' : ''
+                                            }
                                         />
                                         <div className="api-link">
                                             <Tooltip title={t('getTavilyApiKey')}>
@@ -626,9 +634,7 @@ const App: React.FC = () => {
                                                 <Tag
                                                     closable
                                                     key={index}
-                                                    onClose={() =>
-                                                        handleRemoveFilterDomain(domain)
-                                                    }
+                                                    onClose={() => handleRemoveFilterDomain(domain)}
                                                 >
                                                     {domain}
                                                 </Tag>
@@ -643,9 +649,7 @@ const App: React.FC = () => {
                                         <Input
                                             placeholder={t('enterDomainToFilter')}
                                             value={newFilterDomain}
-                                            onChange={(e) =>
-                                                setNewFilterDomain(e.target.value)
-                                            }
+                                            onChange={(e) => setNewFilterDomain(e.target.value)}
                                             onPressEnter={handleAddFilterDomain}
                                             style={{ width: '70%' }}
                                         />
@@ -791,20 +795,28 @@ const App: React.FC = () => {
                                 key="about"
                             >
                                 <div className="about-section">
-                                    <Typography.Title level={4}>
-                                        {t('appTitle')}
-                                    </Typography.Title>
+                                    <Typography.Title level={4}>{t('appTitle')}</Typography.Title>
                                     <Typography.Paragraph>
                                         {t('aboutDescription')}
                                     </Typography.Paragraph>
                                     <div className="app-links">
-                                        <Typography.Link onClick={onSetShortcuts} className="link-item">
+                                        <Typography.Link
+                                            onClick={onSetShortcuts}
+                                            className="link-item"
+                                        >
                                             <SettingOutlined /> {t('setShortcuts')}
                                         </Typography.Link>
-                                        <Typography.Link href={GIT_URL} target="_blank" className="link-item">
+                                        <Typography.Link
+                                            href={GIT_URL}
+                                            target="_blank"
+                                            className="link-item"
+                                        >
                                             <GithubOutlined /> {t('starAuthor')}
                                         </Typography.Link>
-                                        <Typography.Link onClick={openFeedbackSurvey} className="link-item">
+                                        <Typography.Link
+                                            onClick={openFeedbackSurvey}
+                                            className="link-item"
+                                        >
                                             <CommentOutlined /> {t('feedback')}
                                         </Typography.Link>
                                     </div>

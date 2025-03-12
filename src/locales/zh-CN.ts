@@ -154,11 +154,11 @@ export const zhCN = {
     // API Key 错误提示
     apiKeyNeeded: '您需要设置API Key才能使用此功能，是否现在前往设置页面？',
     enterQuestion: '请输入您的问题...',
-    
+
     // 系统提示信息
     systemPrompt: '你是一个 AI 助手，请回答用户的问题',
     modelListNotSupported: '当前服务商不支持模型列表',
-    
+
     // 错误信息
     pleaseSelectProvider: '请先选择服务商',
     pleaseEnterApiKey: '请输入 API Key',
@@ -172,5 +172,9 @@ export const zhCN = {
     duckduckgoSearchFailed: 'DuckDuckGo搜索请求失败，状态码: {status}',
     sogouSearchFailed: '搜狗搜索请求失败，状态码: {status}',
     braveSearchFailed: 'Brave搜索请求失败，状态码: {status}',
-    searxngSearchFailed: 'SearXNG搜索请求失败，状态码: {status}'
+    searxngSearchFailed: 'SearXNG搜索请求失败，状态码: {status}',
+    clearConfirmTitle: '清除聊天记录',
+    clearConfirmContent: '确定要清除聊天记录吗？',
+    chatCleared: '聊天记录已清除',
+    showIconTooltip: '开启此功能，允许 AI 工具在浏览器划词之后显示',
 };

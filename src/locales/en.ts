@@ -1,5 +1,5 @@
 // 自动生成的翻译文件，请勿直接修改
-// Generated on: 2025-03-10T09:10:44.571Z
+// Generated on: 2025-03-12T03:10:07.890Z
 
 export const en = {
     ok: 'OK',
@@ -122,8 +122,6 @@ Please answer in the same language as the user's question.`,
     filteredDomains: 'Filtered Domain Names',
     searchEngines: 'Enabled search engines',
     pressTip: 'Press Enter to send, Shift+Enter to create a new line.',
-
-    // New translation keys for the updated interface
     apiSettings: 'API Settings',
     interface: 'Interface',
     search: 'Search',
@@ -139,28 +137,17 @@ Please answer in the same language as the user's question.`,
     enableWebSearchMessage: 'Enable Web Search to configure search settings.',
     aboutDescription:
         'A powerful browser extension that integrates DeepSeek and other AI models into your browsing experience.',
-
-    // Auto-save related translations
     autoSaving: 'Saving...',
     autoSaved: 'Changes saved',
     autoSaveError: 'Error saving changes',
-
-    // Tavily API validation translations
     validatingTavilyApi: 'Validating Tavily API Key...',
     tavilyApiValidSuccess: 'Tavily API Key validation successful',
     tavilyApiValidError: 'Tavily API Key validation failed',
-
-    // Feedback button translation
     feedback: 'Give Feedback',
-
-    // API Key error message
-    apiKeyNeeded: 'You need to set up your API Key to use this feature. Would you like to go to the settings page now?',
-    
-    // System prompt message
-    systemPrompt: 'You are an AI assistant, please answer the user\'s question',
+    apiKeyNeeded:
+        'You need to set up your API Key to use this feature. Would you like to go to the settings page now?',
+    systemPrompt: "You are an AI assistant, please answer the user's question",
     modelListNotSupported: 'The current service provider does not support model listing',
-    
-    // Error messages
     pleaseSelectProvider: 'Please select a service provider first',
     pleaseEnterApiKey: 'Please enter an API Key',
     providerBaseUrlNotFound: 'Base URL for {provider} not found',
@@ -173,5 +160,6 @@ Please answer in the same language as the user's question.`,
     duckduckgoSearchFailed: 'DuckDuckGo search request failed, status code: {status}',
     sogouSearchFailed: 'Sogou search request failed, status code: {status}',
     braveSearchFailed: 'Brave search request failed, status code: {status}',
-    searxngSearchFailed: 'SearXNG search request failed, status code: {status}'
+    searxngSearchFailed: 'SearXNG search request failed, status code: {status}',
+    enterQuestion: 'Please enter your question...',
 };

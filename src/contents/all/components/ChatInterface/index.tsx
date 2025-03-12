@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useMemo, memo } from 'react';
-import { Button, Input, message as messageNotification, Typography } from 'antd';
-import { SendOutlined, CloseOutlined, CopyOutlined, RedoOutlined } from '@ant-design/icons';
+import { Button, Input, message as messageNotification, Typography, Modal } from 'antd';
+import { SendOutlined, CloseOutlined, CopyOutlined, RedoOutlined, DeleteOutlined } from '@ant-design/icons';
 import './index.scss';
 import './promptSuggestions.css';
 import type { TranslationKey } from '@/contexts/LanguageContext';
@@ -192,7 +192,12 @@ const ChatInterface = ({ initialText }: ChatInterfaceProps) => {
         cancelStreamingResponse,
         sendChatMessage,
         regenerateResponse,
-    } = useChatMessages({ t });
+        clearMessages
+    } = useChatMessages({ 
+        t, 
+        storeType: 'interface',
+        conversationId: 'default'
+    });
 
     const messagesContainerRef = useRef<HTMLDivElement>(null);
 
@@ -404,49 +409,55 @@ const ChatInterface = ({ initialText }: ChatInterfaceProps) => {
         }
     });
 
+    // Add a function to clear chat history
+    const handleClearChat = useCallback(() => {
+        Modal.confirm({
+            title: t('clearConfirmTitle' as TranslationKey),
+            content: t('clearConfirmContent' as TranslationKey),
+            okText: t('ok' as TranslationKey),
+            cancelText: t('cancel' as TranslationKey),
+            onOk: async () => {
+                await clearMessages();
+                messageNotification.success(t('chatCleared' as TranslationKey));
+            },
+        });
+    }, [clearMessages, t]);
+
     return (
-        <div className="chat-interface-container">
-            {showPrompts && filteredPrompts.length > 0 ? (
-                <div className="prompt-suggestions-overlay">
-                    <div className="prompt-suggestions">
-                        {filteredPrompts.map((prompt, index) => (
-                            <div
-                                key={prompt.key}
-                                className={`prompt-item ${
-                                    index === selectedPromptIndex ? 'selected' : ''
-                                }`}
-                                onClick={() => handlePromptSelect(prompt)}
-                            >
-                                <div className="prompt-name">{prompt.name}</div>
-                                <div className="prompt-preview">
-                                    {prompt.content.slice(0, 60)}...
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            ) : null}
-            <ChatControls />
-            <div className="messages-wrapper" ref={messagesWrapperRef}>
-                <div ref={messagesContainerRef} className="messages-container">
-                    {messages.length === 0 ? (
-                        <EmptyChat t={t} handleExampleClick={handleExampleClick} />
-                    ) : (
-                        messages.map((msg) => {
-                            return (
-                                <MessageBubble
-                                    key={msg.id}
-                                    message={msg}
-                                    isStreaming={streamingMessageId === msg.id}
-                                    t={t}
-                                    copyToClipboard={copyToClipboard}
-                                    regenerateResponse={regenerateResponse}
-                                />
-                            );
-                        })
+        <div className="chat-interface">
+            <div className="chat-interface-header">
+                <div className="chat-title">{t('deepSeekChat' as TranslationKey)}</div>
+                <div className="chat-controls">
+                    {messages.length > 0 && (
+                        <Button
+                            className="clear-chat-button"
+                            type="text"
+                            icon={<DeleteOutlined />}
+                            onClick={handleClearChat}
+                            title={t('clearChat' as TranslationKey)}
+                        />
                     )}
                 </div>
             </div>
+            <div className="chat-messages" ref={messagesContainerRef}>
+                {messages.length === 0 ? (
+                    <EmptyChat t={t} handleExampleClick={handleExampleClick} />
+                ) : (
+                    messages.map((msg) => {
+                        return (
+                            <MessageBubble
+                                key={msg.id}
+                                message={msg}
+                                isStreaming={streamingMessageId === msg.id}
+                                t={t}
+                                copyToClipboard={copyToClipboard}
+                                regenerateResponse={regenerateResponse}
+                            />
+                        );
+                    })
+                )}
+            </div>
+            <ChatControls />
             <div className="input-container">
                 <div className="input-wrapper">
                     <Input.TextArea
