@@ -2,12 +2,13 @@ import type { IMessage } from '@/typings';
 import { requestAIStream, requestApi } from '@/utils';
 import { SERVICE_MAP } from '@/utils/constant';
 import storage from '@/utils/storage';
+import { t } from '@/services/i18n';
 
 export const validateApiKey = async () => {
     const { selectedModel, selectedProvider } = await storage.getConfig();
 
     if (!selectedProvider || !(selectedProvider in SERVICE_MAP)) {
-        throw new Error('请选择服务商');
+        throw new Error(t('selectProvider'));
     }
 
     const url = SERVICE_MAP[selectedProvider as keyof typeof SERVICE_MAP].chat;
@@ -23,12 +24,12 @@ export const chat = async (messages: IMessage[]) => {
     const { selectedModel, selectedProvider } = await storage.getConfig();
 
     if (!selectedProvider || !(selectedProvider in SERVICE_MAP)) {
-        throw new Error('请选择服务商');
+        throw new Error(t('selectProvider'));
     }
     const url = SERVICE_MAP[selectedProvider as keyof typeof SERVICE_MAP].chat;
     const data = {
         model: selectedModel,
-        messages: [{ role: 'system', content: '你是一个 AI 助手，请回答用户的问题' }, ...messages],
+        messages: [{ role: 'system', content: t('systemPrompt') }, ...messages],
         stream: true,
     };
     return requestApi(url, 'POST', data);
@@ -36,11 +37,11 @@ export const chat = async (messages: IMessage[]) => {
 
 export const modelList = async (selectedProvider: string) => {
     if (!selectedProvider || !(selectedProvider in SERVICE_MAP)) {
-        throw new Error('请选择服务商');
+        throw new Error(t('selectProvider'));
     }
     const service = SERVICE_MAP[selectedProvider as keyof typeof SERVICE_MAP];
     if (!('modelList' in service)) {
-        throw new Error('当前服务商不支持模型列表');
+        throw new Error(t('modelListNotSupported'));
     }
     const url = service.modelList;
     return requestApi(url);
@@ -53,12 +54,12 @@ export const chatAIStream = async (
     const { selectedModel, selectedProvider } = await storage.getConfig();
 
     if (!selectedProvider || !(selectedProvider in SERVICE_MAP)) {
-        throw new Error('请选择服务商');
+        throw new Error(t('selectProvider'));
     }
     const url = SERVICE_MAP[selectedProvider as keyof typeof SERVICE_MAP].chat;
     const data = {
         model: selectedModel,
-        messages: [{ role: 'system', content: '你是一个 AI 助手，请回答用户的问题' }, ...messages],
+        messages: [{ role: 'system', content: t('systemPrompt') }, ...messages],
         stream: true,
     };
     return requestAIStream(url, 'POST', data, onData);

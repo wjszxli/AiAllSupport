@@ -92,9 +92,9 @@ export const en = {
         'Based on this information and your knowledge, please answer this question',
     Source: 'Source',
     webpageContent: "The following is the content of the webpage I'm currently viewing:",
-    webpagePrompt: 'Based on this webpage, please respond to my question',
-    fetchWebpageContent: 'Fetching the content of the current webpage...',
-    fetchWebpageContentSuccess: 'Successfully fetched the webpage content, processing with AI...',
+    webpagePrompt: 'Given this webpage content, please answer my question',
+    fetchWebpageContent: 'Fetching current webpage content...',
+    fetchWebpageContentSuccess: 'Successfully fetched webpage content, processing with AI...',
     fetchWebpageContentFailed: 'Failed to fetch webpage content. Using AI knowledge only...',
     openSettings: 'Open Settings',
     openChat: 'Open Chat',
@@ -102,7 +102,7 @@ export const en = {
     tryAsking: 'Try asking me:',
     copyMessage: 'Copy Success',
     close: 'Close',
-    pleaseInputApiKey: 'Please enter your API Key on the configuration page.',
+    pleaseInputApiKey: 'Please enter your API Key in the configuration page.',
     REFERENCE_PROMPT: `Please answer the question based on the reference materials.
 
 ## Annotation Rules:
@@ -152,4 +152,26 @@ Please answer in the same language as the user's question.`,
 
     // Feedback button translation
     feedback: 'Give Feedback',
+
+    // API Key error message
+    apiKeyNeeded: 'You need to set up your API Key to use this feature. Would you like to go to the settings page now?',
+    
+    // System prompt message
+    systemPrompt: 'You are an AI assistant, please answer the user\'s question',
+    modelListNotSupported: 'The current service provider does not support model listing',
+    
+    // Error messages
+    pleaseSelectProvider: 'Please select a service provider first',
+    pleaseEnterApiKey: 'Please enter an API Key',
+    providerBaseUrlNotFound: 'Base URL for {provider} not found',
+    httpError: 'HTTP {status} {statusText}',
+    invalidProviderData: 'Invalid data, service provider not found: {provider}',
+    backgroundSearchFailed: 'Background search failed',
+    webContentFetchFailed: 'Failed to fetch web content in background',
+    baiduSearchFailed: 'Baidu search request failed, status code: {status}',
+    googleSearchFailed: 'Google search request failed, status code: {status}',
+    duckduckgoSearchFailed: 'DuckDuckGo search request failed, status code: {status}',
+    sogouSearchFailed: 'Sogou search request failed, status code: {status}',
+    braveSearchFailed: 'Brave search request failed, status code: {status}',
+    searxngSearchFailed: 'SearXNG search request failed, status code: {status}'
 };

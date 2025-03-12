@@ -14,7 +14,6 @@ import {
     Tag,
     Layout,
     Tabs,
-    Menu,
 } from 'antd';
 import React, { useEffect, useState } from 'react';
 import {
@@ -58,12 +57,6 @@ const FEEDBACK_SURVEY_URL = 'https://wj.qq.com/s2/18763807/74b5/';
 
 const App: React.FC = () => {
     const [form] = Form.useForm();
-    const LOADING_STATE = {
-        SAVE: 'SAVE',
-        SAVING: 'SAVING',
-        VALIDATING: 'VALIDATING',
-    };
-    const [loadingState, setLoadingState] = useState<string>(LOADING_STATE.SAVE);
     const [selectedProvider, setSelectedProvider] = useState('DeepSeek');
     const [models, setModels] = useState<Array<{ label: string; value: string }>>([]);
     const [currentLocale, setCurrentLocale] = useState<LocaleType>(getLocale());
@@ -246,7 +239,6 @@ const App: React.FC = () => {
                     return;
                 }
 
-                setLoadingState(LOADING_STATE.SAVING);
                 message.loading({
                     content: t('savingConfig'),
                     key: 'saveConfig',
@@ -255,7 +247,6 @@ const App: React.FC = () => {
 
                 const isValid = await featureSettings.validateAndSubmitSettings(allValues, t);
                 if (!isValid) {
-                    setLoadingState(LOADING_STATE.SAVE);
                     message.error({
                         content: t('savingConfigError'),
                         key: 'saveConfig'
@@ -294,7 +285,6 @@ const App: React.FC = () => {
                     content: t('configSaved'),
                     key: 'saveConfig'
                 });
-                setLoadingState(LOADING_STATE.SAVE);
                 
                 // After save is complete, validate API keys if they were changed
                 if (apiKeyValidating && allValues.apiKey && allValues.apiKey.trim() !== '') {
@@ -348,7 +338,6 @@ const App: React.FC = () => {
                     content: t('savingConfigError'),
                     key: 'saveConfig'
                 });
-                setLoadingState(LOADING_STATE.SAVE);
                 setApiKeyValidating(false);
                 setTavilyApiKeyValidating(false);
             }
@@ -378,20 +367,6 @@ const App: React.FC = () => {
         form.setFieldsValue({ model: value });
     };
 
-    const onValidateApiKey = async () => {
-        try {
-            await validateApiKey();
-            message.success(t('apiValidSuccess'));
-            setLoadingState(LOADING_STATE.SAVE);
-        } catch (error) {
-            setLoadingState(LOADING_STATE.SAVE);
-            if (error instanceof Error) {
-                message.error(error.message);
-            } else {
-                message.error(error as string);
-            }
-        }
-    };
 
     const onSetShortcuts = () => {
         chrome.tabs.create({

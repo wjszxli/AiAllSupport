@@ -2,6 +2,7 @@ import type { RequestMethod } from '@/typings';
 
 import { CHAT_BOX_ID, CHAT_BUTTON_ID, URL_MAP } from './constant';
 import storage from './storage';
+import { t } from '@/services/i18n';
 
 // 通用 Fetch 封装，支持流式响应
 export const fetchData = async ({
@@ -25,17 +26,17 @@ export const fetchData = async ({
 
     const { selectedProvider } = await storage.getConfig();
     if (!selectedProvider) {
-        throw new Error('请先选择服务商');
+        throw new Error(t('pleaseSelectProvider'));
     }
 
     const apiKey = await storage.getApiKey(selectedProvider);
     if (!apiKey && !isLocalhost(selectedProvider)) {
-        throw new Error('请输入 API Key');
+        throw new Error(t('pleaseEnterApiKey'));
     }
 
     const base_url = URL_MAP[selectedProvider as keyof typeof URL_MAP];
     if (!base_url) {
-        throw new Error(`未找到 ${selectedProvider} 的基础 URL`);
+        throw new Error(t('providerBaseUrlNotFound').replace('{provider}', selectedProvider));
     }
 
     try {
@@ -63,7 +64,11 @@ export const fetchData = async ({
         clearTimeout(timeoutId);
 
         if (!response.ok) {
-            throw new Error(`HTTP ${response.status} ${response.statusText}`);
+            throw new Error(
+                t('httpError')
+                    .replace('{status}', response.status.toString())
+                    .replace('{statusText}', response.statusText)
+            );
         }
 
         if (body && body.includes('"stream":true') && response.body) {
@@ -126,9 +131,13 @@ export const requestAIStream = async (
                 method,
                 body: JSON.stringify({ ...requestBody, stream: true }), // 启用流式模式
             },
-            () => {
-                if (chrome.runtime.lastError) {
-                    reject(chrome.runtime.lastError.message);
+            (response) => {
+                console.log('API 响应:', response);
+                if (response.status === 200) {
+                    resolve(response.data);
+                } else {
+                    console.error('API 请求失败:', response.error);
+                    reject(response.error);
                 }
             },
         );

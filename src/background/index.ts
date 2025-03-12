@@ -4,6 +4,7 @@ import { MODIFY_HEADERS_RULE_ID, URL_MAP, SEARCH_ENGINES } from '@/utils/constan
 import storage from '@/utils/storage';
 import { load } from 'cheerio';
 import { tavily } from '@tavily/core';
+import { t } from '@/services/i18n';
 
 // 用于网页搜索的函数，支持多个搜索引擎
 async function searchWeb(query: string): Promise<SearchResult[]> {
@@ -86,21 +87,19 @@ async function searchBaidu(query: string): Promise<SearchResult[]> {
         console.log('执行百度搜索:', query);
 
         // 使用百度搜索
-        const searchUrl = `https://www.baidu.com/s?wd=${encodeURIComponent(query)}`;
+        const searchUrl = `https://www.baidu.com/s?wd=${encodeURIComponent(query)}&ie=utf-8&rn=20`;
 
         const response = await fetch(searchUrl, {
             method: 'GET',
             headers: {
-                'Accept':
-                    'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                'User-Agent':
-                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
                 'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
             },
         });
 
         if (!response.ok) {
-            throw new Error(`百度搜索请求失败，状态码: ${response.status}`);
+            throw new Error(t('baiduSearchFailed').replace('{status}', response.status.toString()));
         }
 
         const html = await response.text();
@@ -167,7 +166,7 @@ async function searchGoogle(query: string): Promise<SearchResult[]> {
         });
 
         if (!response.ok) {
-            throw new Error(`Google搜索请求失败，状态码: ${response.status}`);
+            throw new Error(t('googleSearchFailed').replace('{status}', response.status.toString()));
         }
 
         const html = await response.text();
@@ -233,7 +232,7 @@ async function searchDuckDuckGo(query: string): Promise<SearchResult[]> {
         });
 
         if (!response.ok) {
-            throw new Error(`DuckDuckGo搜索请求失败，状态码: ${response.status}`);
+            throw new Error(t('duckduckgoSearchFailed').replace('{status}', response.status.toString()));
         }
 
         const html = await response.text();
@@ -299,7 +298,7 @@ async function searchSogou(query: string): Promise<SearchResult[]> {
         });
 
         if (!response.ok) {
-            throw new Error(`搜狗搜索请求失败，状态码: ${response.status}`);
+            throw new Error(t('sogouSearchFailed').replace('{status}', response.status.toString()));
         }
 
         const html = await response.text();
@@ -365,7 +364,7 @@ async function searchBrave(query: string): Promise<SearchResult[]> {
         });
 
         if (!response.ok) {
-            throw new Error(`Brave搜索请求失败，状态码: ${response.status}`);
+            throw new Error(t('braveSearchFailed').replace('{status}', response.status.toString()));
         }
 
         const html = await response.text();
@@ -432,7 +431,7 @@ async function searchSearxng(query: string): Promise<SearchResult[]> {
         });
 
         if (!response.ok) {
-            throw new Error(`SearXNG搜索请求失败，状态码: ${response.status}`);
+            throw new Error(t('searxngSearchFailed').replace('{status}', response.status.toString()));
         }
 
         const html = await response.text();

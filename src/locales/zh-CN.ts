@@ -137,17 +137,40 @@ export const zhCN = {
     add: '添加',
     enableWebSearchMessage: '启用网络搜索以配置搜索设置。',
     aboutDescription: '一个强大的浏览器扩展，将 AI 大模型模型集成到您的浏览体验中。',
-    
+
     // 自动保存相关翻译
     autoSaving: '正在保存...',
     autoSaved: '已保存更改',
     autoSaveError: '保存更改时出错',
-    
+
     // Tavily API 验证相关翻译
     validatingTavilyApi: '正在验证 Tavily API 密钥...',
     tavilyApiValidSuccess: 'Tavily API 密钥验证成功',
     tavilyApiValidError: 'Tavily API 密钥验证失败',
-    
+
     // 反馈按钮翻译
-    feedback: '提供反馈'
+    feedback: '提供反馈',
+
+    // API Key 错误提示
+    apiKeyNeeded: '您需要设置API Key才能使用此功能，是否现在前往设置页面？',
+    enterQuestion: '请输入您的问题...',
+    
+    // 系统提示信息
+    systemPrompt: '你是一个 AI 助手，请回答用户的问题',
+    modelListNotSupported: '当前服务商不支持模型列表',
+    
+    // 错误信息
+    pleaseSelectProvider: '请先选择服务商',
+    pleaseEnterApiKey: '请输入 API Key',
+    providerBaseUrlNotFound: '未找到 {provider} 的基础 URL',
+    httpError: 'HTTP {status} {statusText}',
+    invalidProviderData: '数据非法，没有服务商：{provider}',
+    backgroundSearchFailed: '后台搜索失败',
+    webContentFetchFailed: '后台网页内容获取失败',
+    baiduSearchFailed: '百度搜索请求失败，状态码: {status}',
+    googleSearchFailed: 'Google搜索请求失败，状态码: {status}',
+    duckduckgoSearchFailed: 'DuckDuckGo搜索请求失败，状态码: {status}',
+    sogouSearchFailed: '搜狗搜索请求失败，状态码: {status}',
+    braveSearchFailed: 'Brave搜索请求失败，状态码: {status}',
+    searxngSearchFailed: 'SearXNG搜索请求失败，状态码: {status}'
 };

@@ -48,7 +48,6 @@ const App: React.FC = () => {
     const [currentLocale, setCurrentLocale] = useState<LocaleType>(getLocale());
     const [userInput, setUserInput] = useState('');
     const inputRef = useRef<any>(null);
-    const [typingMessageId, setTypingMessageId] = useState<number | null>(null);
 
     const suggestedPrompts = useMemo(
         () => [
@@ -339,10 +338,6 @@ const App: React.FC = () => {
                                     key={msg.id}
                                     className={`message ${
                                         msg.sender === 'user' ? 'user-message' : 'ai-message'
-                                    } ${
-                                        typingMessageId === msg.id || streamingMessageId === msg.id
-                                            ? 'typing'
-                                            : ''
                                     }`}
                                 >
                                     <div className="message-avatar">

@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { message as messageNotification } from 'antd';
+import { message as messageNotification, Modal } from 'antd';
 import { sendMessage, sendMessageWithWebpageContext } from '@/services/chatService';
 import { useThrottledCallback } from '@/utils/reactOptimizations';
 import { LRUCache } from '@/utils/memoryOptimization';
@@ -145,8 +145,24 @@ export const useChatMessages = ({ t }: UseChatMessagesProps) => {
                 setIsLoading(false);
                 scrollToBottom();
             } catch (error) {
-                console.error('Error sending message:', error);
-                messageNotification.error(t('errorProcessing'));
+                const errorMessage = error as string;
+                if (errorMessage === t("pleaseEnterApiKey")) {
+                    Modal.confirm({
+                        title: t('pleaseEnterApiKey'),
+                        content: t('apiKeyNeeded'),
+                        okText: t('ok'),
+                        cancelText: t('cancel'),
+                        onOk: () => {
+                            if (chrome.runtime.openOptionsPage) {
+                                chrome.runtime.openOptionsPage();
+                            } else {
+                                window.open(chrome.runtime.getURL('options.html'));
+                            }
+                        },
+                    });
+                } else {
+                    messageNotification.error(errorMessage);
+                }
                 setIsLoading(false);
             }
         },

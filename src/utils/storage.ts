@@ -1,5 +1,6 @@
 import type { ProviderConfig, StorageData } from '@/typings';
 import { DEFAULT_SEARCH_ENGINES, FILTERED_DOMAINS, PROVIDERS_DATA } from './constant';
+import { t } from '@/services/i18n';
 
 // 封装存储 & 读取 & 监听变化的方法
 const storageUtils = {
@@ -56,7 +57,7 @@ const storageUtils = {
         const data =
             (await storageUtils.get<Record<string, ProviderConfig>>('providers')) || PROVIDERS_DATA;
         if (!data[provider]) {
-            throw new Error(`数据非法，没有服务商：${provider}`);
+            throw new Error(t('invalidProviderData').replace('{provider}', provider));
         }
 
         data[provider].apiKey = apiKey;

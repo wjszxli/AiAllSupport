@@ -1,5 +1,5 @@
 import type { ChatMessage, SearchResult } from '@/typings';
-import { t } from './i18n';
+import { t } from '@/services/i18n';
 import React from 'react';
 import { updateMessage } from '@/utils/messageUtils';
 import { SEARCH_COUNT } from '@/utils/constant';
@@ -51,7 +51,7 @@ export async function performSearch(query: string): Promise<SearchResult[]> {
                     console.log('Background search results:', response.results);
                     return response.results;
                 } else {
-                    throw new Error('Background search failed');
+                    throw new Error(t('backgroundSearchFailed'));
                 }
             } catch (error) {
                 console.error('Background script search failed:', error);
@@ -125,7 +125,7 @@ export async function fetchWebContent(url: string): Promise<string> {
                     console.log('Background fetched content length:', response.content.length);
                     return response.content;
                 } else {
-                    throw new Error('Background web content fetch failed');
+                    throw new Error(t('webContentFetchFailed'));
                 }
             } catch (error) {
                 console.error('Background script web content fetch failed:', error);
