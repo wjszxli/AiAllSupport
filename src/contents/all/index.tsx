@@ -134,8 +134,9 @@ const injectChatBox = (x: number, y: number, text: string) => {
         centerY = (viewportHeight - chatHeight) / 2;
     }
 
-    removeChatBox();
+    // Explicitly remove the chat button first
     removeChatButton();
+    removeChatBox();
 
     let chatContainer = document.getElementById(CHAT_BOX_ID);
     if (!chatContainer) {

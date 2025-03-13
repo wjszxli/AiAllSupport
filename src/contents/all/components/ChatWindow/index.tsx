@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useCallback, useReducer, useMemo, memo } from
 import { CloseOutlined, PushpinOutlined, PushpinFilled, CommentOutlined } from '@ant-design/icons';
 import { Alert, Tooltip, Typography } from 'antd';
 import storage from '@/utils/storage';
+import { removeChatButton, removeChatBox } from '@/utils';
+import { CHAT_BOX_ID, CHAT_BUTTON_ID } from '@/utils/constant';
 
 import Config from '../Config';
 import ChatInterface from '../ChatInterface/index';
@@ -166,6 +168,8 @@ const ChatWindow = ({ x, y, text }: { x: number; y: number; text?: string }) => 
 
     useEffect(() => {
         initData();
+        // Hide the chat button when chat window is open
+        removeChatButton();
     }, [initData]);
 
     const { position, size, isVisible, isPinned, provider } = state;
@@ -178,6 +182,8 @@ const ChatWindow = ({ x, y, text }: { x: number; y: number; text?: string }) => 
 
     const onCancel = useCallback(async () => {
         await storage.remove('chatHistory');
+        removeChatBox();
+        
         // @ts-ignore
         if (window.currentAbortController) {
             // @ts-ignore
