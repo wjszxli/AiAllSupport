@@ -424,40 +424,59 @@ const ChatInterface = ({ initialText }: ChatInterfaceProps) => {
     }, [clearMessages, t]);
 
     return (
-        <div className="chat-interface">
-            <div className="chat-interface-header">
-                <div className="chat-title">{t('deepSeekChat' as TranslationKey)}</div>
-                <div className="chat-controls">
-                    {messages.length > 0 && (
-                        <Button
-                            className="clear-chat-button"
-                            type="text"
-                            icon={<DeleteOutlined />}
-                            onClick={handleClearChat}
-                            title={t('clearChat' as TranslationKey)}
-                        />
+        <div className="chat-interface-container">
+            {showPrompts && filteredPrompts.length > 0 ? (
+                <div className="prompt-suggestions-overlay">
+                    <div className="prompt-suggestions">
+                        {filteredPrompts.map((prompt, index) => (
+                            <div
+                                key={prompt.key}
+                                className={`prompt-item ${
+                                    index === selectedPromptIndex ? 'selected' : ''
+                                }`}
+                                onClick={() => handlePromptSelect(prompt)}
+                            >
+                                <div className="prompt-name">{prompt.name}</div>
+                                <div className="prompt-preview">
+                                    {prompt.content.slice(0, 60)}...
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            ) : null}
+            <ChatControls />
+            <div className="actions-row">
+                {messages.length > 0 && (
+                    <Button
+                        className="clear-chat-button"
+                        type="text"
+                        icon={<DeleteOutlined />}
+                        onClick={handleClearChat}
+                        title={t('clearChat' as TranslationKey)}
+                    />
+                )}
+            </div>
+            <div className="messages-wrapper" ref={messagesWrapperRef}>
+                <div ref={messagesContainerRef} className="messages-container">
+                    {messages.length === 0 ? (
+                        <EmptyChat t={t} handleExampleClick={handleExampleClick} />
+                    ) : (
+                        messages.map((msg) => {
+                            return (
+                                <MessageBubble
+                                    key={msg.id}
+                                    message={msg}
+                                    isStreaming={streamingMessageId === msg.id}
+                                    t={t}
+                                    copyToClipboard={copyToClipboard}
+                                    regenerateResponse={regenerateResponse}
+                                />
+                            );
+                        })
                     )}
                 </div>
             </div>
-            <div className="chat-messages" ref={messagesContainerRef}>
-                {messages.length === 0 ? (
-                    <EmptyChat t={t} handleExampleClick={handleExampleClick} />
-                ) : (
-                    messages.map((msg) => {
-                        return (
-                            <MessageBubble
-                                key={msg.id}
-                                message={msg}
-                                isStreaming={streamingMessageId === msg.id}
-                                t={t}
-                                copyToClipboard={copyToClipboard}
-                                regenerateResponse={regenerateResponse}
-                            />
-                        );
-                    })
-                )}
-            </div>
-            <ChatControls />
             <div className="input-container">
                 <div className="input-wrapper">
                     <Input.TextArea

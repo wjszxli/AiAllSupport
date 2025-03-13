@@ -61,7 +61,6 @@ const App: React.FC = () => {
 
     const {
         messages,
-        setMessages,
         isLoading,
         streamingMessageId,
         messagesWrapperRef,

@@ -127,7 +127,7 @@ const ChatWindow = ({ x, y, text }: { x: number; y: number; text?: string }) => 
 
     const [state, dispatch] = useReducer(windowReducer, {
         position: { x, y },
-        size: { width: 500, height: 600 },
+        size: { width: 600, height: 800 },
         isVisible: false,
         isPinned: false,
         provider: null,
