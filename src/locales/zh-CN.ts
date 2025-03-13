@@ -119,6 +119,7 @@ export const zhCN = {
     searchEngines: '启用的搜索引擎',
     openSettings: '打开设置',
     openChat: '打开聊天',
+    openSidebar: '打开侧边栏',
     pressTip: '按回车键发送，Shift+回车创建新行',
     welcomeMessage: '欢迎使用AI助手！我能为您做什么？',
     tryAsking: '试试问我：',
@@ -177,4 +178,8 @@ export const zhCN = {
     clearConfirmContent: '确定要清除聊天记录吗？',
     chatCleared: '聊天记录已清除',
     showIconTooltip: '开启此功能，允许 AI 工具在浏览器划词之后显示',
+    chatWithAI: '与AI聊天',
+    clearChat: '清除聊天',
+    startChat: '开始聊天',
+    ai: 'AI',
 };

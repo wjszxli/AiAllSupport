@@ -91,6 +91,12 @@ const commonConfig: Configuration = {
             title: 'install page',
             template: resolvePublic('install.html'),
         }),
+        new HtmlWebpackPlugin({
+            chunks: ['sidepanel'],
+            filename: 'sidepanel.html',
+            title: 'Side Panel Chat',
+            template: resolvePublic('sidepanel.html'),
+        }),
         new MiniCssExtractPlugin({
             filename: `css/[name].css`,
             ignoreOrder: false,

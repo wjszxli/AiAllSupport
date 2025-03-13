@@ -834,6 +834,12 @@ chrome.runtime.onInstalled.addListener((details) => {
         contexts: ['page', 'selection', 'image', 'link'],
     });
 
+    // 配置侧边栏行为，使点击扩展图标可以打开侧边栏
+    if (chrome.sidePanel) {
+        chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })
+            .catch(error => console.error('Failed to set side panel behavior:', error));
+    }
+
     if (details.reason === chrome.runtime.OnInstalledReason.INSTALL) {
         // 打开说明页面
         chrome.tabs.create({

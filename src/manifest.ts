@@ -9,7 +9,7 @@ const manifest: Manifest.WebExtensionManifest = {
     description: pkg.description,
     manifest_version: 3,
     minimum_chrome_version: pkg.browserslist.split(' ')[2],
-    permissions: ['storage', 'declarativeNetRequest', 'contextMenus', 'commands', 'activeTab', 'scripting'],
+    permissions: ['storage', 'declarativeNetRequest', 'contextMenus', 'commands', 'activeTab', 'scripting', 'sidePanel'],
     host_permissions: ['https://*/*', 'http://*/*'],
     content_security_policy: {
         extension_pages: "script-src 'self' http://localhost; object-src 'self';",
@@ -43,6 +43,10 @@ const manifest: Manifest.WebExtensionManifest = {
     options_ui: {
         page: 'options.html',
         open_in_tab: true,
+    },
+    // @ts-ignore
+    side_panel: {
+        default_path: "sidepanel.html"
     },
     icons: {
         '16': 'icons/icon16.png',

@@ -1,6 +1,6 @@
 import { Button, Card, Typography, Divider, Space, Select } from 'antd';
 import React, { useEffect, useState } from 'react';
-import { SettingOutlined, GithubOutlined, RocketOutlined, GlobalOutlined, MessageOutlined } from '@ant-design/icons';
+import { SettingOutlined, GithubOutlined, RocketOutlined, GlobalOutlined, MessageOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
 
 import { t, getLocale, setLocale } from '@/services/i18n';
 import type { LocaleType } from '@/locales';
@@ -79,6 +79,26 @@ const App: React.FC = () => {
         });
     };
 
+    const openSidePanel = () => {
+        chrome.windows.getCurrent({ populate: true }, (window) => {
+            if (window.id) {
+                chrome.sidePanel.open({ windowId: window.id })
+                    .catch(error => {
+                        console.error('Failed to open side panel:', error);
+                        // 尝试使用备用方法打开
+                        try {
+                            // 如果直接打开失败，尝试先设置行为再打开
+                            chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })
+                                .then(() => chrome.sidePanel.open({ windowId: window.id }))
+                                .catch(err => console.error('Still failed to open side panel:', err));
+                        } catch (err) {
+                            console.error('Error during side panel opening fallback:', err);
+                        }
+                    });
+            }
+        });
+    };
+
     return (
         <div className="app">
             <Card className="app-container">
@@ -130,6 +150,15 @@ const App: React.FC = () => {
                         block
                     >
                         {t('openSettings')}
+                    </Button>
+                    <Button
+                        type="default"
+                        icon={<MenuUnfoldOutlined />}
+                        onClick={openSidePanel}
+                        size="large"
+                        block
+                    >
+                        {t('openSidebar') || 'Open Sidebar'}
                     </Button>
                 </div>
 

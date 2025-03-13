@@ -12,6 +12,7 @@ const optionsPath = resolveSrc('options/index.tsx');
 const popupPath = resolveSrc('popup/index.tsx');
 const installPath = resolveSrc('install/index.tsx');
 const chatPath = resolveSrc('chat/index.tsx');
+const sidepanelPath = resolveSrc('sidepanel/index.tsx');
 
 const devEntry: Record<string, string[]> = {
     background: [backgroundPath],
@@ -19,6 +20,7 @@ const devEntry: Record<string, string[]> = {
     popup: [HMRClientScript, popupPath],
     install: [HMRClientScript, installPath],
     chat: [HMRClientScript, chatPath],
+    sidepanel: [HMRClientScript, sidepanelPath],
 };
 const prodEntry: Record<string, string[]> = {
     background: [backgroundPath],
@@ -26,6 +28,7 @@ const prodEntry: Record<string, string[]> = {
     popup: [popupPath],
     install: [installPath],
     chat: [chatPath],
+    sidepanel: [sidepanelPath],
 };
 const entry = __DEV__ ? devEntry : prodEntry;
 

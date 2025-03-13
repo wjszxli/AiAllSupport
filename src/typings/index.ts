@@ -72,3 +72,21 @@ export interface ChatMessage {
     thinking?: string;
     sender: 'user' | 'ai' | 'system';
 }
+
+// Chrome Side Panel API type definitions
+declare global {
+    namespace chrome {
+        namespace sidePanel {
+            function open(options: { windowId?: number, tabId?: number }): Promise<void>;
+            function setOptions(options: { 
+                tabId?: number, 
+                path?: string, 
+                enabled?: boolean 
+            }): Promise<void>;
+            function setPanelBehavior(behavior: { 
+                openPanelOnActionClick: boolean 
+            }): Promise<void>;
+            function getOptions(options: { tabId?: number }): Promise<{ path: string }>;
+        }
+    }
+}

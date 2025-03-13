@@ -98,6 +98,7 @@ export const en = {
     fetchWebpageContentFailed: 'Failed to fetch webpage content. Using AI knowledge only...',
     openSettings: 'Open Settings',
     openChat: 'Open Chat',
+    openSidebar: 'Open Sidebar',
     welcomeMessage: 'Welcome to AI Assistant! How can I help you?',
     tryAsking: 'Try asking me:',
     copyMessage: 'Copy Success',
