@@ -11,6 +11,21 @@ import ChatWindow from './components/ChatWindow';
 import './styles/animations.css';
 import './styles/highlight.css';
 
+// Add debounce utility at the top of the file
+const debounce = <F extends (...args: any[]) => any>(
+    func: F,
+    waitFor: number,
+): ((...args: Parameters<F>) => void) => {
+    let timeout: ReturnType<typeof setTimeout> | null = null;
+
+    return (...args: Parameters<F>): void => {
+        if (timeout !== null) {
+            clearTimeout(timeout);
+        }
+        timeout = setTimeout(() => func(...args), waitFor);
+    };
+};
+
 // 初始化语言设置
 (async () => {
     try {
@@ -61,10 +76,20 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 // 监听选中文字
 document.addEventListener(
     'mouseup',
-    async (event) => {
+    debounce(async (event) => {
+        // Chat button should not appear right after clicking on an element
+        if (event.target && (event.target as Element).id === CHAT_BUTTON_ID) {
+            return;
+        }
+
         const selection = window.getSelection();
         if (!selection || selection.toString().trim() === '') {
             removeChatButton();
+            return;
+        }
+
+        const chatBoxExists = document.getElementById(CHAT_BOX_ID);
+        if (chatBoxExists) {
             return;
         }
 
@@ -77,7 +102,7 @@ document.addEventListener(
         }
 
         injectChatButton(clientX, clientY, text);
-    },
+    }, 100),
     { passive: true },
 );
 
@@ -101,12 +126,26 @@ const injectChatButton = (x: number, y: number, text: string) => {
         document.body.append(chatButton);
     }
 
-    chatButton.style.top = `${y + 5}px`;
+    chatButton.style.top = `${y}px`;
+    chatButton.style.left = `${x}px`;
 
-    chatButton.style.left = `${x + 5}px`;
+    // Remove any existing click listeners to prevent multiple handlers
+    const newButton = chatButton.cloneNode(true) as HTMLImageElement;
+    chatButton.parentNode?.replaceChild(newButton, chatButton);
+    chatButton = newButton;
 
-    chatButton.addEventListener('click', () => {
-        injectChatBox(x, y, text);
+    chatButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Clear text selection first to prevent mouseup from reinjecting the button
+        window.getSelection()?.removeAllRanges();
+
+        // Use setTimeout to ensure the selection clear takes effect before we remove the button
+        setTimeout(() => {
+            removeChatButton();
+            injectChatBox(x, y, text);
+        }, 0);
     });
 };
 
@@ -118,11 +157,15 @@ const injectChatBox = (x: number, y: number, text: string) => {
         y: window.scrollY,
     };
 
+    // First, ensure the chat button is removed and the text selection is cleared
+    removeChatButton();
+    window.getSelection()?.removeAllRanges();
+
     // 确保位置在视图区域内
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
-    const chatWidth = 500;
-    const chatHeight = 600;
+    const chatWidth = 600;
+    const chatHeight = 800;
 
     // 计算居中位置
     let centerX = Math.max(0, Math.min(x, viewportWidth - chatWidth - 20));
@@ -133,10 +176,6 @@ const injectChatBox = (x: number, y: number, text: string) => {
         centerX = (viewportWidth - chatWidth) / 2;
         centerY = (viewportHeight - chatHeight) / 2;
     }
-
-    // Explicitly remove the chat button first
-    removeChatButton();
-    removeChatBox();
 
     let chatContainer = document.getElementById(CHAT_BOX_ID);
     if (!chatContainer) {

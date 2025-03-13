@@ -3,7 +3,6 @@ import { CloseOutlined, PushpinOutlined, PushpinFilled, CommentOutlined } from '
 import { Alert, Tooltip, Typography } from 'antd';
 import storage from '@/utils/storage';
 import { removeChatButton, removeChatBox } from '@/utils';
-import { CHAT_BOX_ID, CHAT_BUTTON_ID } from '@/utils/constant';
 
 import Config from '../Config';
 import ChatInterface from '../ChatInterface/index';
