@@ -117,9 +117,9 @@ export const zhCN = {
 
     filteredDomains: '过滤的域名',
     searchEngines: '启用的搜索引擎',
-    openSettings: '打开设置',
-    openChat: '打开聊天',
-    openSidebar: '打开侧边栏',
+    openSettings: '设置',
+    openChat: '聊天',
+    openSidebar: '总结当前页面',
     pressTip: '按回车键发送，Shift+回车创建新行',
     welcomeMessage: '欢迎使用AI助手！我能为您做什么？',
     tryAsking: '试试问我：',

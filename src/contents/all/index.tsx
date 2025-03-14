@@ -95,6 +95,8 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
         return true;
     }
+
+    return false;
 });
 
 // 监听选中文字

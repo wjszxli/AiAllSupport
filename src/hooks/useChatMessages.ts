@@ -8,13 +8,13 @@ import storage from '@/utils/storage';
 import { localFetchWebContentWithContext } from '@/services/localChatService';
 import type { ChatMessage } from '@/typings';
 import { updateMessage } from '@/utils/messageUtils';
-import { 
-    saveChatAppMessages, 
+import {
+    saveChatAppMessages,
     getChatAppMessages,
-    saveChatInterfaceMessages, 
+    saveChatInterfaceMessages,
     getChatInterfaceMessages,
     deleteChatAppConversation,
-    deleteChatInterfaceConversation
+    deleteChatInterfaceConversation,
 } from '@/utils/indexedDBStorage';
 
 export const markdownCache = new LRUCache<string, string>(50);
@@ -27,7 +27,11 @@ export interface UseChatMessagesProps {
     conversationId?: string;
 }
 
-export const useChatMessages = ({ t, storeType, conversationId = 'default' }: UseChatMessagesProps) => {
+export const useChatMessages = ({
+    t,
+    storeType,
+    conversationId = 'default',
+}: UseChatMessagesProps) => {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [streamingMessageId, setStreamingMessageId] = useState<number | null>(null);
@@ -46,7 +50,7 @@ export const useChatMessages = ({ t, storeType, conversationId = 'default' }: Us
                 } else {
                     loadedMessages = await getChatInterfaceMessages(conversationId);
                 }
-                
+
                 if (loadedMessages && loadedMessages.length > 0) {
                     setMessages(loadedMessages);
                 }
@@ -117,16 +121,20 @@ export const useChatMessages = ({ t, storeType, conversationId = 'default' }: Us
     const createStreamUpdateHandler = useCallback(
         (aiMessageId: number) => {
             return (messageText: string, thinkingText: string) => {
-                // 第一帧数据，设置数据 ID
+                // Set streaming message ID on first frame of data
                 if (!streamingMessageId) {
                     setStreamingMessageId(aiMessageId);
                 }
 
-                // 更新消息
+                // Ensure message text is never undefined
+                const safeMessageText = messageText || '';
+                const safeThinkingText = thinkingText || '';
+
+                // Update message
                 updateMessage(setMessages, aiMessageId, {
                     id: aiMessageId,
-                    text: messageText,
-                    thinking: thinkingText,
+                    text: safeMessageText,
+                    thinking: safeThinkingText,
                     sender: 'ai',
                 });
             };
@@ -202,7 +210,7 @@ export const useChatMessages = ({ t, storeType, conversationId = 'default' }: Us
                 scrollToBottom();
             } catch (error) {
                 const errorMessage = error as string;
-                if (errorMessage === t("pleaseEnterApiKey")) {
+                if (errorMessage === t('pleaseEnterApiKey')) {
                     Modal.confirm({
                         title: t('pleaseEnterApiKey'),
                         content: t('apiKeyNeeded'),
@@ -242,14 +250,14 @@ export const useChatMessages = ({ t, storeType, conversationId = 'default' }: Us
         try {
             // Clear messages from state
             setMessages([]);
-            
+
             // Clear messages from IndexedDB based on storeType
             if (storeType === 'app') {
                 await deleteChatAppConversation(conversationId);
             } else {
                 await deleteChatInterfaceConversation(conversationId);
             }
-            
+
             return true;
         } catch (error) {
             console.error('Failed to clear messages:', error);

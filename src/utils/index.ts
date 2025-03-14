@@ -109,7 +109,10 @@ export const requestAIStream = async (
                 } else if (msg.response.ok) {
                     onData(msg.response);
                 } else {
-                    reject(new Error(msg.response.error));
+                    // Properly handle and log errors
+                    console.error('Stream response error:', msg.response.error);
+                    onData({ data: `Error: ${msg.response.error || 'Unknown error'}`, done: false });
+                    reject(new Error(msg.response.error || 'Unknown error'));
                 }
             }
         };
@@ -133,11 +136,14 @@ export const requestAIStream = async (
             },
             (response) => {
                 console.log('API 响应:', response);
-                if (response.status === 200) {
+                if (response && response.status === 200) {
                     resolve(response.data);
                 } else {
-                    console.error('API 请求失败:', response.error);
-                    reject(response.error);
+                    const errorMsg = response && response.error ? response.error : 'API request failed';
+                    console.error('API 请求失败:', errorMsg);
+                    // Send error as a data message to be displayed to the user
+                    onData({ data: `Error: ${errorMsg}`, done: false });
+                    reject(errorMsg);
                 }
             },
         );
@@ -197,25 +203,35 @@ export const isLocalhost = (selectedProvider: string | null) => {
 };
 
 export const handleMessage = (message: string, sender: { tab: { id: number } }) => {
-    const lines = message.split('\n');
+    try {
+        const lines = message.split('\n');
 
-    for (const line of lines) {
-        if (line.trim() === '' || !line.startsWith('data: ')) continue;
+        for (const line of lines) {
+            if (line.trim() === '' || !line.startsWith('data: ')) continue;
 
-        const data = line.slice(6);
-        if (sender?.tab?.id) {
-            if (data === '[DONE]') {
-                chrome.tabs.sendMessage(sender.tab.id, {
-                    type: 'streamResponse',
-                    response: { data: '', ok: true, done: true },
-                });
-                break;
-            } else {
-                chrome.tabs.sendMessage(sender.tab.id, {
-                    type: 'streamResponse',
-                    response: { data: line, ok: true, done: false },
-                });
+            const data = line.slice(6);
+            if (sender?.tab?.id) {
+                if (data === '[DONE]') {
+                    chrome.tabs.sendMessage(sender.tab.id, {
+                        type: 'streamResponse',
+                        response: { data: '', ok: true, done: true },
+                    });
+                    break;
+                } else {
+                    chrome.tabs.sendMessage(sender.tab.id, {
+                        type: 'streamResponse',
+                        response: { data: line, ok: true, done: false },
+                    });
+                }
             }
+        }
+    } catch (error) {
+        console.error('Error handling message:', error);
+        if (sender?.tab?.id) {
+            chrome.tabs.sendMessage(sender.tab.id, {
+                type: 'streamResponse',
+                response: { data: 'Error processing response', ok: false, done: true, error: String(error) },
+            });
         }
     }
 };

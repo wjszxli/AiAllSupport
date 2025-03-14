@@ -6,6 +6,7 @@ import {
     ReloadOutlined,
     StopOutlined,
     CopyOutlined,
+    SettingOutlined,
 } from '@ant-design/icons';
 import { useChatMessages } from '../hooks/useChatMessages';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -16,14 +17,12 @@ import './SidePanel.scss';
 const { TextArea } = Input;
 const { Text } = Typography;
 
-// Initialize markdown-it instance
 const md = new MarkdownIt({
     html: true,
     linkify: true,
     typographer: true,
 });
 
-// Add mathjax support
 md.use(mathjax3);
 
 const SidePanel: React.FC = () => {
@@ -55,23 +54,46 @@ const SidePanel: React.FC = () => {
         }
     };
 
-    // Function to render markdown content
     const renderMarkdown = (content: string) => {
-        return md.render(content);
+        try {
+            return md.render(content || '');
+        } catch (error) {
+            console.error('Error rendering markdown:', error);
+            return content || '';
+        }
+    };
+
+    const openSettingsPage = () => {
+        chrome.runtime.openOptionsPage();
+    };
+
+    const handleClearMessages = () => {
+        clearMessages();
     };
 
     return (
         <div className="side-panel">
             <div className="chat-header">
                 <Text strong>{t('chatWithAI')}</Text>
-                <Tooltip title={t('clearChat')}>
-                    <Button
-                        type="text"
-                        size="small"
-                        icon={<ClearOutlined />}
-                        onClick={clearMessages}
-                    />
-                </Tooltip>
+                <div>
+                    <Tooltip title={t('settings') || 'Settings'}>
+                        <Button
+                            type="text"
+                            size="small"
+                            icon={<SettingOutlined />}
+                            onClick={openSettingsPage}
+                            style={{ marginRight: '4px' }}
+                        />
+                    </Tooltip>
+                    <Tooltip title={t('clearChat')}>
+                        <Button
+                            type="text"
+                            size="small"
+                            icon={<ClearOutlined />}
+                            onClick={handleClearMessages}
+                        />
+                    </Tooltip>
+                </div>
             </div>
 
             <div className="chat-messages" ref={messagesWrapperRef}>

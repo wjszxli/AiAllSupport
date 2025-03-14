@@ -49,7 +49,8 @@ export async function sendMessage(
                         isInThinkEndTag = true;
                     } else if (isInThinkStartTag && !isInThinkEndTag) {
                         thinkingText += data;
-                    } else if (isInThinkEndTag) {
+                    } else {
+                        // Fix: Always append data that's not thinking text to messageText
                         messageText += data;
                     }
 
@@ -66,8 +67,8 @@ export async function sendMessage(
                             if (onStreamUpdate) onStreamUpdate(messageText, thinkingText);
                         } else if (chunkData.choices?.[0]?.delta?.reasoning_content) {
                             const reasoning_content = chunkData.choices[0].delta.reasoning_content;
-                            console.log('添加思考到响应:', thinkingText);
-                            thinkingText += reasoning_content
+                            console.log('添加思考到响应:', reasoning_content);
+                            thinkingText += reasoning_content;
                             if (onStreamUpdate) onStreamUpdate(messageText, thinkingText);
                         } else {
                             console.log('数据块中没有内容:', chunkData);
