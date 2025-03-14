@@ -92,8 +92,10 @@ async function searchBaidu(query: string): Promise<SearchResult[]> {
         const response = await fetch(searchUrl, {
             method: 'GET',
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'User-Agent':
+                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Accept':
+                    'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
                 'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
             },
         });
@@ -166,7 +168,9 @@ async function searchGoogle(query: string): Promise<SearchResult[]> {
         });
 
         if (!response.ok) {
-            throw new Error(t('googleSearchFailed').replace('{status}', response.status.toString()));
+            throw new Error(
+                t('googleSearchFailed').replace('{status}', response.status.toString()),
+            );
         }
 
         const html = await response.text();
@@ -232,7 +236,9 @@ async function searchDuckDuckGo(query: string): Promise<SearchResult[]> {
         });
 
         if (!response.ok) {
-            throw new Error(t('duckduckgoSearchFailed').replace('{status}', response.status.toString()));
+            throw new Error(
+                t('duckduckgoSearchFailed').replace('{status}', response.status.toString()),
+            );
         }
 
         const html = await response.text();
@@ -431,7 +437,9 @@ async function searchSearxng(query: string): Promise<SearchResult[]> {
         });
 
         if (!response.ok) {
-            throw new Error(t('searxngSearchFailed').replace('{status}', response.status.toString()));
+            throw new Error(
+                t('searxngSearchFailed').replace('{status}', response.status.toString()),
+            );
         }
 
         const html = await response.text();
@@ -834,11 +842,9 @@ chrome.runtime.onInstalled.addListener((details) => {
         contexts: ['page', 'selection', 'image', 'link'],
     });
 
-    // 配置侧边栏行为，使点击扩展图标可以打开侧边栏
-    if (chrome.sidePanel) {
-        chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })
-            .catch(error => console.error('Failed to set side panel behavior:', error));
-    }
+    chrome.sidePanel.setOptions({
+        enabled: false,
+    });
 
     if (details.reason === chrome.runtime.OnInstalledReason.INSTALL) {
         // 打开说明页面
@@ -887,4 +893,13 @@ chrome.commands.onCommand.addListener(async (command) => {
             }
         }
     }
+});
+
+chrome.tabs.onUpdated.addListener(async (tabId, _info, tab) => {
+    if (!tab.url) return;
+
+    await chrome.sidePanel.setOptions({
+        tabId,
+        enabled: false,
+    });
 });

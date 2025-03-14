@@ -1,6 +1,13 @@
 import { Button, Card, Typography, Divider, Space, Select } from 'antd';
 import React, { useEffect, useState } from 'react';
-import { SettingOutlined, GithubOutlined, RocketOutlined, GlobalOutlined, MessageOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
+import {
+    SettingOutlined,
+    GithubOutlined,
+    RocketOutlined,
+    GlobalOutlined,
+    MessageOutlined,
+    MenuUnfoldOutlined,
+} from '@ant-design/icons';
 
 import { t, getLocale, setLocale } from '@/services/i18n';
 import type { LocaleType } from '@/locales';
@@ -14,6 +21,7 @@ const { Option } = Select;
 
 const App: React.FC = () => {
     const [currentLocale, setCurrentLocale] = useState<LocaleType>(getLocale());
+    const [isFadingOut, setIsFadingOut] = useState(false);
 
     useEffect(() => {
         const init = async () => {
@@ -75,32 +83,62 @@ const App: React.FC = () => {
 
     const openChatPage = () => {
         chrome.tabs.create({
-            url: chrome.runtime.getURL('chat.html')
+            url: chrome.runtime.getURL('chat.html'),
         });
     };
 
     const openSidePanel = () => {
-        chrome.windows.getCurrent({ populate: true }, (window) => {
-            if (window.id) {
-                chrome.sidePanel.open({ windowId: window.id })
-                    .catch(error => {
+        // 如果支持，使用原生 sidePanel API
+        chrome.windows.getCurrent({ populate: true }, (chromeWindow) => {
+            if (chromeWindow.id) {
+                chrome.sidePanel.setOptions({
+                    enabled: true,
+                });
+                chrome.sidePanel
+                    .open({ windowId: chromeWindow.id })
+                    .then(() => {
+                        // Add smooth fade-out animation before closing
+                        setIsFadingOut(true);
+                        setTimeout(() => {
+                            window.close();
+                        }, 300); // Wait for animation to complete
+                    })
+                    .catch((error) => {
                         console.error('Failed to open side panel:', error);
-                        // 尝试使用备用方法打开
-                        try {
-                            // 如果直接打开失败，尝试先设置行为再打开
-                            chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })
-                                .then(() => chrome.sidePanel.open({ windowId: window.id }))
-                                .catch(err => console.error('Still failed to open side panel:', err));
-                        } catch (err) {
-                            console.error('Error during side panel opening fallback:', err);
-                        }
+                        // 回退到 iframe 解决方案
+                        createIframeSidePanel();
+                    });
+            }
+        });
+    };
+
+    // 创建基于 iframe 的替代侧边栏
+    const createIframeSidePanel = () => {
+        // 向当前活动标签页发送消息，要求创建 iframe 侧边栏
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            if (tabs[0]?.id) {
+                chrome.tabs
+                    .sendMessage(tabs[0].id, { action: 'createIframeSidePanel' })
+                    .then(() => {
+                        // Add smooth fade-out animation before closing
+                        setIsFadingOut(true);
+                        setTimeout(() => {
+                            window.close();
+                        }, 300); // Wait for animation to complete
+                    })
+                    .catch((error) => {
+                        console.error('Failed to send iframe side panel creation message:', error);
+                        // 如果消息发送失败，可能内容脚本未加载，直接创建一个新标签页作为替代
+                        // chrome.tabs.create({
+                        //     url: chrome.runtime.getURL('sidepanel.html'),
+                        // });
                     });
             }
         });
     };
 
     return (
-        <div className="app">
+        <div className={`app ${isFadingOut ? 'fade-out' : ''}`}>
             <Card className="app-container">
                 <div className="app-header">
                     <Typography.Title level={2} className="app-title">

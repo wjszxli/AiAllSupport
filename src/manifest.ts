@@ -17,7 +17,7 @@ const manifest: Manifest.WebExtensionManifest = {
     web_accessible_resources: [
         {
             matches: ['<all_urls>'],
-            resources: ['icons/*', 'images/*', 'fonts/*'],
+            resources: ['icons/*', 'images/*', 'fonts/*','*.html'],
         },
     ],
     background: {

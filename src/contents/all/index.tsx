@@ -8,6 +8,7 @@ import { setLocale } from '@/services/i18n';
 import type { LocaleType } from '@/locales';
 
 import ChatWindow from './components/ChatWindow';
+import { IframeSidePanelManager } from './components/IframeSidePanel';
 import './styles/animations.css';
 import './styles/highlight.css';
 
@@ -48,29 +49,52 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         // 更新语言设置
         setLocale(message.locale)
             .then(() => {
-                // 触发UI更新
-                window.dispatchEvent(
-                    new CustomEvent('translationUpdate', {
-                        detail: { locale: message.locale },
-                    }),
-                );
-                // Send response indicating success
+                console.log('Content script locale updated:', message.locale);
                 sendResponse({ success: true });
             })
-            .catch((error: unknown) => {
-                console.error('Error setting locale:', error);
-                sendResponse({
-                    success: false,
-                    error: error instanceof Error ? error.message : 'Unknown error',
-                });
+            .catch((error) => {
+                console.error('Failed to update locale in content script:', error);
+                sendResponse({ success: false, error: error.message });
             });
-
-        // 返回true表示我们将发送一个异步响应
         return true;
     }
 
-    // 返回false（或什么都不返回）表示我们不处理的消息
-    return false;
+    if (message.action === 'openChatWindow') {
+        const selectedText = message.selectedText || '';
+        console.log('Opening chat window with selected text:', selectedText);
+
+        // 获取当前视窗的中心点
+        const centerX = window.innerWidth / 2;
+        const centerY = window.innerHeight / 2;
+
+        // 先移除已存在的聊天窗口和按钮
+        removeChatButton();
+        removeChatBox();
+
+        // 注入聊天窗口
+        injectChatBox(centerX, centerY, selectedText);
+        sendResponse({ success: true });
+        return true;
+    }
+
+    // 处理 iframe 侧边栏创建请求
+    if (message.action === 'createIframeSidePanel') {
+        console.log('Creating iframe side panel');
+
+        try {
+            // 显示 iframe 侧边栏
+            IframeSidePanelManager.show();
+            sendResponse({ success: true });
+        } catch (error: unknown) {
+            console.error('Failed to create iframe side panel:', error);
+            sendResponse({
+                success: false,
+                error: error instanceof Error ? error.message : 'Unknown error',
+            });
+        }
+
+        return true;
+    }
 });
 
 // 监听选中文字
@@ -204,30 +228,4 @@ document.addEventListener('keydown', async (event) => {
         removeChatBox();
         removeChatButton();
     }
-});
-
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-    if (message.action === 'openChatWindow') {
-        const { selectedText } = message;
-
-        const windowWidth = window.innerWidth;
-        const windowHeight = window.innerHeight;
-        const chatWidth = 500;
-        const chatHeight = 600;
-
-        const centerX = (windowWidth - chatWidth) / 2;
-        const centerY = (windowHeight - chatHeight) / 2;
-
-        try {
-            injectChatBox(centerX, centerY, selectedText);
-            sendResponse({ success: true });
-        } catch (error: unknown) {
-            console.error('Error opening chat window:', error);
-            sendResponse({
-                success: false,
-                error: error instanceof Error ? error.message : 'Unknown error',
-            });
-        }
-    }
-    return false;
 });
