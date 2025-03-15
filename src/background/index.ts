@@ -1,15 +1,21 @@
 import type { OllamaResponse, SearchResult } from '@/typings';
-import { fetchData, handleMessage, isLocalhost } from '@/utils';
+import { fetchData, handleMessage, isLocalhost, initLogger, Logger } from '@/utils';
 import { MODIFY_HEADERS_RULE_ID, URL_MAP, SEARCH_ENGINES } from '@/utils/constant';
 import storage from '@/utils/storage';
 import { load } from 'cheerio';
 import { tavily } from '@tavily/core';
 import { t } from '@/services/i18n';
 
+// Initialize logger
+const logger = new Logger('background');
+initLogger().then(config => {
+  logger.info('Logger initialized with config', config);
+});
+
 // 用于网页搜索的函数，支持多个搜索引擎
 async function searchWeb(query: string): Promise<SearchResult[]> {
     try {
-        console.log('执行多搜索引擎搜索:', query);
+        logger.info('Executing multi-search engine search', { query });
 
         // 获取配置
         const [enabledEngines, filteredDomains] = await Promise.all([
@@ -17,7 +23,8 @@ async function searchWeb(query: string): Promise<SearchResult[]> {
             storage.getFilteredDomains(),
         ]);
 
-        console.log('启用的搜索引擎:', enabledEngines);
+        logger.debug('Enabled search engines', { enabledEngines });
+        logger.debug('Filtered domains', { filteredDomains });
 
         // 创建搜索引擎函数映射
         const searchFunctions: Record<string, (query: string) => Promise<SearchResult[]>> = {
@@ -76,7 +83,7 @@ async function searchWeb(query: string): Promise<SearchResult[]> {
 
         return combinedResults;
     } catch (error: any) {
-        console.error('执行多搜索引擎搜索失败:', error);
+        logger.error('Search web error', error);
         return [];
     }
 }
@@ -706,16 +713,18 @@ const requestControllers = new Map();
 
 // 监听 `popup.ts` 或 `content.ts` 发送的消息，并代理 API 请求
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    logger.debug('Message received', { action: request.action, sender });
+    
     if (request.action === 'fetchData') {
         const controller = new AbortController();
-        console.log('sender', sender);
         const tabId = sender?.tab?.id;
 
         if (tabId) {
             requestControllers.set(tabId, controller);
+            logger.debug('Request controller set for tab', { tabId });
         }
 
-        console.log('📡 发送请求:', request.body);
+        logger.info('Sending API request', { url: request.url, method: request.method });
 
         fetchData({
             url: request.url,
@@ -813,6 +822,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
     if (request.action === 'abortRequest') {
         const tabId = sender?.tab?.id;
+        logger.info('Aborting request', { tabId });
         console.log('🚫 中止请求', tabId);
         if (tabId) {
             const controller = requestControllers.get(tabId);

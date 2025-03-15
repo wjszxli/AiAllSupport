@@ -188,5 +188,24 @@ export const zhCN = {
 	    2.	摘要：详细介绍网页的主要内容，包括背景、关键点、流程、技术细节（如适用）或相关信息。
 	    3.	观点：归纳网页的核心价值点，例如主要结论、重要影响、创新点、对读者的启发或建议等。
 	网页内容：{content}
-    `
+    `,
+
+    // Logging related translations
+    options_tab_logging: '日志系统',
+    options_logging_settings: '日志设置',
+    options_logging_enabled: '启用日志',
+    options_logging_level: '日志级别',
+    options_logging_level_debug: '调试',
+    options_logging_level_info: '信息',
+    options_logging_level_warn: '警告',
+    options_logging_level_error: '错误',
+    options_logging_include_timestamp: '包含时间戳',
+    options_logging_to_console: '输出到控制台',
+    options_logging_persist: '持久化日志',
+    options_logging_max_persisted: '最大持久化日志数量',
+    options_logging_clear: '清除日志',
+    options_logging_settings_saved: '日志设置已保存',
+    options_logging_settings_save_failed: '保存日志设置失败',
+    options_logging_cleared: '日志已清除',
+    options_logging_clear_failed: '清除日志失败',
 };

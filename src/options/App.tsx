@@ -14,6 +14,8 @@ import {
     Tag,
     Layout,
     Tabs,
+    InputNumber,
+    Radio,
 } from 'antd';
 import React, { useEffect, useState } from 'react';
 import {
@@ -26,6 +28,7 @@ import {
     ControlOutlined,
     InfoCircleOutlined,
     CommentOutlined,
+    BugOutlined,
 } from '@ant-design/icons';
 
 import { modelList, validateApiKey } from '@/services';
@@ -45,6 +48,7 @@ import {
 } from '@/utils/constant';
 import storage from '@/utils/storage';
 import { featureSettings } from '@/utils/featureSettings';
+import { LogLevel, getLoggerConfig, updateLoggerConfig, clearLogs } from '@/utils/logger';
 
 import './App.scss';
 
@@ -68,6 +72,7 @@ const App: React.FC = () => {
     const [activeTab, setActiveTab] = useState('api');
     const [apiKeyValidating, setApiKeyValidating] = useState(false);
     const [tavilyApiKeyValidating, setTavilyApiKeyValidating] = useState(false);
+    const [loggerConfig, setLoggerConfig] = useState<any>(null);
 
     // Add an auto-save debounce timer
     const [autoSaveTimer, setAutoSaveTimer] = useState<NodeJS.Timeout | null>(null);
@@ -86,6 +91,10 @@ const App: React.FC = () => {
             }
 
             await initData();
+
+            // Initialize logger config state
+            const config = getLoggerConfig();
+            setLoggerConfig(config);
         };
 
         init();
@@ -676,6 +685,103 @@ const App: React.FC = () => {
         </>
     );
 
+    // Handler for logging settings changes
+    const handleLoggingSettingsChange = async (changedValues: any, allValues: any) => {
+        try {
+            if (changedValues.logging) {
+                const newConfig = await updateLoggerConfig(changedValues.logging);
+                setLoggerConfig(newConfig);
+                message.success(t('options_logging_settings_saved'));
+            }
+        } catch (error) {
+            console.error('Failed to update logging settings:', error);
+            message.error(t('options_logging_settings_save_failed'));
+        }
+    };
+
+    // Handler for clearing logs
+    const handleClearLogs = async () => {
+        try {
+            await clearLogs();
+            message.success(t('options_logging_cleared'));
+        } catch (error) {
+            console.error('Failed to clear logs:', error);
+            message.error(t('options_logging_clear_failed'));
+        }
+    };
+
+    // Render logging settings
+    const renderLoggingSettings = () => (
+        <Card
+            title={
+                <Space>
+                    <BugOutlined />
+                    {t('options_logging_settings')}
+                </Space>
+            }
+        >
+            <Form
+                layout="vertical"
+                initialValues={{ logging: loggerConfig }}
+                onValuesChange={handleLoggingSettingsChange}
+            >
+                <Form.Item
+                    name={['logging', 'enabled']}
+                    label={t('options_logging_enabled')}
+                    valuePropName="checked"
+                >
+                    <Switch />
+                </Form.Item>
+
+                <Form.Item name={['logging', 'level']} label={t('options_logging_level')}>
+                    <Radio.Group>
+                        <Radio value={LogLevel.DEBUG}>{t('options_logging_level_debug')}</Radio>
+                        <Radio value={LogLevel.INFO}>{t('options_logging_level_info')}</Radio>
+                        <Radio value={LogLevel.WARN}>{t('options_logging_level_warn')}</Radio>
+                        <Radio value={LogLevel.ERROR}>{t('options_logging_level_error')}</Radio>
+                    </Radio.Group>
+                </Form.Item>
+
+                <Form.Item
+                    name={['logging', 'includeTimestamp']}
+                    label={t('options_logging_include_timestamp')}
+                    valuePropName="checked"
+                >
+                    <Switch />
+                </Form.Item>
+
+                <Form.Item
+                    name={['logging', 'logToConsole']}
+                    label={t('options_logging_to_console')}
+                    valuePropName="checked"
+                >
+                    <Switch />
+                </Form.Item>
+
+                <Form.Item
+                    name={['logging', 'persistLogs']}
+                    label={t('options_logging_persist')}
+                    valuePropName="checked"
+                >
+                    <Switch />
+                </Form.Item>
+
+                <Form.Item
+                    name={['logging', 'maxPersistedLogs']}
+                    label={t('options_logging_max_persisted')}
+                >
+                    <InputNumber min={100} max={10000} step={100} />
+                </Form.Item>
+
+                <Form.Item>
+                    <Button type="primary" danger onClick={handleClearLogs}>
+                        {t('options_logging_clear')}
+                    </Button>
+                </Form.Item>
+            </Form>
+        </Card>
+    );
+
     // Function to open feedback form
     const openFeedbackSurvey = () => {
         window.open(FEEDBACK_SURVEY_URL, '_blank');
@@ -784,6 +890,17 @@ const App: React.FC = () => {
                                 >
                                     {renderSearchSettings()}
                                 </Form>
+                            </TabPane>
+
+                            <TabPane
+                                tab={
+                                    <span>
+                                        <BugOutlined /> {t('options_logging_settings')}
+                                    </span>
+                                }
+                                key="logging"
+                            >
+                                {renderLoggingSettings()}
                             </TabPane>
 
                             <TabPane

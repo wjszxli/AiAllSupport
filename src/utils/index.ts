@@ -3,6 +3,11 @@ import type { RequestMethod, WebsiteMetadata } from '@/typings';
 import { CHAT_BOX_ID, CHAT_BUTTON_ID, URL_MAP } from './constant';
 import storage from './storage';
 import { t } from '@/services/i18n';
+import { Logger } from './logger';
+export * from './logger';
+
+// Create a logger for this module
+const logger = new Logger('utils');
 
 // 通用 Fetch 封装，支持流式响应
 export const fetchData = async ({
@@ -26,20 +31,27 @@ export const fetchData = async ({
 
     const { selectedProvider } = await storage.getConfig();
     if (!selectedProvider) {
+        logger.error('No provider selected');
         throw new Error(t('pleaseSelectProvider'));
     }
 
     const apiKey = await storage.getApiKey(selectedProvider);
     if (!apiKey && !isLocalhost(selectedProvider)) {
+        logger.error('No API key provided for non-localhost provider', {
+            provider: selectedProvider,
+        });
         throw new Error(t('pleaseEnterApiKey'));
     }
 
     const base_url = URL_MAP[selectedProvider as keyof typeof URL_MAP];
     if (!base_url) {
+        logger.error('Base URL not found for provider', { provider: selectedProvider });
         throw new Error(t('providerBaseUrlNotFound').replace('{provider}', selectedProvider));
     }
 
     try {
+        logger.debug('Preparing fetch request', { url: base_url + url, method });
+
         const config: RequestInit = {
             method,
             body,
@@ -63,15 +75,21 @@ export const fetchData = async ({
 
         clearTimeout(timeoutId);
 
+        logger.debug('Fetch response received', { status: response.status, ok: response.ok });
+
         if (!response.ok) {
-            throw new Error(
-                t('httpError')
-                    .replace('{status}', response.status.toString())
-                    .replace('{statusText}', response.statusText),
-            );
+            const errorMsg = t('httpError')
+                .replace('{status}', response.status.toString())
+                .replace('{statusText}', response.statusText);
+            logger.error('Fetch error', {
+                status: response.status,
+                statusText: response.statusText,
+            });
+            throw new Error(errorMsg);
         }
 
         if (body && body.includes('"stream":true') && response.body) {
+            logger.debug('Processing stream response');
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
 
@@ -84,10 +102,11 @@ export const fetchData = async ({
             return { status: response.status, ok: response.ok, data: {} };
         } else {
             const data = await response.json();
+            logger.debug('Processed JSON response');
             return { status: response.status, ok: response.ok, data };
         }
-    } catch (error) {
-        console.error('fetchData 错误:', error);
+    } catch (error: unknown) {
+        logger.error('Fetch error', { error });
         throw error;
     }
 };
