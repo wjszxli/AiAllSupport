@@ -15,6 +15,7 @@ import { updateMessage } from '@/utils/messageUtils';
 export async function sendMessage(
     message: string,
     onStreamUpdate?: (response: string, thinking: string) => void,
+    tabId?: string | null,
 ): Promise<string> {
     try {
         const previousMessages: IMessage[] = (await storage.get('chatHistory')) || [];
@@ -31,8 +32,9 @@ export async function sendMessage(
         const signal = window.currentAbortController.signal;
 
         return new Promise((resolve, reject) => {
-            console.log('发送数据：', sendMessage)
-            chatAIStream(sendMessage, async (chunk) => {
+            console.log('发送数据：', sendMessage);
+
+            const onData = async (chunk: { data: string; done: boolean }) => {
                 if (signal.aborted) {
                     return;
                 }
@@ -92,7 +94,9 @@ export async function sendMessage(
 
                     resolve(messageText);
                 }
-            }).catch((error) => {
+            };
+
+            chatAIStream(sendMessage, onData, tabId).catch((error) => {
                 console.error('chatAIStream中出错:', error);
                 if (!signal.aborted) {
                     reject(error);

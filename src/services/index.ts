@@ -50,6 +50,7 @@ export const modelList = async (selectedProvider: string) => {
 export const chatAIStream = async (
     messages: IMessage[],
     onData: (chunk: { data: string; done: boolean }) => void,
+    tabId?: string | null,
 ) => {
     const { selectedModel, selectedProvider } = await storage.getConfig();
 
@@ -62,5 +63,5 @@ export const chatAIStream = async (
         messages: [{ role: 'system', content: t('systemPrompt') }, ...messages],
         stream: true,
     };
-    return requestAIStream(url, 'POST', data, onData);
+    return requestAIStream(url, 'POST', data, onData, tabId);
 };

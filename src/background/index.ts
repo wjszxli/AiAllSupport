@@ -708,9 +708,11 @@ const requestControllers = new Map();
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'fetchData') {
         const controller = new AbortController();
+        console.log('sender', sender);
+        const tabId = sender?.tab?.id;
 
-        if (sender?.tab?.id) {
-            requestControllers.set(sender.tab.id, controller);
+        if (tabId) {
+            requestControllers.set(tabId, controller);
         }
 
         console.log('📡 发送请求:', request.body);
@@ -730,28 +732,30 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                                 message: { content },
                                 done,
                             } = data;
-                            if (done && sender?.tab?.id) {
-                                chrome.tabs.sendMessage(sender.tab.id, {
+                            if (done && tabId) {
+                                chrome.tabs.sendMessage(tabId, {
                                     type: 'streamResponse',
                                     response: { data: 'data: [DONE]\n\n', ok: true, done: true },
                                 });
-                            } else if (content && sender?.tab?.id) {
-                                chrome.tabs.sendMessage(sender.tab.id, {
+                            } else if (content && tabId) {
+                                chrome.tabs.sendMessage(tabId, {
                                     type: 'streamResponse',
                                     response: { data: content, ok: true, done: false },
                                 });
                             }
                         } catch (error) {
+                            console.error('streamResponse error', error);
+                            console.log('tabId', tabId);
                             sendResponse({ ok: false, error });
-                            if (sender?.tab?.id) {
-                                chrome.tabs.sendMessage(sender.tab.id, {
+                            if (tabId) {
+                                chrome.tabs.sendMessage(tabId, {
                                     type: 'streamResponse',
                                     response: { data: 'data: [DONE]\n\n', ok: false, done: true },
                                 });
                             }
                         }
-                    } else if (sender?.tab?.id) {
-                        handleMessage(chunk, { tab: { id: sender.tab.id } });
+                    } else if (tabId) {
+                        handleMessage(chunk, { tab: { id: tabId } });
                     }
                 });
             },
@@ -763,14 +767,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 }
             })
             .catch((error) => {
-                if (sender?.tab?.id) {
-                    requestControllers.delete(sender.tab.id);
+                if (tabId) {
+                    requestControllers.delete(tabId);
                 }
                 sendResponse({ ok: false, error: error.message });
             })
             .finally(() => {
-                if (sender?.tab?.id) {
-                    requestControllers.delete(sender.tab.id);
+                if (tabId) {
+                    requestControllers.delete(tabId);
                 }
             });
 
@@ -808,12 +812,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 
     if (request.action === 'abortRequest') {
-        console.log('🚫 中止请求', sender?.tab?.id);
-        if (sender?.tab?.id) {
-            const controller = requestControllers.get(sender.tab.id);
+        const tabId = sender?.tab?.id;
+        console.log('🚫 中止请求', tabId);
+        if (tabId) {
+            const controller = requestControllers.get(tabId);
             if (controller) {
                 controller.abort();
-                requestControllers.delete(sender.tab.id);
+                requestControllers.delete(tabId);
                 sendResponse({ success: true });
             }
         } else {

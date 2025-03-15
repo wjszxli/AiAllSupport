@@ -1,4 +1,4 @@
-import type { RequestMethod } from '@/typings';
+import type { RequestMethod, WebsiteMetadata } from '@/typings';
 
 import { CHAT_BOX_ID, CHAT_BUTTON_ID, URL_MAP } from './constant';
 import storage from './storage';
@@ -67,7 +67,7 @@ export const fetchData = async ({
             throw new Error(
                 t('httpError')
                     .replace('{status}', response.status.toString())
-                    .replace('{statusText}', response.statusText)
+                    .replace('{statusText}', response.statusText),
             );
         }
 
@@ -97,6 +97,7 @@ export const requestAIStream = async (
     method: RequestMethod = 'GET',
     requestBody: object,
     onData: (chunk: { data: string; done: boolean }) => void,
+    tabId?: string | null,
 ) => {
     return new Promise<void>((resolve, reject) => {
         const listener = (msg: any) => {
@@ -111,7 +112,10 @@ export const requestAIStream = async (
                 } else {
                     // Properly handle and log errors
                     console.error('Stream response error:', msg.response.error);
-                    onData({ data: `Error: ${msg.response.error || 'Unknown error'}`, done: false });
+                    onData({
+                        data: `Error: ${msg.response.error || 'Unknown error'}`,
+                        done: false,
+                    });
                     reject(new Error(msg.response.error || 'Unknown error'));
                 }
             }
@@ -133,13 +137,15 @@ export const requestAIStream = async (
                 url,
                 method,
                 body: JSON.stringify({ ...requestBody, stream: true }), // 启用流式模式
+                tabId,
             },
             (response) => {
                 console.log('API 响应:', response);
                 if (response && response.status === 200) {
                     resolve(response.data);
                 } else {
-                    const errorMsg = response && response.error ? response.error : 'API request failed';
+                    const errorMsg =
+                        response && response.error ? response.error : 'API request failed';
                     console.error('API 请求失败:', errorMsg);
                     // Send error as a data message to be displayed to the user
                     onData({ data: `Error: ${errorMsg}`, done: false });
@@ -230,8 +236,106 @@ export const handleMessage = (message: string, sender: { tab: { id: number } }) 
         if (sender?.tab?.id) {
             chrome.tabs.sendMessage(sender.tab.id, {
                 type: 'streamResponse',
-                response: { data: 'Error processing response', ok: false, done: true, error: String(error) },
+                response: {
+                    data: 'Error processing response',
+                    ok: false,
+                    done: true,
+                    error: String(error),
+                },
             });
         }
     }
 };
+
+/**
+ * Extract website metadata from the current page
+ * @returns Promise resolving to website metadata
+ */
+export async function extractWebsiteMetadata(): Promise<WebsiteMetadata> {
+    try {
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+        if (!tab || !tab.id) {
+            throw new Error('No active tab found');
+        }
+
+        const result = await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            func: () => {
+                try {
+                    const extractContent = () => {
+                        const mainElements = document.querySelectorAll(
+                            'main, article, [role="main"]',
+                        );
+                        let contentText = '';
+
+                        if (mainElements.length > 0) {
+                            mainElements.forEach((element) => {
+                                contentText += `${(element as HTMLElement).innerText}\n\n`;
+                            });
+                        } else {
+                            contentText = document.body.innerText;
+                        }
+
+                        return contentText;
+                    };
+
+                    const content = extractContent();
+                    const language = navigator.language || 'en-US';
+
+                    return {
+                        url: document.location.href,
+                        origin: document.location.origin,
+                        title: document.title,
+                        content: content.slice(0, 15000),
+                        type: 'html',
+                        selection: window.getSelection()?.toString() || '',
+                        language: language,
+                    };
+                } catch (error) {
+                    console.error('Error extracting webpage content:', error);
+                    return {
+                        url: document.location.href,
+                        origin: document.location.origin,
+                        title: document.title || 'Unknown page',
+                        content: 'Failed to extract page content',
+                        type: 'html',
+                        selection: '',
+                        hash: '0',
+                    };
+                }
+            },
+        });
+
+        if (!result || !result[0] || !result[0].result) {
+            throw new Error('Failed to extract webpage content');
+        }
+
+        const extractedData = result[0].result;
+        const language = extractedData.language || 'en';
+
+        return {
+            system: {
+                language: language,
+            },
+            website: extractedData,
+            id: tab.id.toString(),
+        };
+    } catch (error) {
+        console.error('Error extracting website metadata:', error);
+        return {
+            system: {
+                language: 'en',
+            },
+            website: {
+                url: 'about:blank',
+                origin: 'about:blank',
+                title: 'Unknown page',
+                content: 'Failed to extract page content',
+                type: 'html',
+                selection: '',
+            },
+            id: '0',
+        };
+    }
+}

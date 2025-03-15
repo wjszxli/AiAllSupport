@@ -1,4 +1,4 @@
-import React, { useState, useRef, FormEvent } from 'react';
+import React, { useState, useRef, FormEvent, useEffect } from 'react';
 import { Button, Input, Spin, Typography, Tooltip } from 'antd';
 import {
     SendOutlined,
@@ -13,6 +13,8 @@ import { useLanguage } from '../contexts/LanguageContext';
 import MarkdownIt from 'markdown-it';
 import mathjax3 from 'markdown-it-mathjax3';
 import './SidePanel.scss';
+import { extractWebsiteMetadata } from '@/utils';
+import { sendMessage } from '@/services/chatService';
 
 const { TextArea } = Input;
 const { Text } = Typography;
@@ -29,6 +31,13 @@ const SidePanel: React.FC = () => {
     const { t } = useLanguage();
     const [inputValue, setInputValue] = useState('');
     const inputRef = useRef<HTMLTextAreaElement>(null);
+    const [tabId, setTabId] = useState<string | undefined>(undefined);
+
+    useEffect(() => {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            setTabId(tabs[0].id?.toString() || undefined);
+        });
+    }, []);
 
     const {
         messages,
@@ -44,6 +53,7 @@ const SidePanel: React.FC = () => {
         t,
         storeType: 'interface',
         conversationId: 'sidepanel',
+        tabId,
     });
 
     const handleSubmit = (e: FormEvent) => {
@@ -70,6 +80,7 @@ const SidePanel: React.FC = () => {
     const handleClearMessages = () => {
         clearMessages();
     };
+    console.log('messages', messages)
 
     return (
         <div className="side-panel">
@@ -192,6 +203,25 @@ const SidePanel: React.FC = () => {
                         disabled={!inputValue.trim() || isLoading}
                     />
                 </form>
+                <Button
+                    type="primary"
+                    onClick={async () => {
+                        const data = await extractWebsiteMetadata();
+                        const message = t('summarizePage').replace(
+                            '{content}',
+                            JSON.stringify(data),
+                        );
+                        const [tab] = await chrome.tabs.query({
+                            active: true,
+                            currentWindow: true,
+                        });
+                        const tabId = tab?.id?.toString();
+                        setTabId(tabId);
+                        await sendMessage(message, undefined, tabId);
+                    }}
+                >
+                    {t('summarize')}
+                </Button>
             </div>
         </div>
     );

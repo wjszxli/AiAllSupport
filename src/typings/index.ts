@@ -77,16 +77,33 @@ export interface ChatMessage {
 declare global {
     namespace chrome {
         namespace sidePanel {
-            function open(options: { windowId?: number, tabId?: number }): Promise<void>;
-            function setOptions(options: { 
-                tabId?: number, 
-                path?: string, 
-                enabled?: boolean 
+            function open(options: { windowId?: number; tabId?: number }): Promise<void>;
+            function setOptions(options: {
+                tabId?: number;
+                path?: string;
+                enabled?: boolean;
             }): Promise<void>;
-            function setPanelBehavior(behavior: { 
-                openPanelOnActionClick: boolean 
-            }): Promise<void>;
+            function setPanelBehavior(behavior: { openPanelOnActionClick: boolean }): Promise<void>;
             function getOptions(options: { tabId?: number }): Promise<{ path: string }>;
         }
     }
+}
+
+export interface WebsiteMetadata {
+    system: {
+        language: string;
+    };
+    website: {
+        url: string;
+        origin: string;
+        title: string;
+        content: string;
+        type: string;
+        selection: string;
+        hash?: string;
+        language?: string;
+        favicons?: string[];
+        og?: any;
+    };
+    id?: string;
 }

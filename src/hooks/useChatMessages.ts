@@ -25,12 +25,14 @@ export interface UseChatMessagesProps {
     t: (key: TranslationKey) => string;
     storeType: StoreType;
     conversationId?: string;
+    tabId?: string;
 }
 
 export const useChatMessages = ({
     t,
     storeType,
     conversationId = 'default',
+    tabId,
 }: UseChatMessagesProps) => {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -202,7 +204,7 @@ export const useChatMessages = ({
                 setStreamingMessageId(messageId);
                 // 响应数据流
                 const handleStreamUpdate = createStreamUpdateHandler(messageId);
-                await sendMessage(enhancedMessage ?? '', handleStreamUpdate);
+                await sendMessage(enhancedMessage ?? '', handleStreamUpdate, tabId);
 
                 // 请求完成
                 setStreamingMessageId(null);
@@ -230,7 +232,7 @@ export const useChatMessages = ({
                 setIsLoading(false);
             }
         },
-        [messages, isLoading, streamingMessageId, t, createStreamUpdateHandler],
+        [messages, isLoading, streamingMessageId, t, createStreamUpdateHandler, tabId],
     );
 
     // 重新生成最后的AI响应
