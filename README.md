@@ -1,105 +1,114 @@
-# DeepSeekAllSupports - DeepSeek 网页助手
+# DeepSeekAllSupports - DeepSeek Web Assistant
 
 <div align="center">
-
 <img src="public/icons/icon128.png" alt="DeepSeekAllSupports" width="128" />
-
 </div>
 
-## 📖 简介
+[English](README.md) | [简体中文](README.zh-CN.md)
 
-DeepSeekAllSupports 是一款免费开源的浏览器扩展，支持 [DeepSeek](https://deepseek.com) 及其多平台服务，包括 DeepSeek 官方、硅基流动、腾讯云、百度云、阿里云、本地大模型等。无论您使用哪家服务商，DeepSeekAllSupports 都能帮助您 无缝集成，轻松调用 DeepSeek 强大的 AI 能力，为您的工作和研究提供高效支持。
+## 📖 Introduction
 
-## 开源插件支持服务商
+**DeepSeekAllSupports** is a free and open-source browser extension that supports [DeepSeek](https://deepseek.com) and its multi-platform services, including DeepSeek official, SiliconFlow, Tencent Cloud, Baidu Cloud, Alibaba Cloud, and local AI models. No matter which provider you use, DeepSeekAllSupports helps you seamlessly integrate and easily access DeepSeek’s powerful AI capabilities, providing efficient support for your work and research.
 
-该插件兼容多个 DeepSeek API 提供商，包括：
+## Supported API Providers
 
-> - [DeepSeek](https://deepseek.com) 官方 API
-> - [硅基流动](https://cloud.siliconflow.cn/i/lStn36vH) DeepSeek API
-> - [腾讯云](https://cloud.tencent.com/document/product/1772/115969) DeepSeek API
-> - [百度云](https://console.bce.baidu.com/iam/#/iam/apikey/list) DeepSeek API
-> - [阿里云](https://bailian.console.aliyun.com/?apiKey=1#/api-key) DeepSeek API
-> - [本地](https://ollama.com/) DeepSeek API
+This extension is compatible with multiple DeepSeek API providers, including:
 
-🔜 未来计划支持更多服务商：科大讯飞、OpenRoute、字节跳动火山引擎等。
+> - [DeepSeek](https://deepseek.com) Official API
+> - [SiliconFlow](https://cloud.siliconflow.cn/i/lStn36vH) DeepSeek API
+> - [Tencent Cloud](https://cloud.tencent.com/document/product/1772/115969) DeepSeek API
+> - [Baidu Cloud](https://console.bce.baidu.com/iam/#/iam/apikey/list) DeepSeek API
+> - [Alibaba Cloud](https://bailian.console.aliyun.com/?apiKey=1#/api-key) DeepSeek API
+> - [Local](https://ollama.com/) DeepSeek API
 
-## 开源插件核心特性
+🔜 Future plans to support more providers: iFlytek, OpenRoute, ByteDance VolcEngine, and more.
 
-### 智能交互
+## Core Features
 
-- **智能文本分析**: 可在网页任意位置选中文本，实时获取 AI 分析与回复。
-- **多轮对话**: 支持上下文连续对话，提供更自然的交互体验。
-- **流式响应**: AI 实时加载回复，增强交互流畅度。
-- **多模型支持**: 自由切换 DeepSeek V3、DeepSeek R1，个性化体验不同模型能力。
-- **多 API 提供商集成**: 兼容多家云服务 API，随时切换，确保稳定可靠。
-- **自由调整窗口**: 支持全局拖拽、大小调整（右下角边缘）、固定窗口位置，适配不同使用场景。
-- **支持本地部署模型**: 可连接本地 Ollama 模型，无需网络，流畅使用 AI。
-- **快捷键操作**: 一键唤起插件，提升使用效率。
-- **自定义快捷键**: 支持个性化快捷键配置，满足不同用户习惯。
-- **一键复制 & 重新生成**: 快速复制 AI 回复，支持内容重新生成。
-- **支持中途停止**: 可随时终止 AI 回答，灵活掌控交互节奏。
+### Intelligent Interaction
 
-### 内容展示
+- **Smart Text Analysis**: Select any text on a webpage to get instant AI analysis and responses.
+- **Multi-turn Conversations**: Supports contextual conversations for a more natural interactive experience.
+- **Streaming Responses**: AI responses load in real-time for a smoother interaction.
+- **Multi-Model Support**: Switch freely between DeepSeek V3, DeepSeek R1, and more for a personalized AI experience.
+- **Multi-Provider API Integration**: Compatible with various cloud service APIs, ensuring stability and reliability.
+- **Adjustable Window**: Supports global drag-and-drop, resizable UI (bottom-right corner), and fixed positioning for different use cases.
+- **Local Model Support**: Connect with local Ollama models for offline AI usage.
+- **Keyboard Shortcuts**: Quick access to the extension for improved efficiency.
+- **Customizable Shortcuts**: Personalize key bindings to match your workflow.
+- **One-Click Copy & Regenerate**: Easily copy AI responses and regenerate content.
+- **Interrupt AI Responses**: Stop AI replies at any time for better control over interactions.
+- **Local Model Internet Access**: Allows locally deployed models to access online information for comprehensive answers while maintaining privacy.
+- **Prompt Capabilities**: Built-in prompt templates for quick and efficient AI usage.
+- **Standalone Window Mode**: Open AI interactions in a separate window for better usability.
 
-- **Markdown 渲染**: 支持代码块、列表、数学公式（MathJax）等格式，增强阅读体验。
-- **代码高亮**: 支持多种编程语言语法高亮。
-- **代码 & 公式复制**: 支持多种编程语言和公式的单独复制。
+### Content Display
 
-## 即将支持
+- **Markdown Rendering**: Supports code blocks, lists, mathematical formulas (MathJax), and more for enhanced readability.
+- **Syntax Highlighting**: Provides code highlighting for multiple programming languages.
+- **Code & Formula Copy**: Enables easy copying of code snippets and mathematical formulas.
 
-### ✅ 本地大模型联网能力
+## Upcoming Features
 
-支持本地的大模型进行联网能力，让需要隐私的同时，还能够通过联网获取最新的信息综合进行回答
+### ✅ One-Click Page Summarization
 
-### ✅ 问题并发能力
+Supports one-click page summarization, generating summaries, abstracts, and mind maps.
 
-一个问题可以问多个服务商和多个大模型，来综合进行比对，并且每个服务商和模型单独窗口，可以随意拖拽和关闭任何其中一个
+### ✅ One-Click Translation
 
-### ✅Prompt 能力
+Supports right-click one-click translation of articles and text.
 
-常见的 prompt 能力快捷支持，进一步降低使用成本
+### ✅ Multi-Model Responses
 
-### ✅ 一键翻译
+Supports getting responses from multiple models simultaneously for comparison.
 
-支持右键一键翻译文章和文本
+### ✅ Code Review
 
-### ✅ 更多功能 期待你的建议，欢迎联系我
+Supports code review on platforms like GitLab and GitHub.
 
-## 如何安装
+### ✅ Concurrent Querying
 
-[安装文档](./public/doc/install.md)
+Allows a single question to be asked to multiple providers and models, compares results, and enables separate response windows that can be freely dragged and closed.
 
-## 如何使用
+### ✅ More Features
 
-[使用文档](./public/doc/use.md)
+Looking forward to your suggestions, feel free to contact me.
 
-## 贡献指南
+## How to Install
 
-## 贡献指南
+[Installation Guide](./public/doc/install.md)
 
-欢迎所有形式的贡献，无论是新功能、bug 修复还是文档改进。
+## How to Use
 
-1. Fork 本仓库
-2. 创建您的特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交您的更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 开启一个 Pull Request
+[Usage Guide](./public/doc/use.md)
 
-## 许可证
+## Contribution Guide
 
-本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情
+## Contribution Guide
 
-## 联系我
+We welcome all forms of contributions, including new features, bug fixes, and documentation improvements.
 
-- 项目问题: [GitHub Issues](https://github.com/wjszxli/DeepSeekAllSupports/issues)
-- 邮件联系: [wjszxli@gmail.com]
+1. Fork this repository
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-## Star 历史
+## License
+
+This project is licensed under the MIT License – see the [LICENSE](LICENSE) file for details.
+
+## Contact Me
+
+- **Project Issues**: [GitHub Issues](https://github.com/wjszxli/DeepSeekAllSupports/issues)
+- **Email**: [wjszxli@gmail.com]
+
+## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=wjszxli/DeepSeekAllSupports&type=Date)](https://star-history.com/#wjszxli/DeepSeekAllSupports&Date)
 
 ---
 
 <div align="center">
-如果这个项目对您有帮助，请考虑给它一个 ⭐️
+If you find this project helpful, please consider giving it a ⭐️!
 </div>
