@@ -92,10 +92,6 @@ DeepSeekAllSupports 是一款免费开源的浏览器扩展，支持 [DeepSeek](
 - 项目问题: [GitHub Issues](https://github.com/wjszxli/DeepSeekAllSupports/issues)
 - 邮件联系: [wjszxli@gmail.com]
 
-## Star 历史
-
-[![Star History Chart](https://api.star-history.com/svg?repos=wjszxli/DeepSeekAllSupports&type=Date)](https://star-history.com/#wjszxli/DeepSeekAllSupports&Date)
-
 ---
 
 <div align="center">

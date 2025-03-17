@@ -103,10 +103,6 @@ This project is licensed under the MIT License – see the [LICENSE](LICENSE) fi
 - **Project Issues**: [GitHub Issues](https://github.com/wjszxli/DeepSeekAllSupports/issues)
 - **Email**: [wjszxli@gmail.com]
 
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=wjszxli/DeepSeekAllSupports&type=Date)](https://star-history.com/#wjszxli/DeepSeekAllSupports&Date)
-
 ---
 
 <div align="center">
