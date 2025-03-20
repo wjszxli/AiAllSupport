@@ -686,7 +686,7 @@ const App: React.FC = () => {
     );
 
     // Handler for logging settings changes
-    const handleLoggingSettingsChange = async (changedValues: any, allValues: any) => {
+    const handleLoggingSettingsChange = async (changedValues: any, _allValues: any) => {
         try {
             if (changedValues.logging) {
                 const newConfig = await updateLoggerConfig(changedValues.logging);
