@@ -182,7 +182,7 @@ export const zhCN = {
     clearChat: '清除聊天',
     startChat: '开始聊天',
     ai: 'AI',
-    summarizePage:`
+    summarizePage: `
 请对以下网页进行结构化总结，包括以下三个部分：
 1. 总结：用简明的语言总结网页的核心内容，突出主要信息或主题。
 2. 摘要：详细介绍网页的主要内容，包括背景、关键点、流程、技术细节（如果适用）或相关信息。
