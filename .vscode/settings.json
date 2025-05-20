@@ -28,5 +28,5 @@
     "[html][css][less][scss][markdown][xml][yaml][svg]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
-    "cSpell.words": ["Tavily"]
+    "cSpell.words": ["Aliyun", "deepseek", "Nemotron", "Ollama", "Qwen", "Tavily"]
 }

@@ -8,6 +8,7 @@ export const zhCN = {
     regenerate: '重新生成',
     settings: '设置',
     stop: '停止',
+    validated: '已验证',
     edit: '修改',
 
     // Add suggested prompts
@@ -25,6 +26,9 @@ export const zhCN = {
     apiKey: 'API Key',
     enterApiKey: '请输入您的 API Key',
     getApiKey: '获取 API Key',
+    validate: '检测',
+    apiHost: 'API 地址',
+    enterApiHost: '请输入您的 API 地址',
     modelSelection: '模型选择',
     selectModel: '请选择您要使用的模型',
     showIcon: '划词工具栏',

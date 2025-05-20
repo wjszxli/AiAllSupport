@@ -1,9 +1,10 @@
+import { t } from '@/services/i18n';
 import type { RequestMethod, WebsiteMetadata } from '@/typings';
 
-import { CHAT_BOX_ID, CHAT_BUTTON_ID, URL_MAP } from './constant';
-import storage from './storage';
-import { t } from '@/services/i18n';
+import { CHAT_BOX_ID, CHAT_BUTTON_ID, PROVIDERS_DATA } from './constant';
 import { Logger } from './logger';
+import storage from './storage';
+
 export * from './logger';
 
 // Create a logger for this module
@@ -29,7 +30,7 @@ export const fetchData = async ({
 }): Promise<{ status: number; ok: boolean; data: any }> => {
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-    const { selectedProvider } = await storage.getConfig();
+    const { selectedProvider, providers } = await storage.getConfig();
     if (!selectedProvider) {
         logger.error('No provider selected');
         throw new Error(t('pleaseSelectProvider'));
@@ -43,11 +44,11 @@ export const fetchData = async ({
         throw new Error(t('pleaseEnterApiKey'));
     }
 
-    const base_url = URL_MAP[selectedProvider as keyof typeof URL_MAP];
+    let base_url = providers[selectedProvider].apiHost;
     if (!base_url) {
-        logger.error('Base URL not found for provider', { provider: selectedProvider });
-        throw new Error(t('providerBaseUrlNotFound').replace('{provider}', selectedProvider));
+        base_url = PROVIDERS_DATA[selectedProvider].apiHost;
     }
+    logger.debug('Base URL', { base_url });
 
     try {
         logger.debug('Preparing fetch request', { url: base_url + url, method });
@@ -290,10 +291,10 @@ export async function extractWebsiteMetadata(): Promise<WebsiteMetadata> {
 
                         if (mainElements.length > 0) {
                             mainElements.forEach((element) => {
-                                contentText += `${(element as HTMLElement).innerText}\n\n`;
+                                contentText += `${(element as HTMLElement).textContent}\n\n`;
                             });
                         } else {
-                            contentText = document.body.innerText;
+                            contentText = document.body.textContent || '';
                         }
 
                         return contentText;

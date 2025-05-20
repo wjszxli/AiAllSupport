@@ -1,8 +1,8 @@
+import { t } from '@/services/i18n';
 import type { IMessage } from '@/typings';
 import { requestAIStream, requestApi } from '@/utils';
 import { SERVICE_MAP } from '@/utils/constant';
 import storage from '@/utils/storage';
-import { t } from '@/services/i18n';
 
 export const validateApiKey = async () => {
     const { selectedModel, selectedProvider } = await storage.getConfig();
@@ -58,6 +58,7 @@ export const chatAIStream = async (
         throw new Error(t('selectProvider'));
     }
     const url = SERVICE_MAP[selectedProvider as keyof typeof SERVICE_MAP].chat;
+    console.log('urls', url);
     const data = {
         model: selectedModel,
         messages: [{ role: 'system', content: t('systemPrompt') }, ...messages],

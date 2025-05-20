@@ -1,7 +1,8 @@
 import type { OllamaResponse } from '@/typings';
-import { fetchData, handleMessage, isLocalhost, initLogger, Logger } from '@/utils';
-import { MODIFY_HEADERS_RULE_ID, URL_MAP } from '@/utils/constant';
+import { fetchData, handleMessage, initLogger, isLocalhost, Logger } from '@/utils';
+import { MODIFY_HEADERS_RULE_ID, PROVIDERS_DATA } from '@/utils/constant';
 import storage from '@/utils/storage';
+
 import { fetchWebPage, searchWeb } from './search';
 
 // Initialize logger
@@ -21,12 +22,16 @@ chrome.declarativeNetRequest.updateDynamicRules(
                     type: 'modifyHeaders',
                     // @ts-ignore
                     requestHeaders: [
-                        // @ts-ignore
-                        { header: 'Origin', operation: 'set', value: URL_MAP.Ollama },
+                        {
+                            header: 'Origin',
+                            // @ts-ignore
+                            operation: 'set',
+                            value: PROVIDERS_DATA.Ollama.apiHost,
+                        },
                     ],
                 },
                 condition: {
-                    urlFilter: `${URL_MAP.Ollama}/*`,
+                    urlFilter: `${PROVIDERS_DATA.Ollama.apiHost}/*`,
                     // @ts-ignore
                     resourceTypes: ['xmlhttprequest'],
                 },

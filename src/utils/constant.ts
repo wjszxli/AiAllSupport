@@ -26,6 +26,7 @@ export const PROVIDERS_DATA: Record<string, ProviderConfig> = {
     DeepSeek: {
         name: 'DeepSeek',
         apiKey: null,
+        apiHost: 'https://api.deepseek.com',
         apiKeyUrl: 'https://platform.deepseek.com/api_keys',
         models: [
             { label: 'V3', value: 'deepseek-chat' },
@@ -37,6 +38,7 @@ export const PROVIDERS_DATA: Record<string, ProviderConfig> = {
     Ollama: {
         name: '本地 Ollama',
         apiKey: null,
+        apiHost: 'http://localhost:11434',
         apiKeyUrl: 'https://ollama.com/api_keys',
         models: [],
         selectedModel: null,
@@ -45,6 +47,7 @@ export const PROVIDERS_DATA: Record<string, ProviderConfig> = {
     SiliconFlow: {
         name: '硅基流动',
         apiKey: null,
+        apiHost: 'https://api.siliconflow.com',
         apiKeyUrl: 'https://cloud.siliconflow.cn/account/ak',
         models: [
             { label: 'V3', value: 'deepseek-ai/DeepSeek-V3' },
@@ -114,6 +117,7 @@ export const PROVIDERS_DATA: Record<string, ProviderConfig> = {
     Tencent: {
         name: '腾讯云',
         apiKey: null,
+        apiHost: 'https://api.lkeap.cloud.tencent.com',
         apiKeyUrl: 'https://console.cloud.tencent.com/lkeap/api',
         models: [
             { label: 'V3', value: 'deepseek-v3' },
@@ -125,6 +129,7 @@ export const PROVIDERS_DATA: Record<string, ProviderConfig> = {
     Baidu: {
         name: '百度云',
         apiKey: null,
+        apiHost: 'https://qianfan.baidubce.com',
         apiKeyUrl: 'https://console.bce.baidu.com/iam/#/iam/apikey/list',
         models: [
             { label: 'V3', value: 'deepseek-v3' },
@@ -136,6 +141,7 @@ export const PROVIDERS_DATA: Record<string, ProviderConfig> = {
     Aliyun: {
         name: '阿里云',
         apiKey: null,
+        apiHost: 'https://dashscope.aliyuncs.com',
         apiKeyUrl: 'https://bailian.console.aliyun.com/?apiKey=1#/api-key',
         models: [
             { label: 'V3', value: 'deepseek-v3' },
@@ -144,15 +150,6 @@ export const PROVIDERS_DATA: Record<string, ProviderConfig> = {
         selectedModel: 'deepseek-r1',
         selected: false,
     },
-};
-
-export const URL_MAP = {
-    DeepSeek: 'https://api.deepseek.com',
-    Ollama: 'http://127.0.0.1:11434',
-    SiliconFlow: 'https://api.siliconflow.com',
-    Tencent: 'https://api.lkeap.cloud.tencent.com',
-    Baidu: 'https://qianfan.baidubce.com',
-    Aliyun: 'https://dashscope.aliyuncs.com',
 };
 
 export const CHAT_BOX_ID = 'custom-chat-box';
@@ -168,7 +165,7 @@ export const tags = ['think', 'reason', 'reasoning', 'thought'];
 export const isFirefox = navigator.userAgent.includes('Firefox');
 
 // 浏览器快捷键设置URL
-export const SHORTCUTS_URL = isFirefox 
+export const SHORTCUTS_URL = isFirefox
     ? 'about:addons' // Firefox的扩展设置页面
     : 'chrome://extensions/shortcuts'; // Chrome的快捷键设置页面
 
@@ -182,7 +179,7 @@ export const SEARCH_ENGINES = {
     SOGOU: 'sogou',
     BRAVE: 'brave',
     SEARXNG: 'searxng',
-    TAVILY: 'tavily'
+    TAVILY: 'tavily',
 };
 
 // 默认启用的搜索引擎
@@ -192,7 +189,7 @@ export const DEFAULT_SEARCH_ENGINES = [
     SEARCH_ENGINES.DUCKDUCKGO,
     SEARCH_ENGINES.SOGOU,
     SEARCH_ENGINES.BRAVE,
-    SEARCH_ENGINES.SEARXNG
+    SEARCH_ENGINES.SEARXNG,
 ];
 
 // 搜索引擎显示名称
@@ -203,10 +200,10 @@ export const SEARCH_ENGINE_NAMES = {
     [SEARCH_ENGINES.SOGOU]: '搜狗',
     [SEARCH_ENGINES.BRAVE]: 'Brave',
     [SEARCH_ENGINES.SEARXNG]: 'SearXNG',
-    [SEARCH_ENGINES.TAVILY]: 'Tavily'
+    [SEARCH_ENGINES.TAVILY]: 'Tavily',
 };
 
 // 搜索结果中需要过滤的域名列表
-export const FILTERED_DOMAINS = [
-    'zhihu.com',
-];
+export const FILTERED_DOMAINS = ['zhihu.com'];
+
+export const FEEDBACK_SURVEY_URL = 'https://wj.qq.com/s2/18763807/74b5/';
