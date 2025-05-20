@@ -47,7 +47,7 @@ export const PROVIDERS_DATA: Record<string, ProviderConfig> = {
     SiliconFlow: {
         name: '硅基流动',
         apiKey: null,
-        apiHost: 'https://api.siliconflow.com',
+        apiHost: 'https://api.siliconflow.cn',
         apiKeyUrl: 'https://cloud.siliconflow.cn/account/ak',
         models: [
             { label: 'V3', value: 'deepseek-ai/DeepSeek-V3' },

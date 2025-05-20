@@ -44,7 +44,7 @@ export const fetchData = async ({
         throw new Error(t('pleaseEnterApiKey'));
     }
 
-    let base_url = providers[selectedProvider].apiHost;
+    let base_url = providers[selectedProvider]?.apiHost;
     if (!base_url) {
         base_url = PROVIDERS_DATA[selectedProvider].apiHost;
     }

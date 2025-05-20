@@ -22,7 +22,7 @@ const ApiSettings: React.FC = () => {
         const models = await getModels(selectedProvider);
         setModels(models);
 
-        let selectedModel = providers[selectedProvider].selectedModel;
+        let selectedModel = providers[selectedProvider]?.selectedModel;
         if (!selectedModel && models.length > 0) {
             selectedModel = models[0].value;
         }
@@ -79,8 +79,7 @@ const ApiSettings: React.FC = () => {
     };
 
     const onProviderChange = async (value: string) => {
-        setSelectedProvider(value);
-        setApiKeyValidated(false);
+        console.log('value', value);
         const providers = await storage.getProviders();
         await storage.setSelectedProvider(value);
         const models = await getModels(value);
@@ -95,9 +94,13 @@ const ApiSettings: React.FC = () => {
             apiKey,
             apiHost,
             selectedModel: model,
+            models,
         };
 
         await storage.setProviders(providers);
+        setModels(models);
+        setSelectedProvider(value);
+        setApiKeyValidated(false);
         form.setFieldsValue(fieldsValue);
     };
 
