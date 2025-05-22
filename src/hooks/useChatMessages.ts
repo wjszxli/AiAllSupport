@@ -6,7 +6,7 @@ import { LRUCache } from '@/utils/memoryOptimization';
 import type { TranslationKey } from '@/contexts/LanguageContext';
 import storage from '@/utils/storage';
 import { localFetchWebContentWithContext } from '@/services/localChatService';
-import type { ChatMessage } from '@/typings';
+import type { ChatMessage } from '@/types';
 import { updateMessage } from '@/utils/messageUtils';
 import {
     saveChatAppMessages,

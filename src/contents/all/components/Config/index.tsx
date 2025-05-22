@@ -2,7 +2,7 @@ import { Form, message, Select } from 'antd';
 import { useEffect, useState } from 'react';
 
 import { modelList } from '@/services';
-import type { ProviderConfig } from '@/typings';
+import type { ProviderConfig } from '@/types';
 import { isLocalhost } from '@/utils';
 import { PROVIDERS_DATA } from '@/utils/constant';
 import storage from '@/utils/storage';

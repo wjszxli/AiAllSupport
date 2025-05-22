@@ -16,7 +16,7 @@
             "^selectors?(/|$)",
             "^styles?(/|$)",
             "^reducers?(/|$)",
-            "^typings?(/|$)",
+            "^types?(/|$)",
             "^utils(/|$)"
         ],
         { "flags": "named", "regex": "^[.]" },

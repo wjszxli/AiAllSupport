@@ -1,4 +1,4 @@
-import type { ProviderConfig } from '@/typings';
+import type { ProviderConfig } from '@/types';
 
 export const SERVICE_MAP = {
     DeepSeek: {

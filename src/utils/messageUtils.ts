@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ChatMessage } from '@/typings';
+import type { ChatMessage } from '@/types';
 import { flushSync } from 'react-dom';
 
 /**

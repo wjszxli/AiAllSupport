@@ -1,3 +1,7 @@
+import OpenAI from 'openai';
+import { Chunk } from './chunk';
+import { Message } from './message';
+
 declare global {
     interface Window {
         currentAbortController?: AbortController;
@@ -107,4 +111,91 @@ export interface WebsiteMetadata {
         og?: any;
     };
     id?: string;
+}
+
+export type ModelType =
+    | 'text'
+    | 'vision'
+    | 'embedding'
+    | 'reasoning'
+    | 'function_calling'
+    | 'web_search';
+
+export type Model = {
+    id: string;
+    provider: string;
+    name: string;
+    group: string;
+    owned_by?: string;
+    description?: string;
+    type?: ModelType[];
+};
+
+export type ProviderType =
+    | 'openai'
+    | 'openai-response'
+    | 'anthropic'
+    | 'gemini'
+    | 'qwenlm'
+    | 'azure-openai';
+
+export type Provider = {
+    id: string;
+    type: ProviderType;
+    name: string;
+    apiKey: string;
+    apiHost: string;
+    apiVersion?: string;
+    models: Model[];
+    enabled?: boolean;
+    isSystem?: boolean;
+    isAuthed?: boolean;
+    rateLimit?: number;
+    isNotSupportArrayContent?: boolean;
+    notes?: string;
+};
+
+export enum UserMessageStatus {
+    SUCCESS = 'success',
+}
+
+export enum AssistantMessageStatus {
+    PROCESSING = 'processing',
+    PENDING = 'pending',
+    SUCCESS = 'success',
+    PAUSED = 'paused',
+    ERROR = 'error',
+}
+
+export type Usage = OpenAI.Completions.CompletionUsage & {
+    thoughts_tokens?: number;
+};
+
+export type Metrics = {
+    completion_tokens: number;
+    time_completion_millsec: number;
+    time_first_token_millsec?: number;
+    time_thinking_millsec?: number;
+};
+
+export type AssistantMessage = {
+    role: 'user' | 'assistant';
+    content: string;
+};
+
+export type Assistant = {
+    id: string;
+    name: string;
+    prompt: string;
+    type: string;
+    emoji?: string;
+    description?: string;
+    model?: Model;
+    defaultModel?: Model;
+    messages?: AssistantMessage[];
+};
+export interface CompletionsParams {
+    messages: Message[];
+    onChunk: (chunk: Chunk) => void;
+    onFilterMessages: (messages: Message[]) => void;
 }

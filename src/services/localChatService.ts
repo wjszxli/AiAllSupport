@@ -1,4 +1,4 @@
-import type { ChatMessage, SearchResult } from '@/typings';
+import type { ChatMessage, SearchResult } from '@/types';
 import { t } from '@/services/i18n';
 import React from 'react';
 import { updateMessage } from '@/utils/messageUtils';
@@ -207,7 +207,6 @@ export async function localFetchWebContentWithContext(
             .replace('{question}', inputMessage)
             .replace('{references}', referenceContent);
 
-
         // 更新系统消息，显示已完成搜索
         const searchCompleteMessage: ChatMessage = {
             id: messageId,
@@ -216,7 +215,7 @@ export async function localFetchWebContentWithContext(
         };
 
         updateMessage(setMessages, messageId, searchCompleteMessage);
-        return promptForAI
+        return promptForAI;
     }
 
     // 没有结果

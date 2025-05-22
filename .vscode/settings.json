@@ -1,13 +1,20 @@
 {
     "typescript.tsdk": "./node_modules/typescript/lib",
     // stylelint 扩展自身的校验就够了
-    "stylelint.validate": ["css", "less", "scss"],
+    "stylelint.validate": [
+        "css",
+        "less",
+        "scss"
+    ],
     "css.validate": false,
     "less.validate": false,
     "scss.validate": false,
     "json.schemas": [
         {
-            "fileMatch": ["/**/src/manifest.dev.json", "/**/src/manifest.prod.json"],
+            "fileMatch": [
+                "/**/src/manifest.dev.json",
+                "/**/src/manifest.prod.json"
+            ],
             "url": "http://json.schemastore.org/chrome-manifest"
         }
     ],
@@ -28,5 +35,36 @@
     "[html][css][less][scss][markdown][xml][yaml][svg]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
-    "cSpell.words": ["Aliyun", "deepseek", "Nemotron", "Ollama", "Qwen", "Tavily"]
+    "cSpell.words": [
+        "aihubmix",
+        "alayanew",
+        "Aliyun",
+        "baichuan",
+        "bailian",
+        "Bytedance",
+        "deepseek",
+        "DMXAPI",
+        "gitee",
+        "gpustack",
+        "groq",
+        "hunyuan",
+        "infini",
+        "jina",
+        "lmstudio",
+        "modelscope",
+        "Nemotron",
+        "ocoolai",
+        "Ollama",
+        "openrouter",
+        "Persistable",
+        "ppio",
+        "qiniu",
+        "Qwen",
+        "Tavily",
+        "volcengine",
+        "voyageai",
+        "xirang",
+        "Zhinao",
+        "zhipu"
+    ]
 }

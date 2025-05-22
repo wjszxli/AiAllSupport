@@ -1,5 +1,5 @@
 import { t } from '@/services/i18n';
-import type { RequestMethod, WebsiteMetadata } from '@/typings';
+import type { RequestMethod, WebsiteMetadata } from '@/types';
 
 import { CHAT_BOX_ID, CHAT_BUTTON_ID, PROVIDERS_DATA } from './constant';
 import { Logger } from './logger';
@@ -225,7 +225,7 @@ export const removeChatBox = async () => {
 };
 
 export const isLocalhost = (selectedProvider: string | null) => {
-    return selectedProvider === 'Ollama';
+    return selectedProvider === 'Ollama' || selectedProvider === 'ollama';
 };
 
 export const handleMessage = (message: string, sender: { tab: { id: number } }) => {
@@ -359,3 +359,48 @@ export async function extractWebsiteMetadata(): Promise<WebsiteMetadata> {
         };
     }
 }
+
+export function formatApiHost(host: string) {
+    const forceUseOriginalHost = () => {
+        if (host.endsWith('/')) {
+            return true;
+        }
+
+        return host.endsWith('volces.com/api/v3');
+    };
+
+    return forceUseOriginalHost() ? host : `${host}/v1/`;
+}
+
+export const getDefaultGroupName = (id: string, provider?: string) => {
+    const str = id.toLowerCase();
+
+    // 定义分隔符
+    let firstDelimiters = ['/', ' ', ':'];
+    let secondDelimiters = ['-', '_'];
+
+    if (
+        provider &&
+        ['aihubmix', 'silicon', 'ocoolai', 'o3', 'dmxapi'].includes(provider.toLowerCase())
+    ) {
+        firstDelimiters = ['/', ' ', '-', '_', ':'];
+        secondDelimiters = [];
+    }
+
+    // 第一类分隔规则
+    for (const delimiter of firstDelimiters) {
+        if (str.includes(delimiter)) {
+            return str.split(delimiter)[0];
+        }
+    }
+
+    // 第二类分隔规则
+    for (const delimiter of secondDelimiters) {
+        if (str.includes(delimiter)) {
+            const parts = str.split(delimiter);
+            return parts.length > 1 ? parts[0] + '-' + parts[1] : parts[0];
+        }
+    }
+
+    return str;
+};

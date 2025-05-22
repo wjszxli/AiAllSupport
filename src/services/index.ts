@@ -1,5 +1,5 @@
 import { t } from '@/services/i18n';
-import type { IMessage } from '@/typings';
+import type { IMessage } from '@/types';
 import { requestAIStream, requestApi } from '@/utils';
 import { SERVICE_MAP } from '@/utils/constant';
 import storage from '@/utils/storage';

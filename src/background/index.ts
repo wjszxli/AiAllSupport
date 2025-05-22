@@ -1,4 +1,4 @@
-import type { OllamaResponse } from '@/typings';
+import type { OllamaResponse } from '@/types';
 import { fetchData, handleMessage, initLogger, isLocalhost, Logger } from '@/utils';
 import { MODIFY_HEADERS_RULE_ID, PROVIDERS_DATA } from '@/utils/constant';
 import storage from '@/utils/storage';

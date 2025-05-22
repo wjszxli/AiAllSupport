@@ -3,7 +3,7 @@ import { tavily } from '@tavily/core';
 import { t } from '@/services/i18n';
 import { initLogger, Logger } from '@/utils';
 import storage from '@/utils/storage';
-import type { SearchResult } from '@/typings';
+import type { SearchResult } from '@/types';
 import { SEARCH_ENGINES } from '@/utils/constant';
 
 const logger = new Logger('background');

@@ -1,4 +1,4 @@
-import type { ChatMessage } from '@/typings';
+import type { ChatMessage } from '@/types';
 
 // Database name and version
 const DB_NAME = 'DeepSeekChatsDB';

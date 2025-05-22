@@ -1,6 +1,6 @@
 import { extractWebpageContent } from '../utils/webContentExtractor';
 import { chatAIStream } from '@/services';
-import type { ChatMessage, IMessage } from '@/typings';
+import type { ChatMessage, IMessage } from '@/types';
 import storage from '@/utils/storage';
 import { t } from './i18n';
 import React from 'react';

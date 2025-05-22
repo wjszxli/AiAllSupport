@@ -1,5 +1,5 @@
 import { t } from '@/services/i18n';
-import type { ProviderConfig, StorageData } from '@/typings';
+import type { ProviderConfig, StorageData } from '@/types';
 
 import { DEFAULT_SEARCH_ENGINES, FILTERED_DOMAINS, PROVIDERS_DATA } from './constant';
 

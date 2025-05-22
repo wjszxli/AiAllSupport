@@ -33,9 +33,11 @@ import type { LocaleType } from '@/locales';
 import { locales } from '@/locales';
 import storage from '@/utils/storage';
 import { useChatMessages } from '@/hooks/useChatMessages';
-import type { ChatMessage } from '@/typings';
 
 import './App.scss';
+import { fetchChatCompletion } from '@/services/apiService';
+import { convertSimpleMessage } from '@/utils/message/create';
+import { ChatMessage } from '@/types';
 
 // Add feedback survey URL constant
 const FEEDBACK_SURVEY_URL = 'https://wj.qq.com/s2/18763807/74b5/';
@@ -66,7 +68,7 @@ const App: React.FC = () => {
         messagesWrapperRef,
         copyToClipboard,
         cancelStreamingResponse,
-        sendChatMessage,
+        // sendChatMessage,
         regenerateResponse,
         clearMessages,
     } = useChatMessages({
@@ -171,24 +173,29 @@ const App: React.FC = () => {
     };
 
     const handleSendMessage = () => {
-        // 如果正在流式传输，停止它而不是发送新消息
-        if (streamingMessageId !== null) {
-            cancelStreamingResponse();
-            return;
-        }
+        if (!userInput.trim() || isLoading) return;
 
-        // 常规发送消息逻辑
-        if (userInput.trim() && !isLoading) {
-            sendChatMessage(userInput.trim());
-            setUserInput('');
+        const message = convertSimpleMessage({
+            role: 'user',
+            content: userInput,
+        });
 
-            // 发送后聚焦输入框
-            setTimeout(() => {
-                if (inputRef.current) {
-                    inputRef.current.focus();
-                }
-            }, 0);
-        }
+        fetchChatCompletion({
+            messages: [message],
+            onChunkReceived: (chunk) => {
+                console.log('收到响应块:', chunk);
+                // 这里可以处理接收到的响应块
+                // 例如更新UI显示等
+            },
+        });
+
+        setUserInput('');
+        // 发送后聚焦输入框
+        setTimeout(() => {
+            if (inputRef.current) {
+                inputRef.current.focus();
+            }
+        }, 0);
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {

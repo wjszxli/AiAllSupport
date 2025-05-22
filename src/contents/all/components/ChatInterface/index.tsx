@@ -1,6 +1,12 @@
 import { useState, useRef, useEffect, useCallback, useMemo, memo } from 'react';
 import { Button, Input, message as messageNotification, Typography, Modal } from 'antd';
-import { SendOutlined, CloseOutlined, CopyOutlined, RedoOutlined, DeleteOutlined } from '@ant-design/icons';
+import {
+    SendOutlined,
+    CloseOutlined,
+    CopyOutlined,
+    RedoOutlined,
+    DeleteOutlined,
+} from '@ant-design/icons';
 import './index.scss';
 import './promptSuggestions.css';
 import type { TranslationKey } from '@/contexts/LanguageContext';
@@ -8,7 +14,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useStableCallback } from '@/utils/reactOptimizations';
 import { md } from '@/utils/markdownRenderer';
 import useChatMessages, { markdownCache } from '@/hooks/useChatMessages';
-import { ChatMessage } from '@/typings';
+import { ChatMessage } from '@/types';
 import ChatControls from '../ChatControls';
 
 interface ChatInterfaceProps {
@@ -85,7 +91,11 @@ const MessageBubble = memo(
 
                     return (
                         <>
-                            <div className={`thinking-container ${isThinkingExpanded ? 'expanded' : 'collapsed'}`}>
+                            <div
+                                className={`thinking-container ${
+                                    isThinkingExpanded ? 'expanded' : 'collapsed'
+                                }`}
+                            >
                                 <div className="thinking-header" onClick={toggleThinking}>
                                     <span className="thinking-label">🧠 {t('think')}</span>
                                     <span className="thinking-toggle">
@@ -192,11 +202,11 @@ const ChatInterface = ({ initialText }: ChatInterfaceProps) => {
         cancelStreamingResponse,
         sendChatMessage,
         regenerateResponse,
-        clearMessages
-    } = useChatMessages({ 
-        t, 
+        clearMessages,
+    } = useChatMessages({
+        t,
         storeType: 'interface',
-        conversationId: 'default'
+        conversationId: 'default',
     });
 
     const messagesContainerRef = useRef<HTMLDivElement>(null);
