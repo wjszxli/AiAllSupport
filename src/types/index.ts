@@ -193,9 +193,22 @@ export type Assistant = {
     model?: Model;
     defaultModel?: Model;
     messages?: AssistantMessage[];
+    topics: Topic[];
 };
 export interface CompletionsParams {
     messages: Message[];
     onChunk: (chunk: Chunk) => void;
     onFilterMessages: (messages: Message[]) => void;
 }
+
+export type Topic = {
+    id: string;
+    assistantId: string;
+    name: string;
+    createdAt: string;
+    updatedAt: string;
+    messages: Message[];
+    pinned?: boolean;
+    prompt?: string;
+    isNameManuallyEdited?: boolean;
+};

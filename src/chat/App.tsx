@@ -38,6 +38,8 @@ import './App.scss';
 import { fetchChatCompletion } from '@/services/apiService';
 import { convertSimpleMessage } from '@/utils/message/create';
 import { ChatMessage } from '@/types';
+import { createStreamCallback, createStreamProcessor } from '@/services/StreamProcessingService';
+import Assistant from './components/Assistant';
 
 // Add feedback survey URL constant
 const FEEDBACK_SURVEY_URL = 'https://wj.qq.com/s2/18763807/74b5/';
@@ -180,13 +182,11 @@ const App: React.FC = () => {
             content: userInput,
         });
 
+        const streamCallback = createStreamProcessor(createStreamCallback);
+
         fetchChatCompletion({
             messages: [message],
-            onChunkReceived: (chunk) => {
-                console.log('收到响应块:', chunk);
-                // 这里可以处理接收到的响应块
-                // 例如更新UI显示等
-            },
+            onChunkReceived: streamCallback,
         });
 
         setUserInput('');
@@ -304,7 +304,7 @@ const App: React.FC = () => {
                         />
                     </div>
                 </div>
-
+                <Assistant />
                 <div className="chat-body">
                     <div className="messages-container" ref={messagesWrapperRef}>
                         {messages.length === 0 ? (

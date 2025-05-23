@@ -162,4 +162,12 @@ export const zhTW = {
     sogouSearchFailed: '搜狗搜索請求失敗，狀態碼: {status}',
     braveSearchFailed: 'Brave搜索請求失敗，狀態碼: {status}',
     searxngSearchFailed: 'SearXNG搜索請求失敗，狀態碼: {status}',
+    clearConfirmTitle: '清除聊天記錄',
+    clearConfirmContent: '確定要清除聊天記錄嗎？',
+    chatCleared: '聊天記錄已清除',
+    chatWithAI: '與AI聊天',
+    clearChat: '清除聊天',
+    startChat: '開始聊天',
+    defaultTopicName: '新對話',
+    ai: 'AI',
 };

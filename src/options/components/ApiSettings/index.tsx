@@ -260,7 +260,7 @@ const ApiSettings: React.FC = observer(() => {
                         onClick={setAsDefault}
                         disabled={currentProvider?.id === llmStore.defaultModel?.provider}
                     >
-                        设为默认
+                        设置使用
                     </Button>,
                     <Button key="cancel" onClick={handleCancel}>
                         取消

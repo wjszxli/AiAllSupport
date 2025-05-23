@@ -1,14 +1,13 @@
 // src/renderer/src/store/rootStore.ts
 import { createContext, useContext } from 'react';
 import llmStore from './llm';
+import assistantsStore from './assistants';
 
 class RootStore {
     llmStore = llmStore;
-    // 添加其他 store 实例
+    assistantsStore = assistantsStore;
 
-    constructor() {
-        // 初始化逻辑
-    }
+    constructor() {}
 }
 
 const rootStore = new RootStore();

@@ -12,8 +12,19 @@ import { getDefaultModel } from '@/services/AssistantService';
 import { getMainTextContent } from '@/utils/message/find';
 import { processReqMessages } from '@/services/ModelMessageService';
 import { ChunkType } from '@/types/chunk';
+import {
+    asyncGeneratorToReadableStream,
+    extractReasoningMiddleware,
+    openAIChunkToTextDelta,
+    readableStreamAsyncIterable,
+} from './utils';
 
 export const NOT_SUPPORTED_REGEX = /(?:^tts|whisper|speech)/i;
+
+export type OpenAIStreamChunk =
+    | { type: 'reasoning' | 'text-delta'; textDelta: string }
+    | { type: 'tool-calls'; delta: any }
+    | { type: 'finish'; finishReason: any; usage: any; delta: any; chunk: any };
 
 export function isSupportedModel(model: OpenAI.Models.Model): boolean {
     if (!model) {
@@ -173,72 +184,88 @@ export default class OpenAiLlmProvider extends BaseLlmProvider {
 
         const processStream = async (stream: any) => {
             // 流式处理主要逻辑
-            // let content = '';
+            let content = '';
             // let thinkingContent = '';
-            // let isFirstChunk = true;
+            let isFirstChunk = true;
 
             console.log('stream', stream);
 
+            const reasoningTags = [
+                { openingTag: '<think>', closingTag: '</think>', separator: '\n' },
+                { openingTag: '###Thinking', closingTag: '###Response', separator: '\n' },
+            ];
+
+            const getAppropriateTag = (model: Model) => {
+                if (model.id.includes('qwen3')) return reasoningTags[0];
+                return reasoningTags[0];
+            };
+
+            const reasoningTag = getAppropriateTag(model);
+
             // // 使用中间件处理推理内容
-            // const { stream: processedStream } = await extractReasoningMiddleware<OpenAIStreamChunk>(
-            //     {
-            //         openingTag: reasoningTag?.openingTag,
-            //         closingTag: reasoningTag?.closingTag,
-            //         separator: reasoningTag?.separator,
-            //         enableReasoning,
-            //     },
-            // ).wrapStream({
-            //     doStream: async () => ({
-            //         stream: asyncGeneratorToReadableStream(openAIChunkToTextDelta(stream)),
-            //     }),
-            // });
+            const { stream: processedStream } = await extractReasoningMiddleware<OpenAIStreamChunk>(
+                {
+                    openingTag: reasoningTag?.openingTag,
+                    closingTag: reasoningTag?.closingTag,
+                    separator: reasoningTag?.separator,
+                    // enableReasoning,
+                },
+            ).onMessage({
+                doStream: async () => ({
+                    stream: asyncGeneratorToReadableStream(openAIChunkToTextDelta(stream)),
+                }),
+            });
 
             // // 处理流式响应
-            // for await (const chunk of readableStreamAsyncIterable(processedStream)) {
-            //     switch (chunk.type) {
-            //         case 'reasoning': {
-            //             // 处理推理/思考内容
-            //             thinkingContent += chunk.textDelta;
-            //             onChunk({
-            //                 type: ChunkType.THINKING_DELTA,
-            //                 text: chunk.textDelta,
-            //                 thinking_millsec: new Date().getTime() - time_first_token_millsec,
-            //             });
-            //             break;
-            //         }
-            //         case 'text-delta': {
-            //             // 处理文本内容
-            //             let textDelta = chunk.textDelta;
-            //             // 链接处理...
+            for await (const chunk of readableStreamAsyncIterable(processedStream)) {
+                console.log('chunk', chunk);
+                // @ts-ignore
+                switch (chunk.type) {
+                    // case 'reasoning': {
+                    //     // 处理推理/思考内容
+                    //     thinkingContent += chunk.textDelta;
+                    //     onChunk({
+                    //         type: ChunkType.THINKING_DELTA,
+                    //         text: chunk.textDelta,
+                    //         thinking_millsec: new Date().getTime() - time_first_token_millsec,
+                    //     });
+                    //     break;
+                    // }
+                    case 'text-delta': {
+                        // 处理文本内容
+                        // @ts-ignore
+                        let textDelta = chunk.textDelta;
+                        // 链接处理...
 
-            //             if (isFirstChunk) {
-            //                 isFirstChunk = false;
-            //                 // 首个token时间记录...
-            //             }
-            //             content += textDelta;
-            //             onChunk({ type: ChunkType.TEXT_DELTA, text: textDelta });
-            //             break;
-            //         }
-            //         case 'tool-calls': {
-            //             // 处理工具调用...
-            //             break;
-            //         }
-            //         case 'finish': {
-            //             // 处理完成事件
-            //             if (content) {
-            //                 onChunk({ type: ChunkType.TEXT_COMPLETE, text: content });
-            //             }
-            //             if (thinkingContent) {
-            //                 onChunk({
-            //                     type: ChunkType.THINKING_COMPLETE,
-            //                     text: thinkingContent,
-            //                 });
-            //             }
-            //             // 处理用量统计...
-            //             break;
-            //         }
-            //     }
-            // }
+                        if (isFirstChunk) {
+                            isFirstChunk = false;
+                            // 首个token时间记录...
+                        }
+                        content += textDelta;
+                        onChunk({ type: ChunkType.TEXT_DELTA, text: textDelta });
+                        break;
+                    }
+                    //     case 'tool-calls': {
+                    //         // 处理工具调用...
+                    //         break;
+                    //     }
+                    //     case 'finish': {
+                    //         // 处理完成事件
+                    //         if (content) {
+                    //             onChunk({ type: ChunkType.TEXT_COMPLETE, text: content });
+                    //         }
+                    //         if (thinkingContent) {
+                    //             onChunk({
+                    //                 type: ChunkType.THINKING_COMPLETE,
+                    //                 text: thinkingContent,
+                    //             });
+                    //         }
+                    //         // 处理用量统计...
+                    //         break;
+                    //     }
+                }
+            }
+            console.log('content', content);
         };
 
         onChunk({ type: ChunkType.LLM_RESPONSE_CREATED });

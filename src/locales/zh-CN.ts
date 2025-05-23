@@ -185,6 +185,7 @@ export const zhCN = {
     chatWithAI: '与AI聊天',
     clearChat: '清除聊天',
     startChat: '开始聊天',
+    defaultTopicName: '新对话',
     ai: 'AI',
     summarizePage: `
 请对以下网页进行结构化总结，包括以下三个部分：
