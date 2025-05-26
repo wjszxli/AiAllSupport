@@ -1,0 +1,249 @@
+.topic-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    overflow: hidden;
+    padding: 16px;
+
+    .topic-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+
+        .topic-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            .anticon {
+                color: #4776e6;
+                font-size: 18px;
+            }
+        }
+
+        .ant-btn {
+            height: 32px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+    }
+
+    .selected-robot-info {
+        margin-bottom: 16px;
+        border-radius: 8px;
+
+        .robot-emoji {
+            font-size: 16px;
+            margin-left: 8px;
+        }
+    }
+
+    .no-robot-warning {
+        margin-bottom: 16px;
+        border-radius: 8px;
+    }
+
+    .topic-search {
+        margin-bottom: 16px;
+
+        .topic-search-input {
+            border-radius: 8px;
+
+            .ant-input {
+                border-radius: 8px;
+                height: 36px;
+            }
+        }
+    }
+
+    .topic-list {
+        flex: 1;
+        overflow-y: auto;
+        max-height: 600px;
+
+        &::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        &::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+
+            &:hover {
+                background: #a8a8a8;
+            }
+        }
+
+        .ant-list {
+            .ant-list-item {
+                position: relative;
+                margin-bottom: 12px;
+                padding: 16px;
+                border: 1px solid transparent;
+                border-radius: 12px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+
+                &:hover {
+                    background-color: #f8fafc;
+                    border-color: #e2e8f0;
+                    box-shadow: 0 2px 12px rgb(0 0 0 / 8%);
+                }
+
+                &.selected {
+                    background-color: #f0f9ff;
+                    border-color: #4776e6;
+                    box-shadow: 0 2px 12px rgb(71 118 230 / 15%);
+                }
+
+                .ant-list-item-meta {
+                    .ant-list-item-meta-title {
+                        margin-bottom: 6px;
+
+                        .topic-name {
+                            display: flex;
+                            align-items: center;
+                            justify-content: space-between;
+                            font-size: 16px;
+                            font-weight: 600;
+                            color: #1a202c;
+                            line-height: 1.4;
+
+                            .message-count {
+                                background: #4776e6;
+                                color: white;
+                                font-size: 12px;
+                                font-weight: 500;
+                                padding: 2px 8px;
+                                border-radius: 12px;
+                                min-width: 20px;
+                                text-align: center;
+                                line-height: 1.2;
+                            }
+                        }
+                    }
+
+                    .ant-list-item-meta-description {
+                        .topic-meta {
+                            font-size: 14px;
+                            color: #718096;
+
+                            .topic-time {
+                                font-size: 14px;
+                            }
+                        }
+                    }
+                }
+
+                .ant-list-item-action {
+                    margin-left: 8px;
+
+                    .ant-btn {
+                        height: 32px;
+                        border-radius: 6px;
+                        font-size: 12px;
+                        font-weight: 500;
+                        transition: all 0.2s ease;
+
+                        &:hover {
+                            transform: translateY(-1px);
+                        }
+                    }
+                }
+            }
+        }
+
+        .ant-empty {
+            margin: 40px 0;
+
+            .ant-empty-description {
+                color: #8c8c8c;
+                font-size: 14px;
+            }
+        }
+    }
+}
+
+// 响应式设计
+@media (max-width: 768px) {
+    .topic-container {
+        .topic-header {
+            padding: 12px;
+
+            .topic-title {
+                font-size: 14px;
+            }
+        }
+
+        .topic-search {
+            padding: 8px 12px;
+        }
+
+        .topic-list {
+            .ant-list-item {
+                padding: 10px 12px;
+
+                .ant-list-item-meta-title .topic-name {
+                    font-size: 13px;
+                }
+
+                .ant-list-item-meta-description .topic-meta {
+                    font-size: 11px;
+                }
+            }
+        }
+    }
+}
+
+// 暗色主题支持
+@media (prefers-color-scheme: dark) {
+    .topic-container {
+        background: #1f1f1f;
+        color: #fff;
+
+        .topic-header {
+            background: #262626;
+            border-bottom-color: #303030;
+
+            .topic-title {
+                color: #fff;
+            }
+        }
+
+        .topic-search {
+            border-bottom-color: #303030;
+        }
+
+        .topic-list {
+            .ant-list-item {
+                border-bottom-color: #303030;
+
+                &:hover {
+                    background: #262626;
+                }
+
+                &.selected {
+                    background: #111b26;
+                }
+
+                .ant-list-item-meta-title .topic-name {
+                    color: #fff;
+                }
+            }
+        }
+    }
+}

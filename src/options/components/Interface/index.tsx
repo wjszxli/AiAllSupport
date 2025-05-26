@@ -1,7 +1,7 @@
 import { Form, Switch } from 'antd';
 import React, { useEffect } from 'react';
 
-import { t } from '@/services/i18n';
+import { t } from '@/locales/i18n';
 import storage from '@/utils/storage';
 
 interface InterfaceProps {

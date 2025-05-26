@@ -6,26 +6,28 @@ import storage from '@/utils/storage';
 const i18nState = {
     currentLocale: DEFAULT_LOCALE,
     listeners: [] as Array<(locale: LocaleType) => void>,
-    initialized: false
+    initialized: false,
 };
 
 // 初始化函数，在应用启动时调用
 const initializeLocale = async () => {
     if (i18nState.initialized) return;
-    
+
     try {
         const savedLocale = await storage.getLocale();
         if (savedLocale && Object.keys(locales).includes(savedLocale)) {
             i18nState.currentLocale = savedLocale as LocaleType;
             console.log('i18n service initialized with locale:', savedLocale);
-            
+
             // 通知监听器初始语言设置
             i18nState.listeners.forEach((listener) => listener(i18nState.currentLocale));
-            
+
             // 广播初始语言设置到其他上下文
-            window.dispatchEvent(new CustomEvent('localeChange', { 
-                detail: { locale: i18nState.currentLocale } 
-            }));
+            window.dispatchEvent(
+                new CustomEvent('localeChange', {
+                    detail: { locale: i18nState.currentLocale },
+                }),
+            );
         } else {
             console.log('Using default locale:', DEFAULT_LOCALE);
         }

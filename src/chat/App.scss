@@ -6,20 +6,20 @@
     width: 100%;
     height: 100vh;
     margin: 0 auto;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
-        sans-serif;
     overflow: hidden;
     background-color: #f8fafc;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+        sans-serif;
 
     .chat-container {
         display: flex;
         flex-direction: column;
         width: 100%;
         height: 100%;
+        overflow: hidden;
         background-color: #fff;
         border-radius: 16px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        overflow: hidden;
+        box-shadow: 0 4px 20px rgb(58 50 50 / 8%);
     }
 
     .chat-header {
@@ -28,7 +28,7 @@
         justify-content: space-between;
         padding: 16px 24px;
         background-color: #fff;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        border-bottom: 1px solid rgb(0 0 0 / 6%);
         z-index: 10;
 
         .chat-title {
@@ -57,27 +57,28 @@
                 }
             }
 
-            .feedback-button {
-                padding: 4px 8px;
-                font-size: 16px;
-                transition: all 0.3s;
-                color: #38a169;
-
-                &:hover {
-                    color: #2f855a;
-                    background-color: rgba(56, 161, 105, 0.1);
-                }
-            }
-
+            .feedback-button,
             .settings-button {
                 padding: 4px 8px;
                 font-size: 16px;
                 transition: all 0.3s;
 
                 &:hover {
-                    color: #4776e6;
-                    background-color: rgba(71, 118, 230, 0.1);
+                    background-color: rgb(71 118 230 / 10%);
                 }
+            }
+
+            .feedback-button {
+                color: #38a169;
+
+                &:hover {
+                    color: #2f855a;
+                    background-color: rgb(56 161 105 / 10%);
+                }
+            }
+
+            .settings-button:hover {
+                color: #4776e6;
             }
         }
     }
@@ -682,12 +683,222 @@
 
         .footer-link {
             margin: 0 10px;
-            font-size: 14px;
             color: #555;
+            font-size: 14px;
             transition: all 0.3s;
 
             &:hover {
                 color: #1677ff;
+            }
+        }
+    }
+
+    // 主要内容区域 - 左右布局
+    .main-content {
+        position: relative;
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+    }
+
+    // 左侧边栏容器
+    .sidebar-container {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        overflow: hidden;
+        background-color: #fff;
+        border-right: 1px solid rgb(0 0 0 / 6%);
+        transition: width 0.3s ease;
+
+        &.collapsed {
+            width: 0 !important;
+            border-right: none;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 8px 12px;
+            background-color: #fafafa;
+            border-bottom: 1px solid rgb(0 0 0 / 6%);
+
+            .collapse-button {
+                padding: 4px;
+                border-radius: 4px;
+                transition: all 0.2s ease;
+
+                &:hover {
+                    background-color: rgb(0 0 0 / 4%);
+                    color: #4776e6;
+                }
+            }
+        }
+    }
+
+    // 拖拽调整大小的分隔线
+    .resize-handle {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 4px;
+        background-color: transparent;
+        cursor: col-resize;
+        transition: background-color 0.2s ease;
+
+        &:hover {
+            background-color: #4776e6;
+
+            .collapse-button-on-handle {
+                opacity: 1;
+                visibility: visible;
+            }
+        }
+
+        &::before {
+            position: absolute;
+            top: 0;
+            right: -2px;
+            bottom: 0;
+            left: -2px;
+            background-color: transparent;
+            content: '';
+        }
+
+        .collapse-button-on-handle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 24px;
+            height: 24px;
+            padding: 0;
+            background-color: #4776e6;
+            border: 1px solid #fff;
+            border-radius: 50%;
+            color: #fff;
+            font-size: 12px;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s ease;
+            z-index: 10;
+            cursor: pointer;
+
+            &:hover {
+                background-color: #5784ec;
+                transform: translate(-50%, -50%) scale(1.1);
+                box-shadow: 0 2px 8px rgba(71, 118, 230, 0.3);
+            }
+
+            .anticon {
+                font-size: 10px;
+            }
+        }
+    }
+
+    // 折叠状态下的展开按钮
+    .collapsed-sidebar-trigger {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        z-index: 10;
+        background-color: #fff;
+        border: 1px solid rgb(0 0 0 / 6%);
+        border-left: none;
+        border-radius: 0 6px 6px 0;
+        box-shadow: 2px 0 8px rgb(0 0 0 / 10%);
+        transform: translateY(-50%);
+
+        .expand-button {
+            padding: 8px 4px;
+            border-radius: 0;
+            transition: all 0.2s ease;
+
+            &:hover {
+                background-color: #f0f7ff;
+                color: #4776e6;
+            }
+        }
+    }
+
+    // 更新 sidebar-tabs 样式
+    .sidebar-tabs {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        overflow: hidden;
+
+        .ant-tabs {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+
+            .ant-tabs-nav {
+                margin-bottom: 0;
+                padding: 0 12px;
+                background-color: #fafafa;
+
+                .ant-tabs-nav-wrap {
+                    .ant-tabs-nav-list {
+                        .ant-tabs-tab {
+                            margin-right: 4px;
+                            padding: 8px 12px;
+                            border: 1px solid transparent;
+                            border-radius: 6px 6px 0 0;
+                            background-color: #f0f0f0;
+                            transition: all 0.2s ease;
+
+                            &:hover {
+                                background-color: #e6f7ff;
+                                color: #4776e6;
+                            }
+
+                            &.ant-tabs-tab-active {
+                                background-color: #fff;
+                                border-color: #e2e8f0;
+                                border-bottom-color: #fff;
+                                color: #4776e6;
+                                font-weight: 600;
+
+                                .ant-tabs-tab-btn {
+                                    color: #4776e6;
+                                }
+                            }
+
+                            .ant-tabs-tab-btn {
+                                display: flex;
+                                align-items: center;
+                                gap: 6px;
+                                color: #64748b;
+                                font-size: 13px;
+
+                                .anticon {
+                                    font-size: 14px;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                .ant-tabs-ink-bar {
+                    display: none;
+                }
+            }
+
+            .ant-tabs-content-holder {
+                flex: 1;
+                overflow: hidden;
+
+                .ant-tabs-content {
+                    height: 100%;
+
+                    .ant-tabs-tabpane {
+                        height: 100%;
+                        overflow: hidden;
+                    }
+                }
             }
         }
     }
@@ -743,15 +954,15 @@
 
     .no-domains-message {
         padding: 10px;
-        font-style: italic;
         color: #888;
+        font-style: italic;
         text-align: center;
     }
 
     .add-domain-container {
         display: flex;
-        gap: 10px;
         align-items: center;
+        gap: 10px;
 
         button {
             margin-left: 10px;
@@ -759,9 +970,9 @@
     }
 
     .ant-tag {
-        padding: 4px 8px;
         margin-right: 8px;
         margin-bottom: 8px;
+        padding: 4px 8px;
         font-size: 14px;
     }
 }

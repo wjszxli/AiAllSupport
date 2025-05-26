@@ -137,7 +137,6 @@ export const ko = {
     apiKeyNeeded:
         '이 기능을 사용하려면 API 키를 설정해야 합니다. 지금 설정 페이지로 이동하시겠습니까?',
     enterQuestion: '질문을 입력해 주세요...',
-    systemPrompt: '저는 AI 어시스턴트입니다. 사용자의 질문에 답변드리겠습니다.',
     modelListNotSupported: '현재 서비스 제공업체가 지원하지 않는 모델 목록',
     pleaseSelectProvider: '먼저 서비스 제공업체를 선택해 주세요.',
     pleaseEnterApiKey: 'API 키를 입력하세요',

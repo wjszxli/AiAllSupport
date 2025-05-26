@@ -4,7 +4,7 @@ import { removeChatBox, removeChatButton } from '@/utils';
 import { CHAT_BOX_ID, CHAT_BUTTON_ID } from '@/utils/constant';
 import storage from '@/utils/storage';
 import { LanguageProvider } from '@/contexts/LanguageContext';
-import { setLocale } from '@/services/i18n';
+import { setLocale } from '@/locales/i18n';
 import type { LocaleType } from '@/locales';
 
 import ChatWindow from './components/ChatWindow';

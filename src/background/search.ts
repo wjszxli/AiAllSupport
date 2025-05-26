@@ -1,6 +1,6 @@
 import { load } from 'cheerio';
 import { tavily } from '@tavily/core';
-import { t } from '@/services/i18n';
+import { t } from '@/locales/i18n';
 import { initLogger, Logger } from '@/utils';
 import storage from '@/utils/storage';
 import type { SearchResult } from '@/types';

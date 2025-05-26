@@ -14,11 +14,39 @@ export const en = {
     aiAssistant: 'AI Assistant',
     you: 'You',
     edit: 'Edit',
+    clear: 'Clear',
+    create: 'Create',
+
+    // Suggested prompts
     suggestedPrompt1: 'Explain the difference between deep learning and machine learning',
     suggestedPrompt2: 'Help me optimize a Python code',
     suggestedPrompt3: 'How to improve English speaking skills',
     suggestedPrompt4: 'Recommend some classic science fiction novels',
+
+    // App and interface
     appTitle: 'AI Tool',
+    assistants: 'Assistants',
+    topics: 'Topics',
+    expand: 'Expand',
+    collapse: 'Collapse',
+
+    // Topic management
+    newTopic: 'New Topic',
+    searchTopics: 'Search topics...',
+    noTopicsFound: 'No topics found',
+    noTopics: 'No topics yet',
+    createTopic: 'Create Topic',
+    editTopic: 'Edit Topic',
+    enterTopicName: 'Enter topic name',
+    topicNameRequired: 'Topic name is required',
+    topicCreated: 'Topic created successfully',
+    topicUpdated: 'Topic updated successfully',
+    topicDeleted: 'Topic deleted successfully',
+    deleteTopicConfirm: 'Confirm Delete Topic',
+    deleteTopicContent: 'Are you sure you want to delete topic',
+    question: '?',
+
+    // Configuration and API
     saveConfig: 'Save Configuration',
     savingConfig: 'Saving Configuration',
     serviceProvider: 'Service Provider',
@@ -37,7 +65,10 @@ export const en = {
     configSaved: 'Configuration saved',
     validatingApi: 'Validating API key',
     apiValidSuccess: 'API Key validation successful, the tool is ready to use',
+    apiValidFailed: 'API Key validation failed',
     savingConfigError: 'Failed to save configuration. Please try again.',
+
+    // Chat interface
     send: 'Send',
     thinking: 'AI is thinking...',
     assistant: 'AI ASSISTANT',
@@ -55,6 +86,8 @@ export const en = {
     codeCopied: 'Code copied',
     failedCodeCopy: 'Failed to copy code',
     selectProviderFirst: 'Please click the plugin icon to select a service provider first',
+
+    // Language settings
     language: 'Language',
     languageEn: 'English',
     languageZhCN: '简体中文',
@@ -62,12 +95,16 @@ export const en = {
     languageJa: '日本語',
     languageKo: '한국어',
     languageChanged: 'Language changed successfully',
+
+    // Input and interaction
     typeMessage: 'Type a message...',
     askAnything: 'Ask me anything about this webpage or any general questions',
     exampleMainPoints: 'What are the main points discussed here?',
     exampleHowToUse: 'How can I use this information?',
     unpinWindow: 'Unpin Window',
     pinWindow: 'Fixed Window',
+
+    // Web search
     webSearch: 'Web Search',
     webSearchTooltip: 'Enable web search for real-time information',
     on: 'On',
@@ -79,6 +116,8 @@ export const en = {
         'Web search and webpage context cannot be enabled at the same time. Please enable only one of them.',
     exclusiveFeatureWarning:
         'Web search and webpage context cannot be enabled at the same time. Please enable only one of them.',
+
+    // Quick actions
     think: 'Thinking content',
     translate: 'Translate',
     translatePrompt: 'Translate the following text to English: ',
@@ -90,6 +129,8 @@ export const en = {
     codeReviewPrompt: 'Review the following code and suggest improvements: ',
     rewrite: 'Rewrite',
     rewritePrompt: 'Rewrite the following text to make it more professional: ',
+
+    // Web search results
     webSearchResultsTips1:
         'Here are some recent information from the web that might help answer this query:',
     webSearchResultsTips2:
@@ -100,6 +141,8 @@ export const en = {
     fetchWebpageContent: 'Fetching current webpage content...',
     fetchWebpageContentSuccess: 'Successfully fetched webpage content, processing with AI...',
     fetchWebpageContentFailed: 'Failed to fetch webpage content. Using AI knowledge only...',
+
+    // Navigation
     openSettings: 'Open Settings',
     openChat: 'Open Chat',
     openSidebar: 'Open Sidebar',
@@ -108,6 +151,8 @@ export const en = {
     copyMessage: 'Copy Success',
     close: 'Close',
     pleaseInputApiKey: 'Please enter your API Key in the configuration page.',
+
+    // Reference prompt
     REFERENCE_PROMPT: `Please answer the question based on the reference materials.
 
 ## Annotation Rules:
@@ -124,6 +169,8 @@ export const en = {
 {references}
 
 Please answer in the same language as the user's question.`,
+
+    // Search settings
     filteredDomains: 'Filtered Domain Names',
     searchEngines: 'Enabled search engines',
     pressTip: 'Press Enter to send, Shift+Enter to create a new line.',
@@ -142,15 +189,21 @@ Please answer in the same language as the user's question.`,
     enableWebSearchMessage: 'Enable Web Search to configure search settings.',
     aboutDescription:
         'A powerful browser extension that integrates DeepSeek and other AI models into your browsing experience.',
+
+    // Auto-save
     autoSaving: 'Saving...',
     autoSaved: 'Changes saved',
     autoSaveError: 'Error saving changes',
     validatingTavilyApi: 'Validating Tavily API Key...',
     tavilyApiValidSuccess: 'Tavily API Key validation successful',
     tavilyApiValidError: 'Tavily API Key validation failed',
+
+    // Feedback
     feedback: 'Give Feedback',
     apiKeyNeeded:
         'You need to set up your API Key to use this feature. Would you like to go to the settings page now?',
+
+    // System and errors
     systemPrompt: "You are an AI assistant, please answer the user's question",
     modelListNotSupported: 'The current service provider does not support model listing',
     pleaseSelectProvider: 'Please select a service provider first',
@@ -167,6 +220,7 @@ Please answer in the same language as the user's question.`,
     braveSearchFailed: 'Brave search request failed, status code: {status}',
     searxngSearchFailed: 'SearXNG search request failed, status code: {status}',
     enterQuestion: 'Please enter your question...',
+
     // Logging related translations
     options_tab_logging: 'Logging',
     options_logging_settings: 'Logging Settings',
@@ -185,6 +239,8 @@ Please answer in the same language as the user's question.`,
     options_logging_settings_save_failed: 'Failed to save logging settings',
     options_logging_cleared: 'Logs cleared',
     options_logging_clear_failed: 'Failed to clear logs',
+
+    // Chat management
     clearConfirmTitle: 'Clear Chat History',
     clearConfirmContent: 'Are you sure you want to clear the chat history?',
     chatCleared: 'Chat history cleared',

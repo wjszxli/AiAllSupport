@@ -2,7 +2,7 @@ import { BugOutlined } from '@ant-design/icons';
 import { Button, Card, Form, InputNumber, message, Radio, Space, Switch } from 'antd';
 import React, { useState } from 'react';
 
-import { t } from '@/services/i18n';
+import { t } from '@/locales/i18n';
 import type { LoggerConfig } from '@/utils/logger';
 import { clearLogs, getLoggerConfig, LogLevel, updateLoggerConfig } from '@/utils/logger';
 

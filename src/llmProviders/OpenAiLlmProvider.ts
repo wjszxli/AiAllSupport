@@ -8,7 +8,6 @@ import {
 import BaseLlmProvider from './BaseLlmProvider';
 import { isEmpty, takeRight } from 'lodash';
 import { getDefaultGroupName } from '@/utils';
-import { getDefaultModel } from '@/services/AssistantService';
 import { getMainTextContent } from '@/utils/message/find';
 import { processReqMessages } from '@/services/ModelMessageService';
 import { ChunkType } from '@/types/chunk';
@@ -18,6 +17,7 @@ import {
     openAIChunkToTextDelta,
     readableStreamAsyncIterable,
 } from './utils';
+import store from '@/store';
 
 export const NOT_SUPPORTED_REGEX = /(?:^tts|whisper|speech)/i;
 
@@ -162,7 +162,7 @@ export default class OpenAiLlmProvider extends BaseLlmProvider {
         onChunk,
         onFilterMessages,
     }: CompletionsParams): Promise<void> {
-        const model = getDefaultModel();
+        const model = store.llmStore.defaultModel;
         const contextCount = 5;
         console.log('messages', messages);
         // 准备请求消息

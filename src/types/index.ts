@@ -178,22 +178,23 @@ export type Metrics = {
     time_thinking_millsec?: number;
 };
 
-export type AssistantMessage = {
+export type RobotMessage = {
     role: 'user' | 'assistant';
     content: string;
 };
 
-export type Assistant = {
+export type Robot = {
     id: string;
     name: string;
     prompt: string;
     type: string;
-    emoji?: string;
+    icon?: string;
     description?: string;
     model?: Model;
     defaultModel?: Model;
-    messages?: AssistantMessage[];
+    messages?: RobotMessage[];
     topics: Topic[];
+    selectedTopicId?: string;
 };
 export interface CompletionsParams {
     messages: Message[];

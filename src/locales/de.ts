@@ -2,173 +2,253 @@
 // Generated on: 2025-03-12T07:21:43.308Z
 
 export const de = {
-    ok: 'Bestätigen',
-    cancel: 'Stornieren',
+    // General
+    ok: 'OK',
+    cancel: 'Abbrechen',
     save: 'Speichern',
     delete: 'Löschen',
     copy: 'Kopieren',
     regenerate: 'Neu generieren',
     settings: 'Einstellungen',
-    close: 'Schließen',
-    appTitle: 'KI-Werkzeuge',
+    stop: 'Stopp',
+    validated: 'Validiert',
+    edit: 'Bearbeiten',
+    clear: 'Löschen',
+    create: 'Erstellen',
+
+    // Suggested prompts
+    suggestedPrompt1: 'Erklären Sie den Unterschied zwischen Deep Learning und maschinellem Lernen',
+    suggestedPrompt2: 'Helfen Sie mir, einen Python-Code zu optimieren',
+    suggestedPrompt3: 'Wie kann man die englischen Sprechfähigkeiten verbessern',
+    suggestedPrompt4: 'Empfehlen Sie einige klassische Science-Fiction-Romane',
+
+    // App and interface
+    appTitle: 'AI-Tool',
+    assistants: 'Assistenten',
+    topics: 'Themen',
+    expand: 'Erweitern',
+    collapse: 'Einklappen',
+
+    // Topic management
+    newTopic: 'Neues Thema',
+    searchTopics: 'Themen suchen...',
+    noTopicsFound: 'Keine Themen gefunden',
+    noTopics: 'Noch keine Themen',
+    createTopic: 'Thema erstellen',
+    editTopic: 'Thema bearbeiten',
+    enterTopicName: 'Themenname eingeben',
+    topicNameRequired: 'Themenname ist erforderlich',
+    topicCreated: 'Thema erfolgreich erstellt',
+    topicUpdated: 'Thema erfolgreich aktualisiert',
+    topicDeleted: 'Thema erfolgreich gelöscht',
+    deleteTopicConfirm: 'Thema löschen bestätigen',
+    deleteTopicContent: 'Sind Sie sicher, dass Sie das Thema löschen möchten',
+    question: '?',
+
+    // Configuration and API
     saveConfig: 'Konfiguration speichern',
-    savingConfig: 'Konfiguration wird gespeichert...',
-    serviceProvider: 'Dienstleister',
-    selectProvider: 'Bitte wählen Sie den Dienstleister aus.',
+    savingConfig: 'Konfiguration wird gespeichert',
+    serviceProvider: 'Dienstanbieter',
+    selectProvider: 'Bitte wählen Sie einen Dienstanbieter',
     apiKey: 'API-Schlüssel',
     enterApiKey: 'Bitte geben Sie Ihren API-Schlüssel ein',
-    getApiKey: 'API-Schlüssel abrufen',
+    getApiKey: 'API-Schlüssel erhalten',
+    validate: 'Validieren',
+    apiHost: 'API-Host',
+    enterApiHost: 'Bitte geben Sie Ihren API-Host ein',
     modelSelection: 'Modellauswahl',
-    selectModel: 'Bitte wählen Sie das Modell aus, das Sie verwenden möchten.',
-    showIcon: 'Wird das ausgewählte Textsymbol angezeigt?',
-    setShortcuts: 'Tastenkombination einrichten',
-    starAuthor: 'Dem Autor gefällt ｜ Kontakt zum Autor',
-    configSaved: 'Konfiguration gespeichert.',
-    validatingApi: 'Überprüfen Sie, ob die API ordnungsgemäß funktioniert.',
-    apiValidSuccess: 'API-Schlüssel erfolgreich überprüft, das Tool kann normal verwendet werden.',
-    aiAssistant: 'KI-Assistent',
-    askAnything: 'Was kann ich heute für Sie tun?',
-    exampleSummarize: 'Zusammenfassung dieser Webseite.',
-    exampleMainPoints: 'Was ist der Hauptpunkt dieses Artikels?',
-    exampleHowToUse: 'Wie verwendet man diese Information?',
-    typeMessage: 'Geben Sie Ihre Nachricht ein...',
+    selectModel: 'Bitte wählen Sie ein Modell',
+    showIcon: 'Symbol bei Textauswahl anzeigen',
+    setShortcuts: 'Tastenkürzel festlegen',
+    starAuthor: 'Autor bewerten | Kontakt',
+    configSaved: 'Konfiguration gespeichert',
+    validatingApi: 'API-Schlüssel wird validiert',
+    apiValidSuccess: 'API-Schlüssel-Validierung erfolgreich, das Tool ist einsatzbereit',
+    apiValidFailed: 'API-Schlüssel-Validierung fehlgeschlagen',
+    savingConfigError: 'Fehler beim Speichern der Konfiguration. Bitte versuchen Sie es erneut.',
+
+    // Chat interface
     send: 'Senden',
-    thinking: 'KI denkt nach...',
-    you: 'Du',
-    assistant: 'KI-Assistent',
-    includeWebpage: 'In den Fragen sind Webinhalte enthalten.',
-    askWebpage: 'Fragen Sie über diese Webseite...',
+    thinking: 'AI denkt nach...',
+    think: 'Denkinhalt',
+    you: 'Sie',
+    assistant: 'AI-Assistent',
+    aiAssistant: 'AI-Assistent',
+    askWebpage: 'Über diese Webseite fragen...',
     sendMessage: 'Nachricht senden...',
     interfaceSettings: 'Oberflächeneinstellungen',
-    errorProcessing:
-        'Entschuldigung, bei der Bearbeitung Ihrer Anfrage ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.',
-    errorRegenerating:
-        'Entschuldigung, beim erneuten Generieren der Antwort ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.',
+    exampleSummarize: 'Diese Webseite für mich zusammenfassen',
+    errorProcessing: 'Fehler beim Verarbeiten der Nachricht, bitte versuchen Sie es erneut',
+    errorRegenerating: 'Fehler beim Regenerieren der Antwort, bitte versuchen Sie es erneut',
     copied: 'In die Zwischenablage kopiert',
-    failedCopy: 'Text konnte nicht kopiert werden.',
-    codeCopied: 'Code wurde in die Zwischenablage kopiert.',
-    failedCodeCopy: 'Fehler beim Kopieren des Codes.',
+    failedCopy: 'Kopieren fehlgeschlagen',
+    codeCopied: 'Code kopiert',
+    failedCodeCopy: 'Code-Kopieren fehlgeschlagen',
+    copyMessage: 'Erfolgreich kopiert',
     selectProviderFirst:
-        'Bitte klicken Sie zuerst auf das Plugin-Symbol, um den Dienstleister auszuwählen.',
-    unpinWindow: 'Fensterfixierung aufheben',
-    pinWindow: 'Fenster mit fester Verglasung',
+        'Bitte klicken Sie zuerst auf das Plugin-Symbol, um einen Dienstanbieter auszuwählen',
+
+    // Language settings
     language: 'Sprache',
-    languageEn: 'Englisch',
-    languageZhCN: 'Vereinfachtes Chinesisch',
-    languageZhTW: 'Traditionelles Chinesisch',
-    languageJa: 'Japanisch',
-    languageKo: 'Koreanisch',
-    languageChanged: 'Sprache wurde erfolgreich geändert.',
-    stop: 'Stopp',
-    edit: 'Ändern',
-    suggestedPrompt1:
-        'Erklären Sie den Unterschied zwischen Deep Learning und maschinellem Lernen.',
-    suggestedPrompt2: '当然，请提供您想要优化的Python代码，我会尽力帮助您优化它。',
-    suggestedPrompt3: 'Wie kann man das Niveau der englischen Konversation verbessern?',
-    suggestedPrompt4: 'Empfehlen Sie einige klassische Science-Fiction-Romane.',
-    savingConfigError: 'Speichern der Konfiguration fehlgeschlagen, bitte versuchen Sie es erneut.',
-    think: 'Ich habe es mir reiflich überlegt.',
-    copyMessage: 'Erfolg kopieren',
-    includeWebpageTooltip:
-        'Nach der Aktivierung antwortet die KI basierend auf dem Inhalt der aktuellen Webseite.',
-    translate: 'Übersetzung',
-    translatePrompt: '请提供需要翻译的文本。',
-    summarize: 'Zusammenfassung',
-    summarizePrompt: 'Bitte fassen Sie den folgenden Text kurz zusammen:',
-    explain: 'Erklärung',
-    explainPrompt: 'Erklären Sie die folgenden Konzepte in einfachen Begriffen:',
-    codeReview: 'Code-Review',
-    codeReviewPrompt: 'Überprüfen Sie den folgenden Code und geben Sie Verbesserungsvorschläge:',
-    rewrite: 'Neu schreiben',
-    rewritePrompt:
-        'Bitte geben Sie den Text an, den Sie umschreiben möchten, damit ich Ihnen eine professionelle Version anbieten kann.',
-    webSearch: 'Netzsuche aktivieren?',
-    webSearchTooltip: 'Aktivieren Sie die Internetsuche, um aktuelle Informationen zu erhalten.',
-    on: 'Starten',
-    off: 'Schließen',
-    searchingWeb: 'Suche nach Netzwerkinformationen...',
-    searchComplete: 'Suche abgeschlossen, verarbeite die Ergebnisse mit KI...',
-    noSearchResults: 'Keine Suchergebnisse gefunden, nur AI-Wissen verwendet...',
+    languageEn: 'English',
+    languageZhCN: '简体中文',
+    languageZhTW: '繁體中文',
+    languageJa: '日本語',
+    languageKo: '한국어',
+    languageChanged: 'Sprache erfolgreich geändert',
+
+    // Input and interaction
+    typeMessage: 'Nachricht eingeben...',
+    askAnything: 'Fragen Sie mich alles über diese Webseite oder allgemeine Fragen',
+    exampleMainPoints: 'Was sind die Hauptpunkte, die hier diskutiert werden?',
+    exampleHowToUse: 'Wie kann ich diese Informationen verwenden?',
+    unpinWindow: 'Fenster lösen',
+    pinWindow: 'Fenster fixieren',
+
+    // Web search
+    webSearch: 'Websuche',
+    webSearchTooltip: 'Websuche für Echtzeitinformationen aktivieren',
+    on: 'Ein',
+    off: 'Aus',
+    searchingWeb: 'Suche im Web nach Informationen...',
+    searchComplete: 'Suche abgeschlossen. Verarbeitung der Ergebnisse mit AI...',
+    noSearchResults: 'Keine Suchergebnisse gefunden. Verwende nur AI-Wissen...',
     exclusiveFeatureError:
-        'Websuche und die aktuelle Webseitenantwort können nicht gleichzeitig aktiviert werden. Bitte aktivieren Sie nur eines davon.',
+        'Websuche und Webseitenkontext können nicht gleichzeitig aktiviert werden. Bitte aktivieren Sie nur eines davon.',
+    exclusiveFeatureWarning:
+        'Websuche und Webseitenkontext können nicht gleichzeitig aktiviert werden. Bitte aktivieren Sie nur eines davon.',
+
+    // Quick actions
+    translate: 'Übersetzen',
+    translatePrompt: 'Übersetzen Sie den folgenden Text ins Deutsche: ',
+    summarize: 'Zusammenfassen',
+    summarizePrompt: 'Fassen Sie den folgenden Text prägnant zusammen: ',
+    explain: 'Erklären',
+    explainPrompt: 'Erklären Sie das folgende Konzept in einfachen Worten: ',
+    codeReview: 'Code-Review',
+    codeReviewPrompt: 'Überprüfen Sie den folgenden Code und schlagen Sie Verbesserungen vor: ',
+    rewrite: 'Umschreiben',
+    rewritePrompt: 'Schreiben Sie den folgenden Text professioneller um: ',
+
+    // Web search results
     webSearchResultsTips1:
-        'Hier sind einige aktuelle Informationen aus dem Internet, die bei der Beantwortung dieser Frage hilfreich sein könnten.',
+        'Hier sind einige aktuelle Informationen aus dem Web, die bei der Beantwortung dieser Anfrage helfen könnten:',
     webSearchResultsTips2:
-        'Bitte beantworten Sie diese Frage basierend auf diesen Informationen und Ihrem Wissen.',
+        'Basierend auf diesen Informationen und Ihrem Wissen, beantworten Sie bitte diese Frage',
     Source: 'Quelle',
-    webpageContent: 'Hier ist der Inhalt der aktuellen Webseite:',
-    webpagePrompt: 'Bitte beantworten Sie meine Fragen basierend auf dieser Webseite.',
-    fetchWebpageContent: 'Aktuelle Webseiteninhalte werden abgerufen...',
-    fetchWebpageContentSuccess:
-        'Die Webseiteninhalte wurden erfolgreich abgerufen, die Ergebnisse werden gerade mit KI verarbeitet...',
-    fetchWebpageContentFailed:
-        'Fehler beim Abrufen der Webseiteninhalte, verwenden Sie nur das KI-Wissen zur Beantwortung...',
-    pleaseInputApiKey: 'Bitte geben Sie den API-Schlüssel auf der Konfigurationsseite ein.',
-    REFERENCE_PROMPT: `Bitte beantworten Sie die Frage anhand der Referenzen
+    webpageContent: 'Das Folgende ist der Inhalt der Webseite, die ich gerade betrachte:',
+    webpagePrompt: 'Basierend auf diesem Webseiteninhalt, beantworten Sie bitte meine Frage',
+    fetchWebpageContent: 'Aktueller Webseiteninhalt wird abgerufen...',
+    fetchWebpageContentSuccess: 'Webseiteninhalt erfolgreich abgerufen, Verarbeitung mit AI...',
+    fetchWebpageContentFailed: 'Fehler beim Abrufen des Webseiteninhalt. Verwende nur AI-Wissen...',
+
+    // Navigation
+    openSettings: 'Einstellungen öffnen',
+    openChat: 'Chat öffnen',
+    openSidebar: 'Seitenleiste öffnen',
+    welcomeMessage: 'Willkommen beim AI-Assistenten! Wie kann ich Ihnen helfen?',
+    tryAsking: 'Versuchen Sie mich zu fragen:',
+    close: 'Schließen',
+    pleaseInputApiKey: 'Bitte geben Sie Ihren API-Schlüssel auf der Konfigurationsseite ein.',
+
+    // Reference prompt
+    REFERENCE_PROMPT: `Bitte beantworten Sie die Frage basierend auf den Referenzmaterialien.
 
 ## Anmerkungsregeln:
-- Bitte zitieren Sie den Kontext am Ende des Satzes, falls zutreffend.
-- Bitte verwenden Sie das Format der Zitiernummer [number], um im Antwortteil auf die entsprechenden Abschnitte zu verweisen.
-- Wenn ein Satz aus mehreren Kontexten stammt, listen Sie bitte alle relevanten Zitiernummern auf, z.B. [1][2]. Achten Sie darauf, die Zitate nicht am Ende zu sammeln, sondern im entsprechenden Antwortteil aufzulisten.
+- Bitte zitieren Sie den Kontext am Ende des Satzes, wenn angemessen.
+- Bitte verwenden Sie das Format [Nummer], um den entsprechenden Teil in der Antwort zu referenzieren.
+- Wenn ein Satz aus mehreren Kontexten stammt, listen Sie bitte alle relevanten Referenznummern auf, zum Beispiel [1][2]. Denken Sie daran, die Referenzen nicht am Ende zu konzentrieren, sondern sie in den entsprechenden Teilen der Antwort aufzulisten.
 
 ## Meine Frage ist:
 
 {question}
 
-## Referenzen:
+## Referenzmaterialien:
 
 {references}
 
 Bitte antworten Sie in derselben Sprache wie die Benutzerfrage.`,
-    filteredDomains: 'Gefilterte Domains',
+
+    // Search settings
+    filteredDomains: 'Gefilterte Domainnamen',
     searchEngines: 'Aktivierte Suchmaschinen',
-    openSettings: 'Einstellungen öffnen',
-    openChat: 'Chat öffnen.',
-    pressTip:
-        'Drücken Sie die Eingabetaste zum Senden, Umschalt+Eingabetaste für einen Zeilenumbruch.',
-    welcomeMessage: 'Willkommen bei Ihrem KI-Assistenten! Wie kann ich Ihnen helfen?',
-    tryAsking: 'Fragen Sie mich:',
-    exclusiveFeatureWarning:
-        'Websuche und Webseitenkontext können nicht gleichzeitig aktiviert sein. Bitte aktivieren Sie nur eines davon.',
+    pressTip: 'Enter zum Senden drücken, Shift+Enter für neue Zeile',
     apiSettings: 'API-Einstellungen',
-    interface: 'Schnittstelle',
+    interface: 'Benutzeroberfläche',
     search: 'Suche',
     about: 'Über',
     tavilyApiKey: 'Tavily API-Schlüssel',
-    enterTavilyApiKey: 'Bitte geben Sie den Tavily API-Schlüssel ein.',
-    getTavilyApiKey: 'Erhalten Sie den Tavily API-Schlüssel',
+    enterTavilyApiKey: 'Bitte geben Sie den Tavily API-Schlüssel ein',
+    getTavilyApiKey: 'Tavily API-Schlüssel erhalten',
     selectAtLeastOneSearchEngine:
-        'Bitte wählen Sie mindestens eine Suchmaschine aus, wenn Sie die Internetsuche aktivieren.',
-    noFilteredDomains: 'Nicht gefilterte Domains',
-    enterDomainToFilter: 'Geben Sie die zu filternde Domain ein',
+        'Bitte wählen Sie mindestens eine Suchmaschine aus, wenn die Websuche aktiviert ist',
+    noFilteredDomains: 'Keine gefilterten Domains',
+    enterDomainToFilter: 'Domain zum Filtern eingeben',
     add: 'Hinzufügen',
-    enableWebSearchMessage:
-        'Aktivieren Sie die Internetsuche, um die Sucheinstellungen zu konfigurieren.',
+    enableWebSearchMessage: 'Aktivieren Sie die Websuche, um Sucheinstellungen zu konfigurieren.',
     aboutDescription:
-        'Eine leistungsstarke Browsererweiterung, die KI-Modelle in Ihr Browsererlebnis integriert.',
-    autoSaving: 'Wird gespeichert...',
-    autoSaved: 'Änderungen gespeichert.',
-    autoSaveError: 'Fehler beim Speichern der Änderungen.',
-    validatingTavilyApi: 'Überprüfe den Tavily API-Schlüssel...',
-    tavilyApiValidSuccess: 'Tavily API-Schlüssel erfolgreich verifiziert.',
-    tavilyApiValidError: 'Tavily API-Schlüsselvalidierung fehlgeschlagen',
-    feedback: 'Feedback bereitstellen',
+        'Eine leistungsstarke Browsererweiterung, die DeepSeek und andere AI-Modelle in Ihr Browsing-Erlebnis integriert.',
+
+    // Auto-save
+    autoSaving: 'Speichern...',
+    autoSaved: 'Änderungen gespeichert',
+    autoSaveError: 'Fehler beim Speichern der Änderungen',
+    validatingTavilyApi: 'Tavily API-Schlüssel wird validiert...',
+    tavilyApiValidSuccess: 'Tavily API-Schlüssel-Validierung erfolgreich',
+    tavilyApiValidError: 'Tavily API-Schlüssel-Validierung fehlgeschlagen',
+
+    // Feedback
+    feedback: 'Feedback geben',
     apiKeyNeeded:
-        'Sie müssen einen API-Schlüssel einrichten, um diese Funktion nutzen zu können. Möchten Sie jetzt zur Einstellungsseite gehen?',
-    enterQuestion: 'Bitte geben Sie Ihre Frage ein...',
-    systemPrompt: 'Sie sind ein KI-Assistent, bitte beantworten Sie die Fragen des Benutzers.',
-    modelListNotSupported: 'Der aktuelle Dienstanbieter unterstützt keine Modellliste.',
-    pleaseSelectProvider: 'Bitte wählen Sie zuerst den Dienstleister aus.',
-    pleaseEnterApiKey: 'Bitte geben Sie den API-Schlüssel ein',
-    providerBaseUrlNotFound: 'Die Basis-URL für {provider} wurde nicht gefunden.',
+        'Sie müssen Ihren API-Schlüssel einrichten, um diese Funktion zu nutzen. Möchten Sie jetzt zur Einstellungsseite gehen?',
+
+    // System and errors
+    systemPrompt: 'Sie sind ein AI-Assistent, bitte beantworten Sie die Frage des Benutzers',
+    modelListNotSupported: 'Der aktuelle Dienstanbieter unterstützt keine Modellliste',
+    pleaseSelectProvider: 'Bitte wählen Sie zuerst einen Dienstanbieter',
+    pleaseEnterApiKey: 'Bitte geben Sie einen API-Schlüssel ein',
+    providerBaseUrlNotFound: 'Basis-URL für {provider} nicht gefunden',
     httpError: 'HTTP {status} {statusText}',
-    invalidProviderData: '数据非法，没有服务商：{provider}',
-    backgroundSearchFailed: 'Backend-Suche fehlgeschlagen',
-    webContentFetchFailed: 'Fehler beim Abrufen der Webseiteninhalte im Backend.',
-    baiduSearchFailed: 'Die Suchanfrage bei Baidu ist fehlgeschlagen, Statuscode: {status}',
+    invalidProviderData: 'Ungültige Daten, Dienstanbieter nicht gefunden: {provider}',
+    backgroundSearchFailed: 'Hintergrundsuche fehlgeschlagen',
+    webContentFetchFailed: 'Fehler beim Abrufen von Webinhalten im Hintergrund',
+    baiduSearchFailed: 'Baidu-Suchanfrage fehlgeschlagen, Statuscode: {status}',
     googleSearchFailed: 'Google-Suchanfrage fehlgeschlagen, Statuscode: {status}',
     duckduckgoSearchFailed: 'DuckDuckGo-Suchanfrage fehlgeschlagen, Statuscode: {status}',
     sogouSearchFailed: 'Sogou-Suchanfrage fehlgeschlagen, Statuscode: {status}',
     braveSearchFailed: 'Brave-Suchanfrage fehlgeschlagen, Statuscode: {status}',
-    searxngSearchFailed: 'SearXNG-Suchanforderung fehlgeschlagen, Statuscode: {status}',
+    searxngSearchFailed: 'SearXNG-Suchanfrage fehlgeschlagen, Statuscode: {status}',
+    enterQuestion: 'Bitte geben Sie Ihre Frage ein...',
+
+    // Logging related translations
+    options_tab_logging: 'Protokollierung',
+    options_logging_settings: 'Protokollierungseinstellungen',
+    options_logging_enabled: 'Protokollierung aktivieren',
+    options_logging_level: 'Protokollierungsebene',
+    options_logging_level_debug: 'Debug',
+    options_logging_level_info: 'Info',
+    options_logging_level_warn: 'Warnung',
+    options_logging_level_error: 'Fehler',
+    options_logging_include_timestamp: 'Zeitstempel einschließen',
+    options_logging_to_console: 'In Konsole protokollieren',
+    options_logging_persist: 'Protokolle beibehalten',
+    options_logging_max_persisted: 'Maximale beibehaltene Protokolle',
+    options_logging_clear: 'Protokolle löschen',
+    options_logging_settings_saved: 'Protokollierungseinstellungen gespeichert',
+    options_logging_settings_save_failed: 'Fehler beim Speichern der Protokollierungseinstellungen',
+    options_logging_cleared: 'Protokolle gelöscht',
+    options_logging_clear_failed: 'Fehler beim Löschen der Protokolle',
+
+    // Chat management
+    clearConfirmTitle: 'Chat-Verlauf löschen',
+    clearConfirmContent: 'Sind Sie sicher, dass Sie den Chat-Verlauf löschen möchten?',
+    chatCleared: 'Chat-Verlauf gelöscht',
+    chatWithAI: 'Mit AI chatten',
+    clearChat: 'Chat löschen',
+    startChat: 'Chat starten',
+    defaultTopicName: 'Neue Unterhaltung',
+    ai: 'AI',
+    includeWebpage: 'Webseitenkontext in Fragen einbeziehen',
+    includeWebpageTooltip:
+        'Aktivieren Sie diese Funktion, damit die AI den Inhalt der aktuellen Webseite für Antworten verwenden kann',
 };

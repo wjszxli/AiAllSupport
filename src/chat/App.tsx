@@ -1,57 +1,40 @@
-import {
-    Button,
-    Input,
-    message,
-    Select,
-    Tooltip,
-    Typography,
-    Avatar,
-    Spin,
-    Empty,
-    Modal,
-} from 'antd';
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import { Button, message, Select, Tooltip, Tabs } from 'antd';
+import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import {
     GlobalOutlined,
     SettingOutlined,
     RocketOutlined,
-    SendOutlined,
-    ReloadOutlined,
-    CopyOutlined,
-    CloseCircleOutlined,
-    RobotOutlined,
-    UserOutlined,
-    BulbOutlined,
-    QuestionCircleOutlined,
-    EditOutlined,
     CommentOutlined,
+    MessageOutlined,
+    MenuFoldOutlined,
+    MenuUnfoldOutlined,
+    RobotOutlined,
 } from '@ant-design/icons';
-import { md } from '@/utils/markdownRenderer';
 
-import { t, getLocale, setLocale } from '@/services/i18n';
+import { t, getLocale, setLocale } from '@/locales/i18n';
 import type { LocaleType } from '@/locales';
 import { locales } from '@/locales';
 import storage from '@/utils/storage';
-import { useChatMessages } from '@/hooks/useChatMessages';
 
 import './App.scss';
-import { fetchChatCompletion } from '@/services/apiService';
-import { convertSimpleMessage } from '@/utils/message/create';
-import { ChatMessage } from '@/types';
-import { createStreamCallback, createStreamProcessor } from '@/services/StreamProcessingService';
-import Assistant from './components/Assistant';
+import Robot from './components/Robot';
+import Topic from './components/Topic';
+import ChatBody from './components/ChatBody';
 
 // Add feedback survey URL constant
 const FEEDBACK_SURVEY_URL = 'https://wj.qq.com/s2/18763807/74b5/';
 
 const { Option } = Select;
-const { TextArea } = Input;
 
 const App: React.FC = () => {
     const [selectedProvider, setSelectedProvider] = useState('DeepSeek');
     const [currentLocale, setCurrentLocale] = useState<LocaleType>(getLocale());
     const [userInput, setUserInput] = useState('');
-    const inputRef = useRef<any>(null);
+    const [activeTab, setActiveTab] = useState('assistant');
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+    const [sidebarWidth, setSidebarWidth] = useState(320);
+    const [isResizing, setIsResizing] = useState(false);
+    const resizeRef = useRef<HTMLDivElement>(null);
 
     const suggestedPrompts = useMemo(
         () => [
@@ -63,21 +46,51 @@ const App: React.FC = () => {
         [t, currentLocale],
     );
 
-    const {
-        messages,
-        isLoading,
-        streamingMessageId,
-        messagesWrapperRef,
-        copyToClipboard,
-        cancelStreamingResponse,
-        // sendChatMessage,
-        regenerateResponse,
-        clearMessages,
-    } = useChatMessages({
-        t,
-        storeType: 'app',
-        conversationId: 'default',
-    });
+    // 拖拽调整大小的处理函数
+    const handleMouseDown = useCallback((e: React.MouseEvent) => {
+        e.preventDefault();
+        setIsResizing(true);
+    }, []);
+
+    const handleMouseMove = useCallback(
+        (e: MouseEvent) => {
+            if (!isResizing) return;
+
+            const newWidth = e.clientX;
+            const minWidth = 200;
+            const maxWidth = window.innerWidth * 0.5; // 最大占屏幕宽度的50%
+
+            if (newWidth >= minWidth && newWidth <= maxWidth) {
+                setSidebarWidth(newWidth);
+            }
+        },
+        [isResizing],
+    );
+
+    const handleMouseUp = useCallback(() => {
+        setIsResizing(false);
+    }, []);
+
+    useEffect(() => {
+        if (isResizing) {
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+        } else {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+        }
+
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+        };
+    }, [isResizing, handleMouseMove, handleMouseUp]);
 
     useEffect(() => {
         const init = async () => {
@@ -174,76 +187,6 @@ const App: React.FC = () => {
         }
     };
 
-    const handleSendMessage = () => {
-        if (!userInput.trim() || isLoading) return;
-
-        const message = convertSimpleMessage({
-            role: 'user',
-            content: userInput,
-        });
-
-        const streamCallback = createStreamProcessor(createStreamCallback);
-
-        fetchChatCompletion({
-            messages: [message],
-            onChunkReceived: streamCallback,
-        });
-
-        setUserInput('');
-        // 发送后聚焦输入框
-        setTimeout(() => {
-            if (inputRef.current) {
-                inputRef.current.focus();
-            }
-        }, 0);
-    };
-
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            handleSendMessage();
-        }
-    };
-
-    const clearChat = () => {
-        Modal.confirm({
-            title: t('clearConfirmTitle'),
-            content: t('clearConfirmContent'),
-            okText: t('ok'),
-            cancelText: t('cancel'),
-            onOk: async () => {
-                await clearMessages();
-                if (inputRef.current) {
-                    inputRef.current.focus();
-                }
-            },
-        });
-    };
-
-    const renderMessageContent = (msg: ChatMessage) => {
-        if (msg.sender === 'system') {
-            return <div className="system-message">{msg.text}</div>;
-        }
-
-        if (msg.thinking) {
-            return (
-                <div className="thinking-message">
-                    <div className="thinking-indicator">{msg.thinking}</div>
-                    <div dangerouslySetInnerHTML={{ __html: md.render(msg.text || '') }} />
-                </div>
-            );
-        }
-
-        return <div dangerouslySetInnerHTML={{ __html: md.render(msg.text) }} />;
-    };
-
-    const handleEditMessage = (messageText: string) => {
-        setUserInput(messageText);
-        if (inputRef.current) {
-            inputRef.current.focus();
-        }
-    };
-
     const openOptionsPage = () => {
         if (chrome.runtime.openOptionsPage) {
             chrome.runtime.openOptionsPage();
@@ -304,209 +247,93 @@ const App: React.FC = () => {
                         />
                     </div>
                 </div>
-                <Assistant />
-                <div className="chat-body">
-                    <div className="messages-container" ref={messagesWrapperRef}>
-                        {messages.length === 0 ? (
-                            <div className="welcome-container">
-                                <Empty
-                                    image={
-                                        <RocketOutlined
-                                            style={{ fontSize: '64px', color: '#1890ff' }}
-                                        />
-                                    }
-                                    description={
-                                        <Typography.Text strong>
-                                            {t('welcomeMessage')}
-                                        </Typography.Text>
-                                    }
-                                />
-                                <div className="prompt-suggestions">
-                                    <Typography.Title level={5}>
-                                        <BulbOutlined /> {t('tryAsking')}
-                                    </Typography.Title>
-                                    <div className="suggestion-items">
-                                        {suggestedPrompts.map((prompt, index) => (
-                                            <Button
-                                                key={index}
-                                                className="suggestion-item"
-                                                onClick={() => {
-                                                    setUserInput(prompt);
-                                                    setTimeout(() => {
-                                                        if (inputRef.current) {
-                                                            inputRef.current.focus();
-                                                        }
-                                                    }, 0);
-                                                }}
-                                            >
-                                                {prompt}
-                                            </Button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        ) : (
-                            messages.map((msg, _) => (
-                                <div
-                                    key={msg.id}
-                                    className={`message ${
-                                        msg.sender === 'user' ? 'user-message' : 'ai-message'
-                                    }`}
-                                >
-                                    <div className="message-avatar">
-                                        {msg.sender === 'user' ? (
-                                            <Avatar
-                                                icon={<UserOutlined />}
-                                                style={{
-                                                    backgroundColor: '#8e54e9',
-                                                    color: 'white',
-                                                }}
-                                            />
-                                        ) : (
-                                            <Avatar
-                                                icon={<RobotOutlined />}
-                                                style={{
-                                                    backgroundColor: '#fff',
-                                                    color: '#06b6d4',
-                                                    border: '1px solid #e1e4e8',
-                                                }}
-                                            />
-                                        )}
-                                    </div>
-                                    <div className="message-content">
-                                        <div className="message-header">
-                                            <div className="message-sender">
-                                                {msg.sender === 'user'
-                                                    ? t('you')
-                                                    : selectedProvider}
-                                                <span className="message-time">
-                                                    {new Date(msg.id).toLocaleTimeString([], {
-                                                        hour: '2-digit',
-                                                        minute: '2-digit',
-                                                    })}
+
+                {/* 主要内容区域 - 左右布局 */}
+                <div className="main-content">
+                    {/* 左侧边栏 */}
+                    <div
+                        className={`sidebar-container ${sidebarCollapsed ? 'collapsed' : ''}`}
+                        style={{ width: sidebarCollapsed ? 0 : sidebarWidth }}
+                    >
+                        {!sidebarCollapsed && (
+                            <div className="sidebar-tabs">
+                                <Tabs
+                                    activeKey={activeTab}
+                                    onChange={setActiveTab}
+                                    type="card"
+                                    size="small"
+                                    items={[
+                                        {
+                                            key: 'assistant',
+                                            label: (
+                                                <span>
+                                                    <RobotOutlined style={{ marginRight: 5 }} />
+                                                    {t('assistants') || '机器人'}
                                                 </span>
-                                            </div>
-                                        </div>
-                                        <div className="message-text">
-                                            {renderMessageContent(msg)}
-                                        </div>
-                                        {msg.sender === 'ai' && streamingMessageId !== msg.id && (
-                                            <div className="message-actions">
-                                                <Button
-                                                    type="text"
-                                                    icon={<CopyOutlined />}
-                                                    size="small"
-                                                    onClick={() => copyToClipboard(msg.text)}
-                                                    title={t('copy')}
-                                                >
-                                                    {t('copy') || '复制'}
-                                                </Button>
-                                                <Button
-                                                    type="text"
-                                                    icon={<ReloadOutlined />}
-                                                    size="small"
-                                                    onClick={() => regenerateResponse()}
-                                                    title={t('regenerate')}
-                                                >
-                                                    {t('regenerate') || '重新生成'}
-                                                </Button>
-                                            </div>
-                                        )}
-                                        {msg.sender === 'user' && (
-                                            <div className="message-actions">
-                                                <Button
-                                                    type="text"
-                                                    icon={<EditOutlined />}
-                                                    size="small"
-                                                    onClick={() => handleEditMessage(msg.text)}
-                                                    title={t('edit') || '修改'}
-                                                >
-                                                    {t('edit') || '修改'}
-                                                </Button>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            ))
-                        )}
-                        {isLoading && streamingMessageId === null && (
-                            <div className="loading-indicator">
-                                <Spin size="small" /> <span>{t('thinking')}</span>
+                                            ),
+                                            children: (
+                                                <Robot
+                                                    onSwitchToTopics={() => setActiveTab('topic')}
+                                                />
+                                            ),
+                                        },
+                                        {
+                                            key: 'topic',
+                                            label: (
+                                                <span>
+                                                    <MessageOutlined style={{ marginRight: 5 }} />
+                                                    {t('topics') || '话题'}
+                                                </span>
+                                            ),
+                                            children: <Topic />,
+                                        },
+                                    ]}
+                                />
                             </div>
                         )}
                     </div>
 
-                    <div className="chat-footer">
-                        <div className="input-container">
-                            <TextArea
-                                ref={inputRef}
-                                value={userInput}
-                                onChange={(e) => setUserInput(e.target.value)}
-                                onKeyDown={handleKeyDown}
-                                placeholder={t('typeMessage') || '输入您的问题...'}
-                                autoSize={{ minRows: 1, maxRows: 5 }}
-                                disabled={isLoading && streamingMessageId === null}
+                    {/* 拖拽调整大小的分隔线 */}
+                    {!sidebarCollapsed && (
+                        <div
+                            ref={resizeRef}
+                            className="resize-handle"
+                            onMouseDown={handleMouseDown}
+                        >
+                            <Button
+                                type="text"
+                                icon={<MenuFoldOutlined />}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSidebarCollapsed(true);
+                                }}
+                                className="collapse-button-on-handle"
+                                title={t('collapse') || '折叠'}
+                                size="small"
                             />
-                            <div className="input-actions">
-                                <Tooltip
-                                    title={
-                                        streamingMessageId !== null
-                                            ? t('stop') || '停止'
-                                            : userInput.trim()
-                                            ? t('sendMessage') || '发送'
-                                            : t('enterQuestion') || '请输入问题'
-                                    }
-                                >
-                                    <Button
-                                        className={
-                                            streamingMessageId !== null
-                                                ? 'stop-button'
-                                                : 'send-button'
-                                        }
-                                        type={streamingMessageId !== null ? 'default' : 'primary'}
-                                        icon={
-                                            streamingMessageId !== null ? (
-                                                <CloseCircleOutlined />
-                                            ) : (
-                                                <SendOutlined />
-                                            )
-                                        }
-                                        onClick={
-                                            streamingMessageId !== null
-                                                ? cancelStreamingResponse
-                                                : handleSendMessage
-                                        }
-                                        disabled={
-                                            !streamingMessageId && (!userInput.trim() || isLoading)
-                                        }
-                                    >
-                                        {streamingMessageId !== null
-                                            ? t('stop') || '停止'
-                                            : t('send') || '发送'}
-                                    </Button>
-                                </Tooltip>
-                            </div>
                         </div>
-                        <div className="footer-actions">
-                            {messages.length > 0 ? (
-                                <>
-                                    <Button
-                                        type="text"
-                                        onClick={clearChat}
-                                        disabled={messages.length === 0 || isLoading}
-                                        title={t('clear')}
-                                    >
-                                        {t('clear') || '清空对话'}
-                                    </Button>
-                                </>
-                            ) : (
-                                <div className="footer-tips">
-                                    <QuestionCircleOutlined />{' '}
-                                    {t('pressTip') || '按回车键发送，Shift+回车换行'}
-                                </div>
-                            )}
+                    )}
+
+                    {/* 折叠状态下的展开按钮 */}
+                    {sidebarCollapsed && (
+                        <div className="collapsed-sidebar-trigger">
+                            <Button
+                                type="text"
+                                icon={<MenuUnfoldOutlined />}
+                                onClick={() => setSidebarCollapsed(false)}
+                                className="expand-button"
+                                title={t('expand') || '展开'}
+                            />
                         </div>
-                    </div>
+                    )}
+
+                    {/* 右侧聊天区域 */}
+                    <ChatBody
+                        selectedProvider={selectedProvider}
+                        userInput={userInput}
+                        setUserInput={setUserInput}
+                        suggestedPrompts={suggestedPrompts}
+                    />
                 </div>
             </div>
         </div>

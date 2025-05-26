@@ -12,7 +12,7 @@ import React, { useEffect, useState } from 'react';
 
 import type { LocaleType } from '@/locales';
 import { locales } from '@/locales';
-import { getLocale, setLocale, t } from '@/services/i18n';
+import { getLocale, setLocale, t } from '@/locales/i18n';
 import { FEEDBACK_SURVEY_URL, isFirefox, SHORTCUTS_URL } from '@/utils/constant';
 import storage from '@/utils/storage';
 

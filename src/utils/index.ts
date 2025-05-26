@@ -1,4 +1,4 @@
-import { t } from '@/services/i18n';
+import { t } from '@/locales/i18n';
 import type { RequestMethod, WebsiteMetadata } from '@/types';
 
 import { CHAT_BOX_ID, CHAT_BUTTON_ID, PROVIDERS_DATA } from './constant';

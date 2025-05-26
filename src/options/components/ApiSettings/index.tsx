@@ -15,7 +15,7 @@ import {
 import React, { useState } from 'react';
 import { GlobalOutlined, KeyOutlined, CodeOutlined, CheckCircleOutlined } from '@ant-design/icons';
 
-import { t } from '@/services/i18n';
+import { t } from '@/locales/i18n';
 import { isLocalhost } from '@/utils';
 import { observer } from 'mobx-react';
 import { useStore } from '@/store';

@@ -9,7 +9,7 @@ import {
     MenuUnfoldOutlined,
 } from '@ant-design/icons';
 
-import { t, getLocale, setLocale } from '@/services/i18n';
+import { t, getLocale, setLocale } from '@/locales/i18n';
 import type { LocaleType } from '@/locales';
 import { locales } from '@/locales';
 import { GIT_URL } from '@/utils/constant';

@@ -1,11 +1,11 @@
 // src/renderer/src/store/rootStore.ts
 import { createContext, useContext } from 'react';
 import llmStore from './llm';
-import assistantsStore from './assistants';
+import robotStore from './robot';
 
 class RootStore {
     llmStore = llmStore;
-    assistantsStore = assistantsStore;
+    robotStore = robotStore;
 
     constructor() {}
 }

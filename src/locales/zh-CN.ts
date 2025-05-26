@@ -10,6 +10,8 @@ export const zhCN = {
     stop: '停止',
     validated: '已验证',
     edit: '修改',
+    clear: '清空',
+    create: '创建',
 
     // Add suggested prompts
     suggestedPrompt1: '解释一下深度学习和机器学习的区别',
@@ -17,8 +19,30 @@ export const zhCN = {
     suggestedPrompt3: '如何提高英语口语水平',
     suggestedPrompt4: '推荐几本经典科幻小说',
 
-    // App settings
+    // App and interface
     appTitle: 'AI 工具',
+    assistants: '机器人',
+    topics: '话题',
+    expand: '展开',
+    collapse: '折叠',
+
+    // Topic management
+    newTopic: '新建话题',
+    searchTopics: '搜索话题...',
+    noTopicsFound: '未找到相关话题',
+    noTopics: '暂无话题',
+    createTopic: '创建话题',
+    editTopic: '编辑话题',
+    enterTopicName: '请输入话题名称',
+    topicNameRequired: '请输入话题名称',
+    topicCreated: '话题创建成功',
+    topicUpdated: '话题更新成功',
+    topicDeleted: '话题删除成功',
+    deleteTopicConfirm: '确认删除话题',
+    deleteTopicContent: '确定要删除话题',
+    question: '吗？',
+
+    // App settings
     saveConfig: '保存配置',
     savingConfig: '保存配置中',
     serviceProvider: '服务商',
@@ -37,6 +61,7 @@ export const zhCN = {
     configSaved: '配置已保存',
     validatingApi: '校验 api 是否正常',
     apiValidSuccess: 'Api Key 校验通过，可以正常使用本工具',
+    apiValidFailed: 'API Key 验证失败',
     savingConfigError: '保存配置失败，请重试。',
     aiAssistant: 'AI 助手',
     askAnything: '今天我能帮您做什么？',
@@ -44,6 +69,7 @@ export const zhCN = {
     exampleMainPoints: '这篇文章的要点是什么？',
     exampleHowToUse: '如何使用这个信息？',
     typeMessage: '输入 / 可以获得建议或直接输入您的消息...',
+    defaultTopicName: '新对话',
 
     // Chat interface
     send: '发送',
@@ -185,7 +211,6 @@ export const zhCN = {
     chatWithAI: '与AI聊天',
     clearChat: '清除聊天',
     startChat: '开始聊天',
-    defaultTopicName: '新对话',
     ai: 'AI',
     summarizePage: `
 请对以下网页进行结构化总结，包括以下三个部分：

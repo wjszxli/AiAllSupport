@@ -1,5 +1,5 @@
 import type { ChatMessage, SearchResult } from '@/types';
-import { t } from '@/services/i18n';
+import { t } from '@/locales/i18n';
 import React from 'react';
 import { updateMessage } from '@/utils/messageUtils';
 import { SEARCH_COUNT } from '@/utils/constant';

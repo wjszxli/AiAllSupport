@@ -1,7 +1,7 @@
 import { Button, Checkbox, Form, Input, message, Switch, Tag, Tooltip, Typography } from 'antd';
 import React, { useEffect, useState } from 'react';
 
-import { t } from '@/services/i18n';
+import { t } from '@/locales/i18n';
 import { FILTERED_DOMAINS, SEARCH_ENGINE_NAMES, SEARCH_ENGINES } from '@/utils/constant';
 import storage from '@/utils/storage';
 

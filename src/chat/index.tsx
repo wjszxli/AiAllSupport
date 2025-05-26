@@ -14,12 +14,12 @@ const StoreContext = createContext(rootStore);
 
 root.render(
     <React.StrictMode>
-        <StoreContext.Provider value={rootStore}>
-            <LanguageProvider>
+        <LanguageProvider>
+            <StoreContext.Provider value={rootStore}>
                 <HashRouter>
                     <App />
                 </HashRouter>
-            </LanguageProvider>
-        </StoreContext.Provider>
+            </StoreContext.Provider>
+        </LanguageProvider>
     </React.StrictMode>,
 );
