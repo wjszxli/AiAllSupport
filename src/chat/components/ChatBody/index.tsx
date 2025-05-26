@@ -1,5 +1,15 @@
 import React, { useRef } from 'react';
-import { Button, Input, Tooltip, Typography, Avatar, Spin, Empty, Modal } from 'antd';
+import {
+    Button,
+    Input,
+    Tooltip,
+    Typography,
+    Avatar,
+    Spin,
+    Empty,
+    Modal,
+    message as AntdMessage,
+} from 'antd';
 import {
     RocketOutlined,
     SendOutlined,
@@ -15,11 +25,15 @@ import {
 import { md } from '@/utils/markdownRenderer';
 import { t } from '@/locales/i18n';
 import { useChatMessages } from '@/hooks/useChatMessages';
-import { fetchChatCompletion } from '@/services/apiService';
-import { convertSimpleMessage } from '@/utils/message/create';
+// import { fetchChatCompletion } from '@/services/apiService';
+// import { convertSimpleMessage } from '@/utils/message/create';
 import { ChatMessage } from '@/types';
-import { createStreamCallback, createStreamProcessor } from '@/services/StreamProcessingService';
+// import { createStreamCallback, createStreamProcessor } from '@/services/StreamProcessingService';
 import './index.scss';
+import { InputMessage } from '@/types/message';
+import robotStore from '@/store/robot';
+import { getUserMessage } from '@/services/MessageService';
+import { getTopicQueue } from '@/utils/queue';
 
 const { TextArea } = Input;
 
@@ -56,25 +70,40 @@ const ChatBody: React.FC<ChatBodyProps> = ({
     const handleSendMessage = () => {
         if (!userInput.trim() || isLoading) return;
 
-        const message = convertSimpleMessage({
-            role: 'user',
+        const { selectedRobot } = robotStore;
+        const { selectedTopicId } = selectedRobot;
+
+        if (!selectedTopicId) {
+            AntdMessage.error('请先选择一个话题');
+            return;
+        }
+
+        const topic = robotStore.selectedRobot.topics.find((topic) => topic.id === selectedTopicId);
+
+        if (!topic) {
+            AntdMessage.error('请先选择一个话题');
+            return;
+        }
+
+        const userMessage: InputMessage = {
+            robot: selectedRobot,
+            topic: topic,
             content: userInput,
+        };
+
+        const { message, blocks } = getUserMessage(userMessage);
+        console.log(message, blocks);
+        const queue = getTopicQueue(selectedTopicId);
+
+        queue.add(async () => {
+            // await fetchAndProcessAssistantResponseImpl(
+            //     dispatch,
+            //     getState,
+            //     topicId,
+            //     assistant,
+            //     assistantMessage,
+            // );
         });
-
-        const streamCallback = createStreamProcessor(createStreamCallback);
-
-        fetchChatCompletion({
-            messages: [message],
-            onChunkReceived: streamCallback,
-        });
-
-        setUserInput('');
-        // 发送后聚焦输入框
-        setTimeout(() => {
-            if (inputRef.current) {
-                inputRef.current.focus();
-            }
-        }, 0);
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {

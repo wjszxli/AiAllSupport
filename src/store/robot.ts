@@ -4,6 +4,7 @@ import { isEmpty, uniqBy } from 'lodash';
 import { Robot, Model, Topic } from '@/types';
 import { getDefaultRobot } from '@/services/RobotService';
 import chromeStorageAdapter from './chromeStorageAdapter';
+import { db } from '@/db';
 
 export class RobotStore {
     robotList: Robot[] = [getDefaultRobot()];
@@ -86,6 +87,11 @@ export class RobotStore {
             // 如果是新添加的话题，自动选中它
             this.selectedRobot.selectedTopicId = topic.id;
         }
+
+        db.topic.add({
+            id: topic.id,
+            messages: [],
+        });
     }
 
     removeTopic(robotId: string, topic: Topic) {
@@ -105,6 +111,8 @@ export class RobotStore {
                 topics: this.selectedRobot.topics.filter(({ id }) => id !== topic.id),
             };
         }
+
+        db.topic.delete(topic.id);
     }
 
     updateTopic(robotId: string, topic: Topic) {

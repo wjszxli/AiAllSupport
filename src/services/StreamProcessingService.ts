@@ -1,4 +1,4 @@
-import { AssistantMessageStatus } from '@/types';
+import { RobotMessageStatus } from '@/types';
 import { Chunk, ChunkType } from '@/types/chunk';
 
 export interface StreamProcessorCallbacks {
@@ -14,7 +14,7 @@ export interface StreamProcessorCallbacks {
     // Called when an error occurs during chunk processing
     onError?: (error: any) => void;
     // Called when the entire stream processing is signaled as complete (success or failure)
-    onComplete?: (status: AssistantMessageStatus, response?: Response) => void;
+    onComplete?: (status: RobotMessageStatus, response?: Response) => void;
 }
 
 export function createStreamProcessor(callbacks: StreamProcessorCallbacks = {}) {
@@ -25,7 +25,7 @@ export function createStreamProcessor(callbacks: StreamProcessorCallbacks = {}) 
             // Logger.log(`[${new Date().toLocaleString()}] createStreamProcessor ${chunk.type}`, chunk)
             // 1. Handle the manual final signal first
             if (chunk?.type === ChunkType.BLOCK_COMPLETE) {
-                callbacks.onComplete?.(AssistantMessageStatus.SUCCESS, chunk?.response);
+                callbacks.onComplete?.(RobotMessageStatus.SUCCESS, chunk?.response);
                 return;
             }
             // 2. Process the actual ChunkCallbackData

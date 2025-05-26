@@ -1,4 +1,4 @@
-import { Metrics, Usage, Model, AssistantMessageStatus, UserMessageStatus } from '.';
+import { Metrics, Usage, Model, RobotMessageStatus, UserMessageStatus, Robot, Topic } from '.';
 
 import { MessageBlock } from './messageBlock';
 
@@ -9,7 +9,7 @@ export type Message = {
     topicId: string;
     createdAt: string;
     updatedAt?: string;
-    status: UserMessageStatus | AssistantMessageStatus;
+    status: UserMessageStatus | RobotMessageStatus;
 
     // 消息元数据
     modelId?: string;
@@ -30,3 +30,9 @@ export type Message = {
     // 块集合
     blocks: MessageBlock['id'][];
 };
+
+export interface InputMessage {
+    robot: Robot;
+    topic: Topic;
+    content: string;
+}

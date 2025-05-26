@@ -1,64 +1,59 @@
+import { RobotMessageStatus, UserMessageStatus } from '@/types';
 import { Message } from '@/types/message';
-import { AssistantMessageStatus, UserMessageStatus } from '@/types';
+import { BaseMessageBlock, MessageBlockStatus, MessageBlockType } from '@/types/messageBlock';
+import { v4 as uuidv4 } from 'uuid';
 
-/**
- * 生成一个简单的ID
- * @returns 随机ID
- */
-function generateId(): string {
-    return (
-        Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
-    );
-}
+type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 
-/**
- * 创建一个新的消息对象
- * @param content 消息内容
- * @param role 消息角色 (user/assistant/system)
- * @param options 可选参数
- * @returns 完整的消息对象
- */
-export function createMessage(
-    content: string,
-    role: 'user' | 'assistant' | 'system' = 'user',
-    options: {
-        assistantId?: string;
-        topicId?: string;
-        modelId?: string;
-        isPreset?: boolean;
-    } = {},
-): Message {
+export function createBaseMessageBlock<T extends MessageBlockType>(
+    messageId: string,
+    type: T,
+    overrides: Partial<Omit<BaseMessageBlock, 'id' | 'messageId' | 'type'>> = {},
+): BaseMessageBlock & { type: T } {
     const now = new Date().toISOString();
-    const status =
-        role === 'assistant' ? AssistantMessageStatus.PROCESSING : UserMessageStatus.SUCCESS;
-
     return {
-        id: generateId(),
-        role,
-        assistantId: options.assistantId || 'default',
-        topicId: options.topicId || 'default',
+        id: uuidv4(),
+        messageId,
+        type,
         createdAt: now,
-        updatedAt: now,
-        status,
-        modelId: options.modelId,
-        isPreset: options.isPreset || false,
-        blocks: [content], // 简单起见，直接将内容作为一个块ID
+        status: MessageBlockStatus.PROCESSING,
+        error: undefined,
+        ...overrides,
     };
 }
 
-/**
- * 将简单的 {role, content} 格式转换为完整的 Message 对象
- * @param simpleMessage 简单格式的消息
- * @param options 可选参数
- * @returns 完整的消息对象
- */
-export function convertSimpleMessage(
-    simpleMessage: { role: 'user' | 'assistant' | 'system'; content: string },
-    options: {
-        assistantId?: string;
-        topicId?: string;
-        modelId?: string;
-    } = {},
+export function createMessage(
+    role: 'user' | 'assistant' | 'system',
+    topicId: string,
+    assistantId: string,
+    overrides: PartialBy<
+        Omit<Message, 'role' | 'topicId' | 'assistantId' | 'createdAt' | 'status'>,
+        'blocks' | 'id'
+    > = {},
 ): Message {
-    return createMessage(simpleMessage.content, simpleMessage.role, options);
+    const now = new Date().toISOString();
+    const messageId = overrides.id || uuidv4();
+
+    const { blocks: initialBlocks, id, ...restOverrides } = overrides;
+
+    let blocks: string[] = initialBlocks || [];
+
+    if (role !== 'system' && (!initialBlocks || initialBlocks.length === 0)) {
+        console.warn(
+            'createMessage: initialContent provided but no initialBlocks. Block must be created separately.',
+        );
+    }
+
+    blocks = blocks.map(String);
+
+    return {
+        id: id ?? messageId,
+        role,
+        topicId,
+        assistantId,
+        createdAt: now,
+        status: role === 'user' ? UserMessageStatus.SUCCESS : RobotMessageStatus.PENDING,
+        blocks,
+        ...restOverrides,
+    };
 }

@@ -159,7 +159,7 @@ export enum UserMessageStatus {
     SUCCESS = 'success',
 }
 
-export enum AssistantMessageStatus {
+export enum RobotMessageStatus {
     PROCESSING = 'processing',
     PENDING = 'pending',
     SUCCESS = 'success',
