@@ -1,9 +1,10 @@
-import { Robot, Topic } from '@/types';
+import { Model, Robot, RobotMessageStatus, Topic } from '@/types';
 import { Message } from '@/types/message';
 import { MessageBlock, MessageBlockStatus, MessageBlockType } from '@/types/messageBlock';
 import llmStore from '@/store/llm';
 import { v4 as uuidv4 } from 'uuid';
 import { createBaseMessageBlock, createMessage } from '@/utils/message/create';
+import rootStore from '@/store';
 
 export function getUserMessage({
     robot,
@@ -45,4 +46,42 @@ export function getUserMessage({
     });
 
     return { message, blocks };
+}
+
+export function resetRobotMessage(message: Message, model?: Model): Message {
+    const blockIdsToRemove = message.blocks;
+    if (blockIdsToRemove.length > 0) {
+        rootStore.messageBlockStore.removeManyBlocks(blockIdsToRemove);
+    }
+
+    return {
+        ...message,
+        model: model || message.model,
+        modelId: model?.id || message.modelId,
+        status: RobotMessageStatus.PENDING,
+        useful: undefined,
+        askId: undefined,
+        blocks: [],
+        createdAt: new Date().toISOString(),
+    };
+}
+
+export function getGroupedMessages(messages: Message[]): {
+    [key: string]: (Message & { index: number })[];
+} {
+    const groups: { [key: string]: (Message & { index: number })[] } = {};
+    messages.forEach((message, index) => {
+        // Use askId if available (should be on assistant messages), otherwise group user messages individually
+        const key =
+            message.role === 'assistant' && message.askId
+                ? 'assistant' + message.askId
+                : message.role + message.id;
+        if (key && !groups[key]) {
+            groups[key] = [];
+        }
+        groups[key].push({ ...message, index }); // Add message with its original index
+        // Sort by index within group to maintain original order
+        groups[key].sort((a, b) => b.index - a.index);
+    });
+    return groups;
 }

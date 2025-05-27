@@ -88,7 +88,7 @@ export class RobotStore {
             this.selectedRobot.selectedTopicId = topic.id;
         }
 
-        db.topic.add({
+        db.topics.add({
             id: topic.id,
             messages: [],
         });
@@ -112,7 +112,7 @@ export class RobotStore {
             };
         }
 
-        db.topic.delete(topic.id);
+        db.topics.delete(topic.id);
     }
 
     updateTopic(robotId: string, topic: Topic) {

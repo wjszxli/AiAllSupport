@@ -1,0 +1,262 @@
+import { RobotMessageStatus } from '@/types';
+import type { Message } from '@/types/message';
+import { MessageBlockStatus } from '@/types/messageBlock';
+import { computed, makeAutoObservable, runInAction } from 'mobx';
+
+export class MessageStore {
+    // 可观察状态
+    messages = new Map<string, Message>();
+    messageIdsByTopic = new Map<string, string[]>();
+    currentTopicId: string | null = null;
+    loadingByTopic = new Map<string, boolean>();
+    displayCount = 20;
+
+    constructor() {
+        makeAutoObservable(this, {
+            // 明确标记计算属性
+            currentTopicMessages: computed,
+            allMessages: computed,
+            messageEntities: computed,
+        });
+    }
+
+    // Actions - 状态修改方法
+    setCurrentTopicId(topicId: string | null) {
+        this.currentTopicId = topicId;
+        if (topicId && !this.messageIdsByTopic.has(topicId)) {
+            this.messageIdsByTopic.set(topicId, []);
+            this.loadingByTopic.set(topicId, false);
+        }
+    }
+
+    setTopicLoading(topicId: string, loading: boolean) {
+        this.loadingByTopic.set(topicId, loading);
+    }
+
+    setDisplayCount(count: number) {
+        this.displayCount = count;
+    }
+
+    // 批量接收消息（用于从数据库加载）
+    messagesReceived(topicId: string, messages: Message[]) {
+        runInAction(() => {
+            // 添加所有消息到 entities
+            messages.forEach((message) => {
+                this.messages.set(message.id, message);
+            });
+
+            // 设置主题的消息ID顺序
+            this.messageIdsByTopic.set(
+                topicId,
+                messages.map((m) => m.id),
+            );
+            this.currentTopicId = topicId;
+        });
+    }
+
+    // 添加单个消息
+    addMessage(topicId: string, message: Message) {
+        this.messages.set(message.id, message);
+
+        if (!this.messageIdsByTopic.has(topicId)) {
+            this.messageIdsByTopic.set(topicId, []);
+        }
+        this.messageIdsByTopic.get(topicId)!.push(message.id);
+
+        if (!this.loadingByTopic.has(topicId)) {
+            this.loadingByTopic.set(topicId, false);
+        }
+    }
+
+    // 在指定位置插入消息
+    insertMessageAtIndex(topicId: string, message: Message, index: number) {
+        this.messages.set(message.id, message);
+
+        if (!this.messageIdsByTopic.has(topicId)) {
+            this.messageIdsByTopic.set(topicId, []);
+        }
+
+        const topicIds = this.messageIdsByTopic.get(topicId)!;
+        const safeIndex = Math.max(0, Math.min(index, topicIds.length));
+        topicIds.splice(safeIndex, 0, message.id);
+
+        if (!this.loadingByTopic.has(topicId)) {
+            this.loadingByTopic.set(topicId, false);
+        }
+    }
+
+    // 更新消息
+    updateMessage(
+        messageId: string,
+        updates: Partial<Message> & { blockInstruction?: { id: string; position?: number } },
+    ) {
+        const message = this.messages.get(messageId);
+        if (!message) {
+            console.warn(`[updateMessage] Message ${messageId} not found in entities.`);
+            return;
+        }
+
+        const { blockInstruction, ...otherUpdates } = updates;
+
+        if (blockInstruction) {
+            const { id: blockIdToAdd, position } = blockInstruction;
+            const currentBlocks = [...(message.blocks || [])];
+
+            if (!currentBlocks.includes(blockIdToAdd)) {
+                if (
+                    typeof position === 'number' &&
+                    position >= 0 &&
+                    position <= currentBlocks.length
+                ) {
+                    currentBlocks.splice(position, 0, blockIdToAdd);
+                } else {
+                    currentBlocks.push(blockIdToAdd);
+                }
+                Object.assign(message, { ...otherUpdates, blocks: currentBlocks });
+            } else if (Object.keys(otherUpdates).length > 0) {
+                Object.assign(message, otherUpdates);
+            }
+        } else {
+            Object.assign(message, otherUpdates);
+        }
+    }
+
+    // 清空主题的所有消息
+    clearTopicMessages(topicId: string) {
+        const idsToRemove = this.messageIdsByTopic.get(topicId) || [];
+
+        // 从 entities 中删除消息
+        idsToRemove.forEach((id) => {
+            this.messages.delete(id);
+        });
+
+        // 清空主题的消息ID列表
+        this.messageIdsByTopic.delete(topicId);
+        this.loadingByTopic.set(topicId, false);
+    }
+
+    // 删除单个消息
+    removeMessage(topicId: string, messageId: string) {
+        const currentTopicIds = this.messageIdsByTopic.get(topicId);
+        if (currentTopicIds) {
+            const filteredIds = currentTopicIds.filter((id) => id !== messageId);
+            this.messageIdsByTopic.set(topicId, filteredIds);
+        }
+        this.messages.delete(messageId);
+    }
+
+    // 根据 askId 删除消息组
+    removeMessagesByAskId(topicId: string, askId: string) {
+        const currentTopicIds = this.messageIdsByTopic.get(topicId) || [];
+        const idsToRemove: string[] = [];
+
+        currentTopicIds.forEach((id) => {
+            const message = this.messages.get(id);
+            if (message && message.askId === askId) {
+                idsToRemove.push(id);
+            }
+        });
+
+        if (idsToRemove.length > 0) {
+            // 从 entities 中删除
+            idsToRemove.forEach((id) => {
+                this.messages.delete(id);
+            });
+
+            // 从主题ID列表中删除
+            const filteredIds = currentTopicIds.filter((id) => !idsToRemove.includes(id));
+            this.messageIdsByTopic.set(topicId, filteredIds);
+        }
+    }
+
+    // 删除多个消息
+    removeMessages(topicId: string, messageIds: string[]) {
+        const currentTopicIds = this.messageIdsByTopic.get(topicId);
+        const idsToRemoveSet = new Set(messageIds);
+
+        if (currentTopicIds) {
+            const filteredIds = currentTopicIds.filter((id) => !idsToRemoveSet.has(id));
+            this.messageIdsByTopic.set(topicId, filteredIds);
+        }
+
+        messageIds.forEach((id) => {
+            this.messages.delete(id);
+        });
+    }
+
+    // 更新块引用
+    upsertBlockReference(messageId: string, blockId: string, status?: MessageBlockStatus) {
+        const message = this.messages.get(messageId);
+        if (!message) {
+            console.error(`[upsertBlockReference] Message ${messageId} not found.`);
+            return;
+        }
+
+        const changes: Partial<Message> = {};
+
+        // 更新块ID
+        const currentBlocks = message.blocks || [];
+        if (!currentBlocks.includes(blockId)) {
+            changes.blocks = [...currentBlocks, blockId];
+        }
+
+        // 根据块状态更新消息状态
+        if (status) {
+            if (
+                (status === MessageBlockStatus.PROCESSING ||
+                    status === MessageBlockStatus.STREAMING) &&
+                message.status !== RobotMessageStatus.PROCESSING &&
+                message.status !== RobotMessageStatus.SUCCESS &&
+                message.status !== RobotMessageStatus.ERROR
+            ) {
+                changes.status = RobotMessageStatus.PROCESSING;
+            } else if (status === MessageBlockStatus.ERROR) {
+                changes.status = RobotMessageStatus.ERROR;
+            }
+        }
+
+        // 应用更新
+        if (Object.keys(changes).length > 0) {
+            Object.assign(message, changes);
+        }
+    }
+
+    // Computed - 计算属性
+    get allMessages(): Message[] {
+        return Array.from(this.messages.values());
+    }
+
+    get messageEntities(): Record<string, Message> {
+        const entities: Record<string, Message> = {};
+        this.messages.forEach((message, id) => {
+            entities[id] = message;
+        });
+        return entities;
+    }
+
+    get currentTopicMessages(): Message[] {
+        if (!this.currentTopicId) return [];
+        return this.getMessagesForTopic(this.currentTopicId);
+    }
+
+    // 获取指定主题的消息（按顺序）
+    getMessagesForTopic(topicId: string): Message[] {
+        const messageIds = this.messageIdsByTopic.get(topicId) || [];
+        return messageIds.map((id) => this.messages.get(id)).filter((msg): msg is Message => !!msg);
+    }
+
+    // 根据ID获取消息
+    getMessageById(messageId: string): Message | undefined {
+        return this.messages.get(messageId);
+    }
+
+    // 获取主题加载状态
+    getTopicLoading(topicId: string): boolean {
+        return this.loadingByTopic.get(topicId) || false;
+    }
+
+    // 获取所有消息ID
+    get allMessageIds(): string[] {
+        return Array.from(this.messages.keys());
+    }
+}

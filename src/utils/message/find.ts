@@ -1,5 +1,6 @@
+import rootStore from '@/store';
 import { Message } from '@/types/message';
-import { MainTextMessageBlock } from '@/types/messageBlock';
+import { MainTextMessageBlock, MessageBlockType } from '@/types/messageBlock';
 
 /**
  * 找出消息中的所有主文本块，不依赖 Redux
@@ -17,10 +18,10 @@ export const findMainTextBlocks = (message: Message): MainTextMessageBlock[] => 
     // Iterate through message blocks
     for (const blockId of message.blocks) {
         // Get block from store since blocks array contains IDs
-        const block = blockId as unknown as MainTextMessageBlock;
-        // if (block.type === MessageBlockType.MAIN_TEXT) {
-        textBlocks.push(block);
-        // }
+        const block = rootStore.messageBlockStore.getBlockById(blockId);
+        if (block && block.type === MessageBlockType.MAIN_TEXT) {
+            textBlocks.push(block);
+        }
     }
 
     return textBlocks;
@@ -28,5 +29,5 @@ export const findMainTextBlocks = (message: Message): MainTextMessageBlock[] => 
 
 export const getMainTextContent = (message: Message): string => {
     const textBlocks = findMainTextBlocks(message);
-    return textBlocks.map((block) => block.content || block).join('\n\n');
+    return textBlocks.map((block) => block.content).join('\n\n');
 };

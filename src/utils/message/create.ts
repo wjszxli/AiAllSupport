@@ -1,6 +1,11 @@
-import { RobotMessageStatus, UserMessageStatus } from '@/types';
+import { Robot, RobotMessageStatus, Topic, UserMessageStatus } from '@/types';
 import { Message } from '@/types/message';
-import { BaseMessageBlock, MessageBlockStatus, MessageBlockType } from '@/types/messageBlock';
+import {
+    BaseMessageBlock,
+    ErrorMessageBlock,
+    MessageBlockStatus,
+    MessageBlockType,
+} from '@/types/messageBlock';
 import { v4 as uuidv4 } from 'uuid';
 
 type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
@@ -57,3 +62,78 @@ export function createMessage(
         ...restOverrides,
     };
 }
+
+export function createRobotMessage(
+    assistantId: Robot['id'],
+    topicId: Topic['id'],
+    overrides: Partial<
+        Omit<Message, 'id' | 'role' | 'assistantId' | 'topicId' | 'createdAt' | 'type' | 'status'>
+    > = {},
+): Message {
+    const now = new Date().toISOString();
+    const messageId = uuidv4();
+
+    return {
+        id: messageId,
+        role: 'assistant',
+        assistantId: assistantId,
+        topicId,
+        createdAt: now,
+        status: RobotMessageStatus.PENDING,
+        blocks: [],
+        ...overrides,
+    };
+}
+
+export function createErrorBlock(
+    messageId: string,
+    errorData: Record<string, any>,
+    overrides: Partial<Omit<ErrorMessageBlock, 'id' | 'messageId' | 'type' | 'error'>> = {},
+): ErrorMessageBlock {
+    const baseBlock = createBaseMessageBlock(messageId, MessageBlockType.ERROR, {
+        status: MessageBlockStatus.ERROR,
+        error: errorData,
+        ...overrides,
+    });
+    return baseBlock as ErrorMessageBlock;
+}
+
+export const resetRobotMessage = (
+    originalMessage: Message,
+    updates?: Partial<Pick<Message, 'status' | 'updatedAt' | 'model' | 'modelId'>>, // Primarily allow updating status
+): Message => {
+    // Ensure we are only resetting assistant messages
+    if (originalMessage.role !== 'assistant') {
+        console.warn(
+            `[resetAssistantMessage] Attempted to reset a non-assistant message (ID: ${originalMessage.id}, Role: ${originalMessage.role}). Returning original.`,
+        );
+        return originalMessage;
+    }
+
+    // Create the base reset message
+    return {
+        // --- Retain Core Identifiers ---
+        id: originalMessage.id, // Keep the same message ID
+        topicId: originalMessage.topicId,
+        askId: originalMessage.askId, // Keep the link to the original user query
+
+        // --- Retain Identity ---
+        role: 'assistant',
+        assistantId: originalMessage.assistantId,
+        model: originalMessage.model, // Keep the model information
+        modelId: originalMessage.modelId,
+
+        // --- Reset Response Content & Status ---
+        blocks: [], // <<< CRITICAL: Clear the blocks array
+        mentions: undefined, // Clear any mentions
+        status: RobotMessageStatus.PENDING, // Default to PENDING
+        metrics: undefined, // Clear performance metrics
+        usage: undefined, // Clear token usage data
+
+        // --- Timestamps ---
+        createdAt: originalMessage.createdAt, // Keep original creation timestamp
+
+        // --- Apply Overrides ---
+        ...updates, // Apply any specific updates passed in (e.g., a different status)
+    };
+};

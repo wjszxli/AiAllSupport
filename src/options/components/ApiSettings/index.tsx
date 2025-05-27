@@ -21,7 +21,7 @@ import { observer } from 'mobx-react';
 import { useStore } from '@/store';
 import { Provider } from '@/types';
 import { getProviderLogo, PROVIDER_CONFIG } from '@/config/providers';
-import { checkApiProvider, getModels } from '@/services/apiService';
+import { checkApiProvider, getModels } from '@/services/AiService';
 
 const { Text } = Typography;
 

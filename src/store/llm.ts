@@ -86,6 +86,5 @@ class LlmStore {
     };
 }
 
-// 创建并导出单例实例
 const llmStore = new LlmStore();
 export default llmStore;

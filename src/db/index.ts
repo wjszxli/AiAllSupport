@@ -3,7 +3,7 @@ import { MessageBlock } from '@/types/messageBlock';
 import { Dexie, type EntityTable } from 'dexie';
 
 export const db = new Dexie('CherryStudio') as Dexie & {
-    topic: EntityTable<{ id: string; messages: Message[] }, 'id'>;
+    topics: EntityTable<{ id: string; messages: Message[] }, 'id'>;
     message_blocks: EntityTable<MessageBlock, 'id'>;
 };
 
