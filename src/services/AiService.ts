@@ -11,7 +11,7 @@ import {
     MessageBlockType,
     PlaceholderMessageBlock,
 } from '@/types/messageBlock';
-import messageStore from '@/store/message';
+// import messageStore from '@/store/message'; // 已移除，使用 rootStore.messageStore
 import { createStreamProcessor, StreamProcessorCallbacks } from './StreamProcessingService';
 import { createBaseMessageBlock } from '@/utils/message/create';
 import llmStore from '@/store/llm';
@@ -94,7 +94,7 @@ export const fetchAndProcessAssistantResponseImpl = async (
 
         // const messagesForContext = [message];
 
-        const allMessages = messageStore.getMessagesForTopic(topicId);
+        const allMessages = rootStore.messageStore.getMessagesForTopic(topicId);
         console.log('allMessages', allMessages);
         const userMessageIndex = allMessages.findIndex((m) => m?.id === message.askId);
         const messagesForContext =

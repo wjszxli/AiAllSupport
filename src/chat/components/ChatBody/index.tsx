@@ -24,7 +24,7 @@ import {
 } from '@ant-design/icons';
 import { md } from '@/utils/markdownRenderer';
 import { t } from '@/locales/i18n';
-import { useChatMessages } from '@/hooks/useChatMessages';
+// import { useChatMessages } from '@/hooks/useChatMessages'; // 不再使用旧的消息系统
 // import { fetchChatCompletion } from '@/services/AiService';
 // import { convertSimpleMessage } from '@/utils/message/create';
 import { ChatMessage } from '@/types';
@@ -38,7 +38,6 @@ import llmStore from '@/store/llm';
 import rootStore from '@/store';
 import { MessageThunkService } from '@/store/messageThunk';
 import { observer } from 'mobx-react-lite';
-import messageStore from '@/store/message';
 
 const { TextArea } = Input;
 
@@ -61,24 +60,43 @@ const ChatBody: React.FC<ChatBodyProps> = observer(
             [robotStore.selectedRobot.selectedTopicId],
         );
         const newMessages = useMemo(
-            () => messageStore.getMessagesForTopic(selectedTopicId || ''),
-            [selectedTopicId, messageStore],
+            () => rootStore.messageStore.getMessagesForTopic(selectedTopicId || ''),
+            [selectedTopicId, rootStore.messageStore],
         );
 
-        const {
-            messages,
-            isLoading,
-            streamingMessageId,
-            messagesWrapperRef,
-            copyToClipboard,
-            cancelStreamingResponse,
-            regenerateResponse,
-            clearMessages,
-        } = useChatMessages({
-            t,
-            storeType: 'app',
-            conversationId: 'default',
-        });
+        // 移除旧的 useChatMessages hook，使用新的消息系统
+        const messagesWrapperRef = useRef<HTMLDivElement>(null);
+        const [isLoading, setIsLoading] = useState(false);
+        const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
+
+        const copyToClipboard = useCallback(
+            (text: string) => {
+                navigator.clipboard
+                    .writeText(text)
+                    .then(() => {
+                        AntdMessage.success(t('copied') || '已复制', 2);
+                    })
+                    .catch(() => {
+                        AntdMessage.error(t('failedCopy') || '复制失败');
+                    });
+            },
+            [t],
+        );
+
+        const cancelStreamingResponse = useCallback(() => {
+            // TODO: 实现取消流式响应的逻辑
+            setStreamingMessageId(null);
+            setIsLoading(false);
+        }, []);
+
+        const regenerateResponse = useCallback(async () => {
+            // TODO: 实现重新生成响应的逻辑
+        }, []);
+
+        const clearMessages = useCallback(async () => {
+            // TODO: 实现清空消息的逻辑
+            return true;
+        }, []);
 
         // 使用 useCallback 缓存函数
         const computeDisplayMessages = useCallback(
@@ -125,6 +143,15 @@ const ChatBody: React.FC<ChatBodyProps> = observer(
             [],
         );
 
+        // 当话题切换时加载消息
+        useEffect(() => {
+            if (selectedTopicId) {
+                console.log('Loading messages for topic:', selectedTopicId);
+                const messageService = new MessageThunkService(rootStore);
+                messageService.loadTopicMessages(selectedTopicId);
+            }
+        }, [selectedTopicId]);
+
         // 当 messages 变化时自动重新计算显示消息
         useEffect(() => {
             const newDisplayMessages = computeDisplayMessages(newMessages, 0, 10);
@@ -170,6 +197,9 @@ const ChatBody: React.FC<ChatBodyProps> = observer(
             const messageService = new MessageThunkService(rootStore);
 
             messageService.sendMessage(message, blocks, selectedRobot, selectedTopicId);
+
+            // 清空输入框
+            setUserInput('');
         };
 
         const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -218,7 +248,15 @@ const ChatBody: React.FC<ChatBodyProps> = observer(
             }
         };
 
-        console.log('groupedMessages', groupedMessages); // 移除重复输出的日志
+        // 调试信息
+        console.log('=== 调试信息 ===');
+        console.log('selectedTopicId:', selectedTopicId);
+        console.log('messageStore.messageEntities:', rootStore.messageStore.messageEntities);
+        console.log('messageStore.messageIdsByTopic:', rootStore.messageStore.messageIdsByTopic);
+        console.log('newMessages (from rootStore.messageStore):', newMessages);
+        console.log('displayMessages:', displayMessages);
+        console.log('groupedMessages:', groupedMessages);
+        console.log('==================');
 
         return (
             <div className="chat-body">
@@ -396,12 +434,12 @@ const ChatBody: React.FC<ChatBodyProps> = observer(
                         </div>
                     </div>
                     <div className="footer-actions">
-                        {messages.length > 0 ? (
+                        {newMessages.length > 0 ? (
                             <>
                                 <Button
                                     type="text"
                                     onClick={clearChat}
-                                    disabled={messages.length === 0 || isLoading}
+                                    disabled={newMessages.length === 0 || isLoading}
                                     title={t('clear')}
                                 >
                                     {t('clear') || '清空对话'}
