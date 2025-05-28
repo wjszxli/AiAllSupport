@@ -80,8 +80,8 @@ export function getGroupedMessages(messages: Message[]): {
             groups[key] = [];
         }
         groups[key].push({ ...message, index }); // Add message with its original index
-        // Sort by index within group to maintain original order
-        groups[key].sort((a, b) => b.index - a.index);
+        // Sort by index within group to maintain original order (ascending)
+        groups[key].sort((a, b) => a.index - b.index);
     });
     return groups;
 }

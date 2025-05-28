@@ -53,21 +53,27 @@ export class MessageThunkService {
                 // 序列化 MobX 对象
                 const serializedBlocks = blocks.map((block) => JSON.parse(JSON.stringify(block)));
                 await db.message_blocks.bulkPut(serializedBlocks);
+                console.log('blocks', serializedBlocks);
             }
+
             const topic = await db.topics.get(message.topicId);
             if (topic) {
                 const _messageIndex = topic.messages.findIndex((m) => m.id === message.id);
                 const updatedMessages = [...topic.messages];
 
+                // 序列化消息对象
+                const serializedMessage = JSON.parse(JSON.stringify(message));
+
                 if (_messageIndex !== -1) {
-                    updatedMessages[_messageIndex] = message;
+                    updatedMessages[_messageIndex] = serializedMessage;
                 } else {
                     if (messageIndex !== -1) {
-                        updatedMessages.splice(messageIndex, 0, message);
+                        updatedMessages.splice(messageIndex, 0, serializedMessage);
                     } else {
-                        updatedMessages.push(message);
+                        updatedMessages.push(serializedMessage);
                     }
                 }
+                console.log('updatedMessages', updatedMessages, message.topicId);
                 await db.topics.update(message.topicId, { messages: updatedMessages });
             }
         } catch (error) {
@@ -86,9 +92,17 @@ export class MessageThunkService {
                 // 将 MobX 对象转换为纯 JavaScript 对象
                 const serializedBlock = JSON.parse(JSON.stringify(block));
                 await db.message_blocks.put(serializedBlock);
+                console.log(`[saveBlockToDB] Saved block ${blockId}:`, {
+                    id: serializedBlock.id,
+                    type: serializedBlock.type,
+                    status: serializedBlock.status,
+                    contentLength: serializedBlock.content?.length || 0,
+                });
             } catch (error) {
                 console.error(`[saveBlockToDB] Failed to save block ${blockId}:`, error);
             }
+        } else {
+            console.warn(`[saveBlockToDB] Block ${blockId} not found in store`);
         }
     }
 
@@ -192,15 +206,20 @@ export class MessageThunkService {
                     });
                 });
 
-                if (status === MessageBlockStatus.SUCCESS) {
-                    await this.saveBlockToDB(currentBlockId);
-                }
+                // 总是保存到数据库，不仅仅是 SUCCESS 状态
+                await this.saveBlockToDB(currentBlockId);
             };
 
             // 6. 核心回调函数
             callbacks = {
                 // 开始响应
                 onLLMResponseCreated: () => {
+                    console.log('onLLMResponseCreated');
+                    // 设置流式消息ID
+                    runInAction(() => {
+                        this.rootStore.messageStore.setStreamingMessageId(assistantMsgId);
+                    });
+
                     const baseBlock = createBaseMessageBlock(
                         assistantMsgId,
                         MessageBlockType.UNKNOWN,
@@ -213,6 +232,7 @@ export class MessageThunkService {
 
                 // 文本流处理
                 onTextChunk: (text: string) => {
+                    console.log('onTextChunk', text, currentBlockId, currentBlockType);
                     accumulatedContent += text;
                     if (currentBlockId) {
                         if (currentBlockType === MessageBlockType.UNKNOWN) {
@@ -225,6 +245,8 @@ export class MessageThunkService {
                                 });
                             });
                             currentBlockType = MessageBlockType.MAIN_TEXT;
+                            // 保存首次类型转换到数据库
+                            this.saveBlockToDB(currentBlockId);
                         } else if (currentBlockType === MessageBlockType.MAIN_TEXT) {
                             // 节流更新文本内容
                             this.throttledBlockUpdate(currentBlockId, {
@@ -237,6 +259,7 @@ export class MessageThunkService {
 
                 // 文本完成
                 onTextComplete: async (finalText: string) => {
+                    console.log('onTextComplete', finalText);
                     this.cancelThrottledBlockUpdate();
                     if (currentBlockType === MessageBlockType.MAIN_TEXT && currentBlockId) {
                         await updateBlockContent(finalText, MessageBlockStatus.SUCCESS);
@@ -245,7 +268,14 @@ export class MessageThunkService {
 
                 // 错误处理
                 onError: async (error: { name: string; message: string; stack: any }) => {
+                    console.log('onError', error);
                     this.cancelThrottledBlockUpdate();
+
+                    // 清除流式消息ID
+                    runInAction(() => {
+                        this.rootStore.messageStore.setStreamingMessageId(null);
+                    });
+
                     const isAbort = isAbortError(error);
 
                     // 更新当前块状态
@@ -292,12 +322,28 @@ export class MessageThunkService {
                 },
 
                 // 完成处理
-                onComplete: async (status: RobotMessageStatus, response?: Response) => {
+                onComplete: async (status: RobotMessageStatus, response?: any) => {
+                    console.log('onComplete', status, response);
                     this.cancelThrottledBlockUpdate();
 
-                    // 更新最后一个块状态
+                    // 清除流式消息ID
+                    runInAction(() => {
+                        this.rootStore.messageStore.setStreamingMessageId(null);
+                    });
+
+                    // 注意：不要在这里重复更新块内容，因为 onTextComplete 已经处理了
+                    // 只需要确保块状态是 SUCCESS（如果还不是的话）
                     if (currentBlockId && status === 'success') {
-                        await updateBlockContent(accumulatedContent, MessageBlockStatus.SUCCESS);
+                        const currentBlock =
+                            this.rootStore.messageBlockStore.getBlockById(currentBlockId);
+                        if (currentBlock && currentBlock.status !== MessageBlockStatus.SUCCESS) {
+                            runInAction(() => {
+                                this.rootStore.messageBlockStore.updateBlock(currentBlockId!, {
+                                    status: MessageBlockStatus.SUCCESS,
+                                });
+                            });
+                            await this.saveBlockToDB(currentBlockId);
+                        }
                     }
 
                     // 更新消息状态和使用量
@@ -341,9 +387,10 @@ export class MessageThunkService {
             }
             throw error;
         } finally {
-            // 重置加载状态
+            // 重置加载状态和流式状态
             runInAction(() => {
                 this.rootStore.messageStore.setTopicLoading(topicId, false);
+                this.rootStore.messageStore.setStreamingMessageId(null);
             });
         }
     }
@@ -429,13 +476,49 @@ export class MessageThunkService {
                     .anyOf(messageIds)
                     .toArray();
 
+                console.log(`[loadTopicMessages] Loading topic ${topicId}:`, {
+                    messagesCount: messagesFromDB.length,
+                    blocksCount: blocks.length,
+                    messageIds,
+                    blockIds: blocks.map((b) => b.id),
+                });
+
+                // 重建消息的blocks数组
+                const blocksByMessageId = new Map<string, string[]>();
+                blocks.forEach((block) => {
+                    if (!blocksByMessageId.has(block.messageId)) {
+                        blocksByMessageId.set(block.messageId, []);
+                    }
+                    blocksByMessageId.get(block.messageId)!.push(block.id);
+                });
+
+                // 更新消息对象的blocks数组
+                const correctedMessages = messagesFromDB.map((message) => {
+                    const messageBlocks = blocksByMessageId.get(message.id) || [];
+                    return {
+                        ...message,
+                        blocks: messageBlocks,
+                    };
+                });
+
+                console.log(`[loadTopicMessages] Corrected messages blocks:`, {
+                    corrections: correctedMessages.map((m) => ({
+                        id: m.id,
+                        role: m.role,
+                        originalBlocks:
+                            messagesFromDB.find((orig) => orig.id === m.id)?.blocks?.length || 0,
+                        correctedBlocks: m.blocks.length,
+                    })),
+                });
+
                 runInAction(() => {
                     if (blocks && blocks.length > 0) {
                         this.rootStore.messageBlockStore.upsertManyBlocks(blocks);
                     }
-                    this.rootStore.messageStore.messagesReceived(topicId, messagesFromDB);
+                    this.rootStore.messageStore.messagesReceived(topicId, correctedMessages);
                 });
             } else {
+                console.log(`[loadTopicMessages] No messages found for topic ${topicId}`);
                 runInAction(() => {
                     this.rootStore.messageStore.messagesReceived(topicId, []);
                 });

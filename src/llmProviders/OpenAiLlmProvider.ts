@@ -245,22 +245,23 @@ export default class OpenAiLlmProvider extends BaseLlmProvider {
                         onChunk({ type: ChunkType.TEXT_DELTA, text: textDelta });
                         break;
                     }
+                    case 'finish': {
+                        // 处理完成事件
+                        if (content) {
+                            onChunk({ type: ChunkType.TEXT_COMPLETE, text: content });
+                        }
+                        // if (thinkingContent) {
+                        //     onChunk({
+                        //         type: ChunkType.THINKING_COMPLETE,
+                        //         text: thinkingContent,
+                        //     });
+                        // }
+                        // 发送流式处理完成信号
+                        onChunk({ type: ChunkType.BLOCK_COMPLETE });
+                        break;
+                    }
                     //     case 'tool-calls': {
                     //         // 处理工具调用...
-                    //         break;
-                    //     }
-                    //     case 'finish': {
-                    //         // 处理完成事件
-                    //         if (content) {
-                    //             onChunk({ type: ChunkType.TEXT_COMPLETE, text: content });
-                    //         }
-                    //         if (thinkingContent) {
-                    //             onChunk({
-                    //                 type: ChunkType.THINKING_COMPLETE,
-                    //                 text: thinkingContent,
-                    //             });
-                    //         }
-                    //         // 处理用量统计...
                     //         break;
                     //     }
                 }

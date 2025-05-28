@@ -10,6 +10,8 @@ export class MessageStore {
     currentTopicId: string | null = null;
     loadingByTopic = new Map<string, boolean>();
     displayCount = 20;
+    // 添加流式消息状态
+    streamingMessageId: string | null = null;
 
     constructor() {
         makeAutoObservable(this, {
@@ -31,6 +33,11 @@ export class MessageStore {
 
     setTopicLoading(topicId: string, loading: boolean) {
         this.loadingByTopic.set(topicId, loading);
+    }
+
+    // 设置流式消息ID
+    setStreamingMessageId(messageId: string | null) {
+        this.streamingMessageId = messageId;
     }
 
     setDisplayCount(count: number) {
