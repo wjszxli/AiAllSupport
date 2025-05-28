@@ -1,5 +1,5 @@
 import { Button, message, Select, Tooltip, Tabs } from 'antd';
-import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
     GlobalOutlined,
     SettingOutlined,
@@ -35,16 +35,6 @@ const App: React.FC = () => {
     const [sidebarWidth, setSidebarWidth] = useState(320);
     const [isResizing, setIsResizing] = useState(false);
     const resizeRef = useRef<HTMLDivElement>(null);
-
-    const suggestedPrompts = useMemo(
-        () => [
-            t('suggestedPrompt1') || '解释一下深度学习和机器学习的区别',
-            t('suggestedPrompt2') || '帮我优化一段Python代码',
-            t('suggestedPrompt3') || '如何提高英语口语水平',
-            t('suggestedPrompt4') || '推荐几本经典科幻小说',
-        ],
-        [t, currentLocale],
-    );
 
     // 拖拽调整大小的处理函数
     const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -332,7 +322,6 @@ const App: React.FC = () => {
                         selectedProvider={selectedProvider}
                         userInput={userInput}
                         setUserInput={setUserInput}
-                        suggestedPrompts={suggestedPrompts}
                     />
                 </div>
             </div>

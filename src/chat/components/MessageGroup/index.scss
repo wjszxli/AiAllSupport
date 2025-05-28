@@ -1,49 +1,23 @@
 .message-group {
     display: flex;
-    gap: 12px;
-    margin-bottom: 24px;
+    gap: 16px;
     padding: 16px;
-    border-radius: 12px;
-    transition: all 0.2s ease;
+    transition: background-color 0.3s;
 
     &:hover {
-        background-color: #f8f9fa;
-    }
-
-    &.user-group {
-        flex-direction: row-reverse;
-
-        .message-content {
-            text-align: right;
-        }
-
-        .message-header {
-            justify-content: flex-end;
-        }
-
-        .message-actions {
-            justify-content: flex-end;
-        }
-    }
-
-    &.assistant-group {
-        flex-direction: row;
-
-        .message-content {
-            text-align: left;
-        }
+        background-color: rgb(0 0 0 / 2%);
     }
 
     .message-avatar {
         flex-shrink: 0;
 
         .ant-avatar {
-            width: 40px;
-            height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            width: 40px;
+            height: 40px;
+            box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
         }
     }
 
@@ -52,120 +26,130 @@
         min-width: 0;
 
         .message-header {
-            display: flex;
-            align-items: center;
             margin-bottom: 8px;
 
             .message-sender {
                 display: flex;
-                align-items: center;
                 gap: 8px;
+                align-items: center;
 
                 .sender-name {
-                    font-weight: 600;
-                    color: #262626;
-                    font-size: 14px;
+                    font-weight: 500;
+                    color: #333;
                 }
 
                 .message-time {
                     font-size: 12px;
-                    color: #8c8c8c;
+                    color: #999;
                 }
             }
         }
 
         .message-body {
             .message-item {
-                margin-bottom: 8px;
+                margin-bottom: 16px;
 
                 &:last-child {
                     margin-bottom: 0;
                 }
 
                 .message-text {
+                    font-size: 14px;
                     line-height: 1.6;
-                    color: #262626;
+                    color: #333;
                     word-wrap: break-word;
+                    overflow-wrap: break-word;
 
-                    // 流式内容样式
-                    &.streaming {
-                        position: relative;
-
-                        // 在流式内容末尾添加闪烁光标
-                        &::after {
-                            content: '';
-                            display: inline-block;
-                            width: 2px;
-                            height: 1.2em;
-                            margin-left: 2px;
-                            vertical-align: text-bottom;
-                            background-color: #1890ff;
-                            animation: cursor-blink 1s infinite;
-                        }
-                    }
-
-                    // Markdown 样式
                     p {
-                        margin: 0 0 8px 0;
+                        margin-bottom: 12px;
 
                         &:last-child {
                             margin-bottom: 0;
                         }
                     }
 
-                    pre {
-                        background-color: #f6f8fa;
+                    // 代码块样式
+                    .code-block-wrapper {
+                        margin: 16px 0;
+                        overflow: hidden;
+                        background: #f8f9fa;
+                        border: 1px solid #e1e4e8;
                         border-radius: 6px;
-                        padding: 12px;
-                        margin: 8px 0;
+
+                        .code-block-header {
+                            display: flex;
+                            align-items: center;
+                            justify-content: space-between;
+                            padding: 8px 12px;
+                            background: #f1f3f5;
+                            border-bottom: 1px solid #e1e4e8;
+
+                            .code-language {
+                                font-size: 12px;
+                                color: #666;
+                                text-transform: uppercase;
+                            }
+
+                            .copy-code-button {
+                                padding: 4px 8px;
+                                cursor: pointer;
+                                font-size: 12px;
+                                color: #666;
+                                background: transparent;
+                                border: 1px solid #d1d5db;
+                                border-radius: 4px;
+                                transition: all 0.2s;
+
+                                &:hover {
+                                    color: #333;
+                                    background: #fff;
+                                    border-color: #999;
+                                }
+                            }
+                        }
+
+                        pre {
+                            padding: 16px;
+                            margin: 0;
+                            overflow-x: auto;
+
+                            code {
+                                font-family: monospace;
+                                font-size: 13px;
+                                line-height: 1.5;
+                            }
+                        }
+                    }
+
+                    // 数学公式样式
+                    .math-inline {
+                        padding: 0 4px;
+                        font-family: serif;
+                        background: #f8f9fa;
+                        border-radius: 4px;
+                    }
+
+                    .math-block {
+                        padding: 16px;
+                        margin: 16px 0;
+                        font-family: serif;
+                        background: #f8f9fa;
+                        border: 1px solid #e1e4e8;
+                        border-radius: 6px;
                         overflow-x: auto;
-
-                        code {
-                            background: none;
-                            padding: 0;
-                        }
                     }
 
-                    code {
-                        background-color: #f6f8fa;
-                        padding: 2px 4px;
-                        border-radius: 3px;
-                        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-                        font-size: 0.9em;
+                    // 表情符号样式
+                    .emoji {
+                        display: inline-block;
+                        padding: 0 4px;
+                        font-family: sans-serif;
                     }
 
-                    blockquote {
-                        border-left: 4px solid #d1d5db;
-                        padding-left: 12px;
-                        margin: 8px 0;
-                        color: #6b7280;
+                    // 流式加载样式
+                    &.streaming {
+                        opacity: 0.7;
                     }
-
-                    ul,
-                    ol {
-                        padding-left: 20px;
-                        margin: 8px 0;
-                    }
-
-                    h1,
-                    h2,
-                    h3,
-                    h4,
-                    h5,
-                    h6 {
-                        margin: 16px 0 8px 0;
-                        font-weight: 600;
-
-                        &:first-child {
-                            margin-top: 0;
-                        }
-                    }
-                }
-
-                .empty-content {
-                    color: #8c8c8c;
-                    font-style: italic;
-                    padding: 8px 0;
                 }
 
                 .streaming-indicator {
@@ -174,20 +158,23 @@
                     .typing-dots {
                         display: inline-flex;
                         gap: 4px;
+                        padding: 8px;
+                        background: #f5f7fa;
+                        border-radius: 12px;
 
                         span {
                             width: 6px;
                             height: 6px;
+                            background-color: #666;
                             border-radius: 50%;
-                            background-color: #1890ff;
-                            animation: typing 1.4s infinite ease-in-out;
-
-                            &:nth-child(1) {
-                                animation-delay: -0.32s;
-                            }
+                            animation: pulse 1s infinite;
 
                             &:nth-child(2) {
-                                animation-delay: -0.16s;
+                                animation-delay: 0.2s;
+                            }
+
+                            &:nth-child(3) {
+                                animation-delay: 0.4s;
                             }
                         }
                     }
@@ -198,86 +185,99 @@
         .message-actions {
             display: flex;
             gap: 8px;
-            margin-top: 12px;
+            margin-top: 8px;
             opacity: 0;
-            transition: opacity 0.2s ease;
+            transition: opacity 0.2s;
 
             .ant-btn {
-                height: 28px;
-                padding: 0 8px;
-                font-size: 12px;
-                border-radius: 6px;
+                color: #666;
 
                 &:hover {
-                    background-color: #f0f0f0;
+                    color: #333;
+                    background: rgb(0 0 0 / 4%);
                 }
+            }
+        }
+
+        &:hover .message-actions {
+            opacity: 1;
+        }
+    }
+
+    &.user-group {
+        flex-direction: row-reverse;
+
+        .message-content {
+            .message-header {
+                text-align: right;
+            }
+
+            .message-sender {
+                justify-content: flex-end;
+            }
+
+            .message-actions {
+                justify-content: flex-end;
             }
         }
     }
 
-    &:hover .message-actions {
-        opacity: 1;
+    &.assistant-group {
+        flex-direction: row;
+
+        .message-content {
+            text-align: left;
+        }
     }
 }
 
 // 用户消息特殊样式
-.message-group.user-group {
-    .message-content .message-body .message-item .message-text {
-        background-color: #1890ff;
+.message-group.user-group .message-content .message-body .message-item .message-text {
+    display: inline-block;
+    max-width: 80%;
+    padding: 12px 16px;
+    color: white;
+    background-color: #1890ff;
+    border-radius: 18px;
+
+    code {
         color: white;
-        padding: 12px 16px;
-        border-radius: 18px;
-        display: inline-block;
-        max-width: 80%;
+        background-color: rgb(255 255 255 / 20%);
+    }
+
+    pre {
+        background-color: rgb(255 255 255 / 10%);
 
         code {
-            background-color: rgba(255, 255, 255, 0.2);
-            color: white;
-        }
-
-        pre {
-            background-color: rgba(255, 255, 255, 0.1);
-
-            code {
-                background: none;
-            }
+            background: none;
         }
     }
 }
 
 // 助手消息特殊样式
-.message-group.assistant-group {
-    .message-content .message-body .message-item .message-text {
-        background-color: #ffffff;
-        border: 1px solid #f0f0f0;
-        padding: 16px;
-        border-radius: 12px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    }
+.message-group.assistant-group .message-content .message-body .message-item .message-text {
+    padding: 16px;
+    background-color: #fff;
+    border: 1px solid #f0f0f0;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 5%);
 }
 
 // 动画
-@keyframes typing {
-    0%,
-    80%,
-    100% {
+@keyframes pulse {
+    0% {
+        opacity: 0.4;
         transform: scale(0.8);
-        opacity: 0.5;
     }
-    40% {
-        transform: scale(1);
-        opacity: 1;
-    }
-}
 
-@keyframes cursor-blink {
-    0%,
     50% {
         opacity: 1;
+        transform: scale(1);
     }
-    51%,
+
     100% {
-        opacity: 0;
+        opacity: 0.4;
+        transform: scale(0.8);
     }
 }
 

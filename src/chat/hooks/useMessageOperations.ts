@@ -1,0 +1,98 @@
+import { useCallback } from 'react';
+import { Message } from '@/types/message';
+import { MessageBlockType, MessageBlockStatus } from '@/types/messageBlock';
+import rootStore from '@/store';
+import { message as AntdMessage } from 'antd';
+import { t } from '@/locales/i18n';
+
+export const useMessageOperations = (streamingMessageId: string | null) => {
+    // 获取消息内容（从 MessageBlock 中获取）
+    const getMessageContent = useCallback((message: Message): string => {
+        if (!message.blocks || message.blocks.length === 0) {
+            console.log(`[getMessageContent] Message ${message.id} has no blocks`);
+            return '';
+        }
+
+        const blocks = message.blocks
+            .map((blockId) => {
+                const block = rootStore.messageBlockStore.getBlockById(blockId);
+                if (!block) {
+                    console.warn(`[getMessageContent] Block ${blockId} not found in store`);
+                }
+                return block;
+            })
+            .filter(Boolean);
+
+        if (blocks.length === 0) {
+            console.warn(`[getMessageContent] No valid blocks found for message ${message.id}`);
+            return '';
+        }
+
+        const content = blocks
+            .filter((block): block is NonNullable<typeof block> => {
+                if (!block) return false;
+
+                const hasContent =
+                    block.type === MessageBlockType.MAIN_TEXT ||
+                    block.type === MessageBlockType.THINKING ||
+                    block.type === MessageBlockType.CODE;
+
+                const hasContentProperty = 'content' in block;
+
+                return hasContent && hasContentProperty;
+            })
+            .map((block) => {
+                const content = (block as any).content || '';
+                return content;
+            })
+            .join('');
+
+        return content;
+    }, []);
+
+    // 检查消息是否正在流式显示
+    const isMessageStreaming = useCallback(
+        (message: Message): boolean => {
+            // 首先检查是否是当前流式消息
+            if (streamingMessageId === message.id) {
+                return true;
+            }
+
+            // 其次检查消息的块是否有流式状态
+            if (message.blocks && message.blocks.length > 0) {
+                return message.blocks.some((blockId) => {
+                    const block = rootStore.messageBlockStore.getBlockById(blockId);
+                    return block && block.status === MessageBlockStatus.STREAMING;
+                });
+            }
+
+            return false;
+        },
+        [streamingMessageId],
+    );
+
+    // 复制消息内容
+    const handleCopyMessage = useCallback((text: string) => {
+        navigator.clipboard
+            .writeText(text)
+            .then(() => {
+                AntdMessage.success(t('copied') || '已复制', 2);
+            })
+            .catch(() => {
+                AntdMessage.error(t('failedCopy') || '复制失败');
+            });
+    }, []);
+
+    // 重新生成响应
+    const handleRegenerateResponse = useCallback(() => {
+        // TODO: 实现重新生成响应的逻辑
+        console.log('重新生成响应');
+    }, []);
+
+    return {
+        getMessageContent,
+        isMessageStreaming,
+        handleCopyMessage,
+        handleRegenerateResponse,
+    };
+};

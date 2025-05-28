@@ -1,0 +1,57 @@
+.messages-container {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px;
+    overflow-y: auto;
+
+    .welcome-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        padding: 40px;
+
+        .prompt-suggestions {
+            max-width: 600px;
+            margin-top: 40px;
+            text-align: center;
+
+            h5 {
+                margin-bottom: 20px;
+                color: #666;
+            }
+
+            .suggestion-items {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 12px;
+                justify-content: center;
+
+                .suggestion-item {
+                    padding: 8px 16px;
+                    background: #f5f5f5;
+                    border: 1px solid #e0e0e0;
+                    border-radius: 20px;
+                    transition: all 0.3s;
+
+                    &:hover {
+                        background: #e8e8e8;
+                        border-color: #d0d0d0;
+                    }
+                }
+            }
+        }
+    }
+
+    .loading-indicator {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        color: #666;
+    }
+}

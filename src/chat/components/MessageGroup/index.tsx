@@ -1,5 +1,5 @@
 import React from 'react';
-import { Avatar, Button, Typography } from 'antd';
+import { Avatar, Button } from 'antd';
 import {
     UserOutlined,
     RobotOutlined,
@@ -8,11 +8,9 @@ import {
     EditOutlined,
 } from '@ant-design/icons';
 import { Message } from '@/types/message';
-import { MessageBlockType, MessageBlockStatus } from '@/types/messageBlock';
-import { md } from '@/utils/markdownRenderer';
 import { t } from '@/locales/i18n';
-import rootStore from '@/store';
 import { observer } from 'mobx-react-lite';
+import { useMessageRenderer } from '@/chat/hooks/useMessageRenderer';
 import './index.scss';
 
 interface MessageGroupProps {
@@ -20,6 +18,8 @@ interface MessageGroupProps {
     messages: (Message & { index: number })[];
     selectedProvider: string;
     streamingMessageId: string | null;
+    getMessageContent: (message: Message) => string;
+    isMessageStreaming: (message: Message) => boolean;
     onCopyMessage: (text: string) => void;
     onRegenerateResponse: () => void;
     onEditMessage: (text: string) => void;
@@ -30,6 +30,8 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
         messages,
         selectedProvider,
         streamingMessageId,
+        getMessageContent,
+        isMessageStreaming,
         onCopyMessage,
         onRegenerateResponse,
         onEditMessage,
@@ -41,106 +43,8 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
         const isUserMessage = firstMessage.role === 'user';
         const isAssistantMessage = firstMessage.role === 'assistant';
 
-        // 获取消息内容（从 MessageBlock 中获取）
-        const getMessageContent = (message: Message): string => {
-            if (!message.blocks || message.blocks.length === 0) {
-                console.log(`[getMessageContent] Message ${message.id} has no blocks`);
-                return '';
-            }
-
-            console.log(
-                `[getMessageContent] Processing message ${message.id} with ${message.blocks.length} block IDs:`,
-                message.blocks,
-            );
-
-            const blocks = message.blocks
-                .map((blockId) => {
-                    const block = rootStore.messageBlockStore.getBlockById(blockId);
-                    if (!block) {
-                        console.warn(`[getMessageContent] Block ${blockId} not found in store`);
-                    } else {
-                        console.log(`[getMessageContent] Found block ${blockId}:`, {
-                            type: block.type,
-                            status: block.status,
-                            hasContent: 'content' in block,
-                            contentLength:
-                                'content' in block ? (block as any).content?.length || 0 : 0,
-                        });
-                    }
-                    return block;
-                })
-                .filter(Boolean);
-
-            if (blocks.length === 0) {
-                console.warn(`[getMessageContent] No valid blocks found for message ${message.id}`);
-                return '';
-            }
-
-            const content = blocks
-                .filter((block): block is NonNullable<typeof block> => {
-                    // 检查块类型和是否有 content 属性
-                    if (!block) return false;
-
-                    const hasContent =
-                        block.type === MessageBlockType.MAIN_TEXT ||
-                        block.type === MessageBlockType.THINKING ||
-                        block.type === MessageBlockType.CODE;
-
-                    const hasContentProperty = 'content' in block;
-
-                    console.log(`[getMessageContent] Block ${block.id} filter check:`, {
-                        type: block.type,
-                        hasContent,
-                        hasContentProperty,
-                        willInclude: hasContent && hasContentProperty,
-                    });
-
-                    return hasContent && hasContentProperty;
-                })
-                .map((block) => {
-                    const content = (block as any).content || '';
-                    console.log(
-                        `[getMessageContent] Extracting content from block ${block.id}: ${content.length} chars`,
-                    );
-                    return content;
-                })
-                .join('');
-
-            console.log(
-                `[getMessageContent] Message ${message.id} final content length: ${content.length}`,
-            );
-            return content;
-        };
-
-        // 检查消息是否正在流式显示
-        const isMessageStreaming = (message: Message): boolean => {
-            // 首先检查是否是当前流式消息
-            if (streamingMessageId === message.id) {
-                return true;
-            }
-
-            // 其次检查消息的块是否有流式状态
-            if (message.blocks && message.blocks.length > 0) {
-                return message.blocks.some((blockId) => {
-                    const block = rootStore.messageBlockStore.getBlockById(blockId);
-                    return block && block.status === MessageBlockStatus.STREAMING;
-                });
-            }
-
-            return false;
-        };
-
-        // 渲染消息内容
-        const renderMessageContent = (content: string, isStreaming: boolean = false) => {
-            if (!content) return <div className="empty-content">暂无内容</div>;
-
-            return (
-                <div
-                    className={`message-text ${isStreaming ? 'streaming' : ''}`}
-                    dangerouslySetInnerHTML={{ __html: md.render(content) }}
-                />
-            );
-        };
+        // 使用消息渲染 hook
+        const { renderMessageContent } = useMessageRenderer();
 
         // 获取消息时间
         const getMessageTime = (message: Message) => {
@@ -184,13 +88,18 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
                     </div>
 
                     <div className="message-body">
-                        {messages.map((message, index) => {
+                        {messages.map((message) => {
                             const content = getMessageContent(message);
                             const isStreaming = isMessageStreaming(message);
 
                             return (
                                 <div key={message.id} className="message-item">
-                                    {renderMessageContent(content, isStreaming)}
+                                    <div
+                                        className="message-text"
+                                        dangerouslySetInnerHTML={{
+                                            __html: renderMessageContent(content, isStreaming),
+                                        }}
+                                    />
 
                                     {/* 流式加载指示器 */}
                                     {isStreaming && (
