@@ -15,6 +15,8 @@ import {
     createBaseMessageBlock,
     createErrorBlock,
     resetRobotMessage,
+    createMainTextBlock,
+    createThinkingBlock,
 } from '@/utils/message/create';
 // import { getTopicQueue, waitForTopicQueue } from '@/utils/queue';
 import { getTopicQueue } from '@/utils/queue';
@@ -157,6 +159,7 @@ export class MessageThunkService {
             let currentBlockId: string | null = null;
             let currentBlockType: MessageBlockType | null = null;
             let accumulatedContent = '';
+            let accumulatedThinkingContent = '';
 
             // 3. 准备上下文消息
             const allMessages = this.rootStore.messageStore.getMessagesForTopic(topicId);
@@ -179,7 +182,13 @@ export class MessageThunkService {
             ) => {
                 currentBlockId = newBlock.id;
                 currentBlockType = blockType;
-                accumulatedContent = '';
+
+                if (currentBlockType !== MessageBlockType.MAIN_TEXT) {
+                    accumulatedContent = '';
+                }
+                if (currentBlockType !== MessageBlockType.THINKING) {
+                    accumulatedThinkingContent = '';
+                }
 
                 // MobX 状态更新
                 runInAction(() => {
@@ -230,13 +239,96 @@ export class MessageThunkService {
                     handleBlockTransition(baseBlock, MessageBlockType.UNKNOWN);
                 },
 
+                // 思考内容流处理
+                onThinkingChunk: (text: string, thinking_millsec?: number) => {
+                    console.log('onThinkingChunk', text, thinking_millsec);
+                    // 累积思考内容
+                    accumulatedThinkingContent += text;
+
+                    if (currentBlockId) {
+                        if (currentBlockType === MessageBlockType.UNKNOWN) {
+                            // 首次确定为思考块
+                            runInAction(() => {
+                                this.rootStore.messageBlockStore.updateBlock(currentBlockId!, {
+                                    type: MessageBlockType.THINKING,
+                                    content: accumulatedThinkingContent,
+                                    status: MessageBlockStatus.STREAMING,
+                                    thinking_millsec: thinking_millsec,
+                                });
+                            });
+                            currentBlockType = MessageBlockType.THINKING;
+                            // 保存首次类型转换到数据库
+                            this.saveBlockToDB(currentBlockId);
+                        } else if (currentBlockType === MessageBlockType.THINKING) {
+                            // 实时更新思考内容
+                            runInAction(() => {
+                                this.rootStore.messageBlockStore.updateBlock(currentBlockId!, {
+                                    content: accumulatedThinkingContent,
+                                    status: MessageBlockStatus.STREAMING,
+                                    thinking_millsec: thinking_millsec,
+                                });
+                            });
+                            // 节流保存到数据库
+                            this.throttledBlockUpdate(currentBlockId, {
+                                content: accumulatedThinkingContent,
+                                status: MessageBlockStatus.STREAMING,
+                                thinking_millsec: thinking_millsec,
+                            });
+                        } else {
+                            const newBlock = createThinkingBlock(
+                                assistantMsgId,
+                                accumulatedThinkingContent,
+                                {
+                                    status: MessageBlockStatus.STREAMING,
+                                    thinking_millsec: 0,
+                                },
+                            );
+                            handleBlockTransition(newBlock, MessageBlockType.THINKING);
+                        }
+                    }
+                },
+
+                // 思考完成
+                onThinkingComplete: async (finalText: string, thinking_millsec?: number) => {
+                    console.log('onThinkingComplete', finalText, thinking_millsec);
+                    this.cancelThrottledBlockUpdate();
+
+                    if (currentBlockType === MessageBlockType.THINKING && currentBlockId) {
+                        runInAction(() => {
+                            this.rootStore.messageBlockStore.updateBlock(currentBlockId!, {
+                                type: MessageBlockType.THINKING,
+                                content: finalText,
+                                status: MessageBlockStatus.SUCCESS,
+                                thinking_millsec: thinking_millsec,
+                            });
+                        });
+                        await this.saveBlockToDB(currentBlockId);
+                    } else {
+                        console.warn(
+                            `[onThinkingComplete] Received thinking.complete but last block was not THINKING (was ${currentBlockType}) or lastBlockId is null.`,
+                        );
+                    }
+                },
+
                 // 文本流处理
                 onTextChunk: (text: string) => {
-                    console.log('onTextChunk', text, currentBlockId, currentBlockType);
+                    console.log('onTextChunk', {
+                        text: text.substring(0, 50) + (text.length > 50 ? '...' : ''),
+                        currentBlockId,
+                        currentBlockType,
+                        accumulatedContentLength: accumulatedContent.length,
+                        accumulatedThinkingContentLength: accumulatedThinkingContent.length,
+                    });
+
                     accumulatedContent += text;
+
                     if (currentBlockId) {
                         if (currentBlockType === MessageBlockType.UNKNOWN) {
                             // 首次确定为文本块
+                            console.log(
+                                'Converting to MAIN_TEXT block, content length:',
+                                accumulatedContent.length,
+                            );
                             runInAction(() => {
                                 this.rootStore.messageBlockStore.updateBlock(currentBlockId!, {
                                     type: MessageBlockType.MAIN_TEXT,
@@ -253,16 +345,26 @@ export class MessageThunkService {
                                 content: accumulatedContent,
                                 status: MessageBlockStatus.STREAMING,
                             });
+                        } else {
+                            const newBlock = createMainTextBlock(
+                                assistantMsgId,
+                                accumulatedContent,
+                                {
+                                    status: MessageBlockStatus.STREAMING,
+                                },
+                            );
+                            handleBlockTransition(newBlock, MessageBlockType.MAIN_TEXT);
                         }
                     }
                 },
 
                 // 文本完成
                 onTextComplete: async (finalText: string) => {
-                    console.log('onTextComplete', finalText);
                     this.cancelThrottledBlockUpdate();
                     if (currentBlockType === MessageBlockType.MAIN_TEXT && currentBlockId) {
+                        // 确保使用最终的干净文本内容
                         await updateBlockContent(finalText, MessageBlockStatus.SUCCESS);
+                        console.log('Text content finalized for block:', currentBlockId);
                     }
                 },
 

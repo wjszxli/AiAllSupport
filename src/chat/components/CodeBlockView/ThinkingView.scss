@@ -1,0 +1,253 @@
+.thinking-view {
+    margin: 12px 0;
+    border: 1px solid #e1e5e9;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #f8f9fa;
+    transition: all 0.2s ease;
+
+    &:hover {
+        border-color: #d0d7de;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    &.streaming {
+        border-color: #1890ff;
+        background: linear-gradient(135deg, #f0f9ff 0%, #e6f7ff 100%);
+
+        .thinking-header {
+            background: linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%);
+        }
+    }
+
+    &.completed {
+        border-color: #52c41a;
+        background: linear-gradient(135deg, #f6ffed 0%, #d9f7be 100%);
+
+        .thinking-header {
+            background: linear-gradient(135deg, #d9f7be 0%, #b7eb8f 100%);
+        }
+
+        .thinking-title .thinking-icon {
+            opacity: 1;
+        }
+    }
+
+    .thinking-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+        border-bottom: 1px solid #e1e5e9;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        cursor: pointer;
+        transition: background 0.2s ease;
+
+        &:hover {
+            background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+        }
+
+        .thinking-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #495057;
+            font-weight: 500;
+
+            .thinking-icon {
+                font-size: 16px;
+                opacity: 0.8;
+
+                .anticon {
+                    color: #1890ff;
+                }
+            }
+
+            .thinking-label {
+                font-size: 14px;
+            }
+
+            .thinking-time {
+                color: #6c757d;
+                font-size: 12px;
+                font-weight: 400;
+                opacity: 0.8;
+            }
+
+            .thinking-status {
+                color: #1890ff;
+                font-size: 12px;
+                font-weight: 400;
+                opacity: 0.8;
+                animation: pulse 1.5s infinite;
+            }
+        }
+
+        .thinking-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px;
+            border: none;
+            border-radius: 4px;
+            background: none;
+            color: #6c757d;
+            cursor: pointer;
+            transition: all 0.2s ease;
+
+            &:hover {
+                background: rgba(0, 0, 0, 0.1);
+                color: #495057;
+            }
+
+            svg {
+                font-size: 14px;
+            }
+        }
+    }
+
+    .thinking-content {
+        border-top: 1px solid #e9ecef;
+        background: #fff;
+
+        .thinking-text {
+            margin-left: 8px;
+            padding: 16px 20px;
+            padding-left: 16px;
+            border-left: 3px solid #6f42c1;
+            background: linear-gradient(90deg, rgba(111, 66, 193, 0.02) 0%, transparent 100%);
+            color: #495057;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
+                Arial, sans-serif;
+            font-size: 14px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+
+            .thinking-cursor {
+                color: #1890ff;
+                animation: blink 1s infinite;
+                font-weight: bold;
+                margin-left: 2px;
+            }
+        }
+    }
+
+    // 动画定义
+    @keyframes pulse {
+        0%,
+        100% {
+            opacity: 0.8;
+        }
+        50% {
+            opacity: 0.4;
+        }
+    }
+
+    @keyframes blink {
+        0%,
+        50% {
+            opacity: 1;
+        }
+        51%,
+        100% {
+            opacity: 0;
+        }
+    }
+
+    // 用户消息中的思考块样式调整
+    .message-user & {
+        border-color: rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.1);
+
+        &.streaming {
+            border-color: rgba(255, 255, 255, 0.6);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .thinking-header {
+            border-bottom-color: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.9);
+
+            &:hover {
+                background: rgba(255, 255, 255, 0.15);
+            }
+
+            .thinking-title {
+                color: rgba(255, 255, 255, 0.9);
+
+                .thinking-time {
+                    color: rgba(255, 255, 255, 0.7);
+                }
+
+                .thinking-status {
+                    color: rgba(255, 255, 255, 0.8);
+                }
+
+                .thinking-icon .anticon {
+                    color: rgba(255, 255, 255, 0.8);
+                }
+            }
+
+            .thinking-toggle {
+                color: rgba(255, 255, 255, 0.7);
+
+                &:hover {
+                    background: rgba(255, 255, 255, 0.1);
+                    color: rgba(255, 255, 255, 0.9);
+                }
+            }
+        }
+
+        .thinking-content {
+            border-top-color: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+
+            .thinking-text {
+                border-left-color: rgba(255, 255, 255, 0.3);
+                background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, transparent 100%);
+                color: rgba(255, 255, 255, 0.9);
+
+                .thinking-cursor {
+                    color: rgba(255, 255, 255, 0.8);
+                }
+            }
+        }
+    }
+
+    // 响应式设计
+    @media (max-width: 768px) {
+        margin: 8px 0;
+
+        .thinking-header {
+            padding: 10px 12px;
+
+            .thinking-title {
+                gap: 6px;
+
+                .thinking-icon {
+                    font-size: 14px;
+                }
+
+                .thinking-label {
+                    font-size: 13px;
+                }
+
+                .thinking-time,
+                .thinking-status {
+                    font-size: 11px;
+                }
+            }
+        }
+
+        .thinking-content {
+            .thinking-text {
+                margin-left: 6px;
+                padding: 12px 16px;
+                padding-left: 12px;
+                font-size: 13px;
+            }
+        }
+    }
+}

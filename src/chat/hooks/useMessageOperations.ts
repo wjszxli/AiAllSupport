@@ -30,13 +30,15 @@ export const useMessageOperations = (streamingMessageId: string | null) => {
             return '';
         }
 
+        // 获取所有类型的块内容（暂时恢复原逻辑以确保内容显示）
         const content = blocks
             .filter((block): block is NonNullable<typeof block> => {
                 if (!block) return false;
 
+                // 包含所有有内容的块类型
                 const hasContent =
                     block.type === MessageBlockType.MAIN_TEXT ||
-                    block.type === MessageBlockType.THINKING ||
+                    // block.type === MessageBlockType.THINKING ||
                     block.type === MessageBlockType.CODE;
 
                 const hasContentProperty = 'content' in block;
@@ -48,6 +50,15 @@ export const useMessageOperations = (streamingMessageId: string | null) => {
                 return content;
             })
             .join('');
+
+        console.log(`[getMessageContent] Message ${message.id} content (all blocks):`, {
+            totalBlocks: blocks.length,
+            thinkingBlocks: blocks.filter((b) => b?.type === MessageBlockType.THINKING).length,
+            mainTextBlocks: blocks.filter((b) => b?.type === MessageBlockType.MAIN_TEXT).length,
+            codeBlocks: blocks.filter((b) => b?.type === MessageBlockType.CODE).length,
+            contentLength: content.length,
+            preview: content.substring(0, 100),
+        });
 
         return content;
     }, []);

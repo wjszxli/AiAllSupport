@@ -185,8 +185,9 @@ export default class OpenAiLlmProvider extends BaseLlmProvider {
         const processStream = async (stream: any) => {
             // 流式处理主要逻辑
             let content = '';
-            // let thinkingContent = '';
+            let thinkingContent = '';
             let isFirstChunk = true;
+            let time_first_token_millsec = 0;
 
             console.log('stream', stream);
 
@@ -202,7 +203,7 @@ export default class OpenAiLlmProvider extends BaseLlmProvider {
 
             const reasoningTag = getAppropriateTag(model);
 
-            // // 使用中间件处理推理内容
+            // 使用中间件处理推理内容
             const { stream: processedStream } = await extractReasoningMiddleware<OpenAIStreamChunk>(
                 {
                     openingTag: reasoningTag?.openingTag,
@@ -216,30 +217,30 @@ export default class OpenAiLlmProvider extends BaseLlmProvider {
                 }),
             });
 
-            // // 处理流式响应
+            // 处理流式响应
             for await (const chunk of readableStreamAsyncIterable(processedStream)) {
-                console.log('chunk', chunk);
-                // @ts-ignore
-                switch (chunk.type) {
-                    // case 'reasoning': {
-                    //     // 处理推理/思考内容
-                    //     thinkingContent += chunk.textDelta;
-                    //     onChunk({
-                    //         type: ChunkType.THINKING_DELTA,
-                    //         text: chunk.textDelta,
-                    //         thinking_millsec: new Date().getTime() - time_first_token_millsec,
-                    //     });
-                    //     break;
-                    // }
-                    case 'text-delta': {
-                        // 处理文本内容
-                        // @ts-ignore
-                        let textDelta = chunk.textDelta;
-                        // 链接处理...
+                // console.log('chunk', chunk);
+                const typedChunk = chunk as OpenAIStreamChunk;
 
+                switch (typedChunk.type) {
+                    case 'reasoning': {
+                        if (time_first_token_millsec === 0) {
+                            time_first_token_millsec = new Date().getTime();
+                        }
+                        // 处理推理/思考内容
+                        onChunk({
+                            type: ChunkType.THINKING_DELTA,
+                            text: typedChunk.textDelta,
+                            thinking_millsec: new Date().getTime() - time_first_token_millsec,
+                        });
+                        break;
+                    }
+                    case 'text-delta': {
+                        let textDelta = typedChunk.textDelta;
+
+                        console.log('isFirstChunk', isFirstChunk);
                         if (isFirstChunk) {
                             isFirstChunk = false;
-                            // 首个token时间记录...
                         }
                         content += textDelta;
                         onChunk({ type: ChunkType.TEXT_DELTA, text: textDelta });
@@ -247,23 +248,19 @@ export default class OpenAiLlmProvider extends BaseLlmProvider {
                     }
                     case 'finish': {
                         // 处理完成事件
-                        if (content) {
-                            onChunk({ type: ChunkType.TEXT_COMPLETE, text: content });
-                        }
                         // if (thinkingContent) {
                         //     onChunk({
                         //         type: ChunkType.THINKING_COMPLETE,
                         //         text: thinkingContent,
                         //     });
                         // }
+                        if (content) {
+                            onChunk({ type: ChunkType.TEXT_COMPLETE, text: content });
+                        }
                         // 发送流式处理完成信号
                         onChunk({ type: ChunkType.BLOCK_COMPLETE });
                         break;
                     }
-                    //     case 'tool-calls': {
-                    //         // 处理工具调用...
-                    //         break;
-                    //     }
                 }
             }
             console.log('content', content);

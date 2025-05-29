@@ -3,8 +3,10 @@ import { Message } from '@/types/message';
 import {
     BaseMessageBlock,
     ErrorMessageBlock,
+    MainTextMessageBlock,
     MessageBlockStatus,
     MessageBlockType,
+    ThinkingMessageBlock,
 } from '@/types/messageBlock';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -137,3 +139,33 @@ export const resetRobotMessage = (
         ...updates, // Apply any specific updates passed in (e.g., a different status)
     };
 };
+
+export function createMainTextBlock(
+    messageId: string,
+    content: string,
+    overrides: Partial<Omit<MainTextMessageBlock, 'id' | 'messageId' | 'type' | 'content'>> = {},
+): MainTextMessageBlock {
+    const baseBlock = createBaseMessageBlock(messageId, MessageBlockType.MAIN_TEXT, overrides);
+    return {
+        ...baseBlock,
+        content,
+        knowledgeBaseIds: overrides.knowledgeBaseIds,
+    };
+}
+
+export function createThinkingBlock(
+    messageId: string,
+    content: string = '',
+    overrides: Partial<Omit<ThinkingMessageBlock, 'id' | 'messageId' | 'type' | 'content'>> = {},
+): ThinkingMessageBlock {
+    const baseOverrides: Partial<Omit<BaseMessageBlock, 'id' | 'messageId' | 'type'>> = {
+        status: MessageBlockStatus.PROCESSING,
+        ...overrides,
+    };
+    const baseBlock = createBaseMessageBlock(messageId, MessageBlockType.THINKING, baseOverrides);
+    return {
+        ...baseBlock,
+        content,
+        thinking_millsec: overrides.thinking_millsec,
+    };
+}

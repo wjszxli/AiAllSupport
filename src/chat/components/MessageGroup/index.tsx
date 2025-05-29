@@ -140,6 +140,7 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
                                     <div className="message-text">
                                         <MessageRenderer
                                             content={content}
+                                            messageId={message.id}
                                             isStreaming={isStreaming}
                                         />
                                     </div>

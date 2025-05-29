@@ -75,6 +75,7 @@ export const zhCN = {
     send: '发送',
     thinking: 'AI 正在思考...',
     think: '已深思熟虑',
+    processing: '思考中...',
     you: '你',
     assistant: 'AI 助手',
     askWebpage: '询问关于这个网页...',

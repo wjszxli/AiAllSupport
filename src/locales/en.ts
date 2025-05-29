@@ -86,6 +86,7 @@ export const en = {
     codeCopied: 'Code copied',
     failedCodeCopy: 'Failed to copy code',
     selectProviderFirst: 'Please click the plugin icon to select a service provider first',
+    processing: 'Processing...',
 
     // Language settings
     language: 'Language',
