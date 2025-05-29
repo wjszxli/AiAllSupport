@@ -2,6 +2,8 @@ import { useCallback } from 'react';
 import { Message } from '@/types/message';
 import { MessageBlockType, MessageBlockStatus } from '@/types/messageBlock';
 import rootStore from '@/store';
+import robotStore from '@/store/robot';
+import { MessageThunkService } from '@/store/messageThunk';
 import { message as AntdMessage } from 'antd';
 import { t } from '@/locales/i18n';
 
@@ -84,9 +86,42 @@ export const useMessageOperations = (streamingMessageId: string | null) => {
     }, []);
 
     // 重新生成响应
-    const handleRegenerateResponse = useCallback(() => {
-        // TODO: 实现重新生成响应的逻辑
-        console.log('重新生成响应');
+    const handleRegenerateResponse = useCallback((assistantMessage: Message) => {
+        console.log('开始重新生成响应', assistantMessage);
+
+        try {
+            // 获取当前选中的话题ID
+            const selectedTopicId = robotStore.selectedRobot.selectedTopicId;
+            if (!selectedTopicId) {
+                console.error('[handleRegenerateResponse] No selected topic');
+                AntdMessage.error(t('errorRegenerating') || '重新生成失败：未选择话题');
+                return;
+            }
+
+            // 获取当前机器人配置
+            const robot = robotStore.selectedRobot;
+            if (!robot) {
+                console.error('[handleRegenerateResponse] No selected robot');
+                AntdMessage.error(t('errorRegenerating') || '重新生成失败：未选择机器人');
+                return;
+            }
+
+            // 检查是否是助手消息
+            if (assistantMessage.role !== 'assistant') {
+                console.error('[handleRegenerateResponse] Message is not from assistant');
+                AntdMessage.error(t('errorRegenerating') || '重新生成失败：只能重新生成助手消息');
+                return;
+            }
+
+            // 创建消息服务实例并调用重新生成
+            const messageService = new MessageThunkService(rootStore);
+            messageService.regenerateAssistantResponse(selectedTopicId, assistantMessage, robot);
+
+            AntdMessage.info(t('regenerating') || '正在重新生成...', 2);
+        } catch (error) {
+            console.error('[handleRegenerateResponse] Error:', error);
+            AntdMessage.error(t('errorRegenerating') || '重新生成失败');
+        }
     }, []);
 
     return {

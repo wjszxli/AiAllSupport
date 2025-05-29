@@ -1,9 +1,16 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { md } from '@/utils/markdownRenderer';
 import DOMPurify from 'dompurify';
+import hljs from 'highlight.js';
 
 export const useMessageRenderer = () => {
-    // 处理代码块
+    // 初始化 Highlight.js
+    useEffect(() => {
+        // 初始化时自动高亮页面上的代码块
+        hljs.highlightAll();
+    }, []);
+
+    // 处理代码块的语法高亮和行号
     const processCodeBlocks = useCallback((html: string): string => {
         // 使用正则表达式匹配代码块
         const codeBlockRegex = /<pre><code(?:\s+class="language-(\w+)")?>([^<]+)<\/code><\/pre>/g;
@@ -16,18 +23,85 @@ export const useMessageRenderer = () => {
                 .replace(/&quot;/g, '"')
                 .replace(/&#39;/g, "'");
 
-            // 添加行号和复制按钮的容器
+            // 获取语言显示名称
+            const languageMap: { [key: string]: string } = {
+                ts: 'TypeScript',
+                js: 'JavaScript',
+                jsx: 'React JSX',
+                tsx: 'React TSX',
+                py: 'Python',
+                java: 'Java',
+                cpp: 'C++',
+                cs: 'C#',
+                go: 'Go',
+                rs: 'Rust',
+                sql: 'SQL',
+                json: 'JSON',
+                yaml: 'YAML',
+                md: 'Markdown',
+                sh: 'Shell',
+                bash: 'Bash',
+                docker: 'Dockerfile',
+                git: 'Git',
+            };
+
+            const displayLang = lang ? languageMap[lang] || lang.toUpperCase() : 'Plain Text';
+
+            // 使用 highlight.js 高亮代码
+            let highlightedCode;
+            try {
+                // 确保代码有正确的换行
+                const codeWithLineBreaks = decodedCode.replace(/\r\n/g, '\n');
+
+                highlightedCode = lang
+                    ? hljs.highlight(codeWithLineBreaks, { language: lang }).value
+                    : hljs.highlightAuto(codeWithLineBreaks).value;
+            } catch (error) {
+                // 如果指定的语言不支持，回退到自动检测
+                highlightedCode = hljs.highlightAuto(decodedCode).value;
+            }
+
+            // 添加行号
+            const lines = highlightedCode.split('\n');
+            const lineCount = lines.length;
+
+            // 构建行号和代码内容
+            const numberedLines = lines
+                .map((line, index) => {
+                    const lineNumber = index + 1;
+                    // 确保空行也有适当的高度
+                    const lineContent = line || '&nbsp;';
+                    return `<div class="code-line">
+                        <div class="line-number" data-line-number="${lineNumber}"></div>
+                        <div class="line-content"><span class="line-text">${lineContent}</span></div>
+                    </div>`;
+                })
+                .join('');
+
+            // 构建代码块容器
             return `
                 <div class="code-block-wrapper">
                     <div class="code-block-header">
-                        ${lang ? `<span class="code-language">${lang}</span>` : ''}
-                        <button class="copy-code-button" data-code="${encodeURIComponent(
-                            decodedCode,
-                        )}">
-                            复制代码
-                        </button>
+                        <div class="code-info">
+                            <span class="code-language">${displayLang}</span>
+                            <span class="code-lines">${lineCount} lines</span>
+                        </div>
+                        <div class="code-actions">
+                            <button class="copy-code-button" data-code="${encodeURIComponent(
+                                decodedCode,
+                            )}">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                                    <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                                </svg>
+                                <span>复制代码</span>
+                            </button>
+                        </div>
                     </div>
-                    <pre><code class="language-${lang || 'plaintext'}">${code}</code></pre>
+                    <div class="code-block-body">
+                        <div class="code-content">
+                            ${numberedLines}
+                        </div>
+                    </div>
                 </div>
             `;
         });

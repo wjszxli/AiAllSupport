@@ -1,5 +1,5 @@
-import React from 'react';
-import { Avatar, Button } from 'antd';
+import React, { useEffect } from 'react';
+import { Avatar, Button, message } from 'antd';
 import {
     UserOutlined,
     RobotOutlined,
@@ -10,7 +10,7 @@ import {
 import { Message } from '@/types/message';
 import { t } from '@/locales/i18n';
 import { observer } from 'mobx-react-lite';
-import { useMessageRenderer } from '@/chat/hooks/useMessageRenderer';
+import MessageRenderer from './MessageRenderer';
 import './index.scss';
 
 interface MessageGroupProps {
@@ -21,7 +21,7 @@ interface MessageGroupProps {
     getMessageContent: (message: Message) => string;
     isMessageStreaming: (message: Message) => boolean;
     onCopyMessage: (text: string) => void;
-    onRegenerateResponse: () => void;
+    onRegenerateResponse: (assistantMessage: Message) => void;
     onEditMessage: (text: string) => void;
 }
 
@@ -43,9 +43,6 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
         const isUserMessage = firstMessage.role === 'user';
         const isAssistantMessage = firstMessage.role === 'assistant';
 
-        // 使用消息渲染 hook
-        const { renderMessageContent } = useMessageRenderer();
-
         // 获取消息时间
         const getMessageTime = (message: Message) => {
             return new Date(message.createdAt).toLocaleTimeString([], {
@@ -53,6 +50,52 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
                 minute: '2-digit',
             });
         };
+
+        // 处理复制代码块
+        useEffect(() => {
+            const handleCopyCode = (e: MouseEvent) => {
+                const target = e.target as HTMLElement;
+                const copyButton = target.closest('.copy-code-button') as HTMLButtonElement;
+
+                if (copyButton) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const codeData = copyButton.getAttribute('data-code');
+                    if (codeData) {
+                        try {
+                            const decodedCode = decodeURIComponent(codeData);
+                            navigator.clipboard.writeText(decodedCode).then(() => {
+                                // 复制成功提示
+                                message.success(t('copy_success') || '复制成功');
+
+                                // 更新按钮文本显示复制成功，然后恢复
+                                const textSpan = copyButton.querySelector('span');
+                                if (textSpan) {
+                                    const originalText = textSpan.textContent;
+                                    textSpan.textContent = t('copied') || '已复制';
+
+                                    setTimeout(() => {
+                                        textSpan.textContent = originalText;
+                                    }, 2000);
+                                }
+                            });
+                        } catch (error) {
+                            console.error('Copy failed:', error);
+                            message.error(t('copy_failed') || '复制失败');
+                        }
+                    }
+                }
+            };
+
+            // 添加事件监听器
+            document.addEventListener('click', handleCopyCode);
+
+            // 清理函数
+            return () => {
+                document.removeEventListener('click', handleCopyCode);
+            };
+        }, []);
 
         return (
             <div className={`message-group ${isUserMessage ? 'user-group' : 'assistant-group'}`}>
@@ -94,13 +137,12 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
 
                             return (
                                 <div key={message.id} className="message-item">
-                                    <div
-                                        className="message-text"
-                                        dangerouslySetInnerHTML={{
-                                            __html: renderMessageContent(content, isStreaming),
-                                        }}
-                                    />
-
+                                    <div className="message-text">
+                                        <MessageRenderer
+                                            content={content}
+                                            isStreaming={isStreaming}
+                                        />
+                                    </div>
                                     {/* 流式加载指示器 */}
                                     {isStreaming && (
                                         <div className="streaming-indicator">
@@ -136,7 +178,7 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
                                     type="text"
                                     icon={<ReloadOutlined />}
                                     size="small"
-                                    onClick={onRegenerateResponse}
+                                    onClick={() => onRegenerateResponse(firstMessage)}
                                     title={t('regenerate') || '重新生成'}
                                 >
                                     {t('regenerate') || '重新生成'}

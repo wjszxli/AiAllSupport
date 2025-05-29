@@ -620,19 +620,11 @@ export class MessageThunkService {
             const blockIdsToDelete = [...(messageToReset.blocks || [])];
 
             // 重置消息
-            const resetAssistantMsg = resetRobotMessage(
-                messageToReset,
-                assistantMessageToRegenerate.modelId
-                    ? {
-                          status: RobotMessageStatus.PENDING,
-                          updatedAt: new Date().toISOString(),
-                      }
-                    : {
-                          status: RobotMessageStatus.PENDING,
-                          updatedAt: new Date().toISOString(),
-                          model: robot.model,
-                      },
-            );
+            const resetAssistantMsg = resetRobotMessage(messageToReset, {
+                status: RobotMessageStatus.PENDING,
+                updatedAt: new Date().toISOString(),
+                ...(assistantMessageToRegenerate.modelId ? {} : { model: robot.model }),
+            });
 
             runInAction(() => {
                 this.rootStore.messageStore.updateMessage(resetAssistantMsg.id, resetAssistantMsg);
@@ -641,27 +633,51 @@ export class MessageThunkService {
                 }
             });
 
-            // 更新数据库
+            // 更新数据库 - 使用深度序列化确保对象完全可序列化
             const finalMessages = this.rootStore.messageStore.getMessagesForTopic(topicId);
+
+            // 使用 JSON.parse(JSON.stringify()) 进行深度清理，移除所有不可序列化的属性
+            const deepCleanedMessages = JSON.parse(JSON.stringify(finalMessages));
+
             await db.transaction('rw', db.topics, db.message_blocks, async () => {
-                await db.topics.update(topicId, { messages: finalMessages });
+                await db.topics.update(topicId, { messages: deepCleanedMessages });
                 if (blockIdsToDelete.length > 0) {
                     await db.message_blocks.bulkDelete(blockIdsToDelete);
                 }
             });
 
-            // 添加到队列重新生成
+            // 添加到队列重新生成 - 创建完全可序列化的robot配置
             const queue = getTopicQueue(topicId);
-            const assistantConfigForRegen = {
-                ...robot,
-                ...(resetAssistantMsg.model ? { model: resetAssistantMsg.model } : {}),
-            };
+
+            // 深度清理robot对象，移除所有可能的循环引用和不可序列化属性
+            const cleanRobot = JSON.parse(
+                JSON.stringify({
+                    id: robot.id,
+                    name: robot.name,
+                    prompt: robot.prompt,
+                    type: robot.type,
+                    ...(robot.icon && { icon: robot.icon }),
+                    ...(robot.description && { description: robot.description }),
+                    // 提供空的topics数组以满足Robot类型要求
+                    topics: [],
+                    ...(robot.selectedTopicId && { selectedTopicId: robot.selectedTopicId }),
+                    // 只包含当前需要的model信息
+                    ...(resetAssistantMsg.model && {
+                        model: {
+                            id: resetAssistantMsg.model.id,
+                            provider: resetAssistantMsg.model.provider,
+                            name: resetAssistantMsg.model.name,
+                            group: resetAssistantMsg.model.group,
+                        },
+                    }),
+                }),
+            );
+
+            // 也要深度清理resetAssistantMsg
+            const cleanResetMessage = JSON.parse(JSON.stringify(resetAssistantMsg));
+
             queue.add(async () => {
-                await this.fetchAndProcessAssistantResponse(
-                    topicId,
-                    assistantConfigForRegen,
-                    resetAssistantMsg,
-                );
+                await this.fetchAndProcessAssistantResponse(topicId, cleanRobot, cleanResetMessage);
             });
         } catch (error) {
             console.error(`[regenerateAssistantResponse] Error:`, error);
@@ -704,17 +720,43 @@ export class MessageThunkService {
         const topicFromDB = await db.topics.get(topicId);
         if (topicFromDB) {
             const messagesToSaveInDB = this.rootStore.messageStore.getMessagesForTopic(topicId);
-            await db.topics.update(topicId, { messages: messagesToSaveInDB });
+            // 使用深度序列化确保对象完全可序列化
+            const deepCleanedMessages = JSON.parse(JSON.stringify(messagesToSaveInDB));
+            await db.topics.update(topicId, { messages: deepCleanedMessages });
         }
 
         const queue = getTopicQueue(topicId);
         for (const assistantMessage of assistantMessageStubs) {
-            const assistantForThisMention = { ...robot, model: assistantMessage.model };
+            // 创建清理的robot对象以避免序列化问题
+            const cleanRobotForMention = JSON.parse(
+                JSON.stringify({
+                    id: robot.id,
+                    name: robot.name,
+                    prompt: robot.prompt,
+                    type: robot.type,
+                    ...(robot.icon && { icon: robot.icon }),
+                    ...(robot.description && { description: robot.description }),
+                    topics: [],
+                    ...(robot.selectedTopicId && { selectedTopicId: robot.selectedTopicId }),
+                    ...(assistantMessage.model && {
+                        model: {
+                            id: assistantMessage.model.id,
+                            provider: assistantMessage.model.provider,
+                            name: assistantMessage.model.name,
+                            group: assistantMessage.model.group,
+                        },
+                    }),
+                }),
+            );
+
+            // 清理assistant消息对象
+            const cleanAssistantMessage = JSON.parse(JSON.stringify(assistantMessage));
+
             queue.add(async () => {
                 await this.fetchAndProcessAssistantResponse(
                     topicId,
-                    assistantForThisMention,
-                    assistantMessage,
+                    cleanRobotForMention,
+                    cleanAssistantMessage,
                 );
             });
         }

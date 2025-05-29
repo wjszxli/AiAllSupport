@@ -1,0 +1,255 @@
+@import url('highlight.js/styles/github.css');
+
+.code-block {
+    margin: 16px 0;
+    overflow: hidden;
+    background: #f8f9fa;
+    border: 1px solid #e1e4e8;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 5%);
+
+    .code-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 12px;
+        background: #f1f3f5;
+        border-bottom: 1px solid #e1e4e8;
+
+        .code-info {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+
+            .code-language {
+                font-size: 12px;
+                font-weight: 500;
+                color: #666;
+            }
+
+            .code-lines {
+                font-size: 12px;
+                color: #999;
+            }
+        }
+
+        .code-toolbar {
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+
+            &.show {
+                opacity: 1;
+            }
+
+            .toolbar-button {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 28px;
+                height: 28px;
+                padding: 0;
+                font-size: 14px;
+                color: #666;
+                cursor: pointer;
+                background: transparent;
+                border: 1px solid transparent;
+                border-radius: 4px;
+                transition: all 0.2s;
+
+                &:hover {
+                    color: #333;
+                    background: #fff;
+                    border-color: #d1d5db;
+                }
+
+                &:active {
+                    transform: scale(0.95);
+                }
+            }
+        }
+    }
+
+    .code-content {
+        position: relative;
+        max-height: 600px;
+        overflow: auto;
+
+        .code-container {
+            display: flex;
+            min-height: 100%;
+
+            .line-numbers {
+                display: flex;
+                flex-direction: column;
+                padding: 12px 8px 12px 12px;
+                font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+                font-size: 12px;
+                line-height: 1.5;
+                color: #999;
+                text-align: right;
+                user-select: none;
+                background: #f1f3f5;
+                border-right: 1px solid #e1e4e8;
+
+                .line-number {
+                    display: block;
+                    height: 19.5px; // 与代码行高度对齐 (13px * 1.5)
+                    white-space: nowrap;
+                }
+            }
+
+            .code-main {
+                flex: 1;
+                min-width: 0;
+
+                pre {
+                    padding: 12px;
+                    margin: 0;
+                    overflow-x: auto;
+                    background: transparent;
+
+                    code {
+                        display: block;
+                        font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+                        font-size: 13px;
+                        line-height: 1.5;
+                        color: #333;
+                        background: transparent;
+
+                        &.hljs {
+                            padding: 0;
+                            background: transparent;
+                        }
+                    }
+                }
+            }
+        }
+
+        // 滚动条样式
+        &::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        &::-webkit-scrollbar-track {
+            background: #f1f3f5;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 4px;
+
+            &:hover {
+                background: #9ca3af;
+            }
+        }
+    }
+
+    // 深色主题适配
+    &.dark {
+        background: #1e1e1e;
+        border-color: #444;
+
+        .code-header {
+            background: #2d2d2d;
+            border-color: #444;
+
+            .code-info .code-language {
+                color: #ccc;
+            }
+
+            .code-toolbar .toolbar-button {
+                color: #ccc;
+
+                &:hover {
+                    color: #fff;
+                    background: #444;
+                    border-color: #666;
+                }
+            }
+        }
+
+        .code-content {
+            .code-container {
+                .line-numbers {
+                    color: #888;
+                    background: #2d2d2d;
+                    border-color: #444;
+                }
+
+                .code-main {
+                    pre code {
+                        color: #fff;
+                    }
+                }
+            }
+
+            &::-webkit-scrollbar-track {
+                background: #2d2d2d;
+            }
+
+            &::-webkit-scrollbar-thumb {
+                background: #666;
+
+                &:hover {
+                    background: #888;
+                }
+            }
+        }
+    }
+}
+
+// 响应式设计
+@media (max-width: 768px) {
+    .code-block {
+        margin: 12px 0;
+        border-radius: 4px;
+
+        .code-header {
+            padding: 6px 10px;
+
+            .code-info {
+                gap: 8px;
+
+                .code-language,
+                .code-lines {
+                    font-size: 11px;
+                }
+            }
+
+            .code-toolbar .toolbar-button {
+                width: 24px;
+                height: 24px;
+                font-size: 12px;
+            }
+        }
+
+        .code-content {
+            max-height: 400px;
+
+            .code-container {
+                .line-numbers {
+                    min-width: var(--mobile-width);
+                    padding: 10px 6px 10px 10px;
+                    font-size: 11px;
+
+                    .line-number {
+                        height: 18px; // 调整移动端行高
+                    }
+                }
+
+                .code-main {
+                    pre {
+                        padding: 10px;
+
+                        code {
+                            font-size: 12px;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

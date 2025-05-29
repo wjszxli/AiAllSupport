@@ -82,6 +82,7 @@ export const zhCN = {
     interfaceSettings: '界面设置',
     errorProcessing: '处理消息时出错，请重试',
     errorRegenerating: '重新生成回复时出错，请重试',
+    regenerating: '正在重新生成...',
     copied: '已复制到剪贴板',
     failedCopy: '复制失败',
     codeCopied: '代码已复制',

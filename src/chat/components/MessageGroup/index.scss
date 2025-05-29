@@ -1,7 +1,10 @@
+// 导入 highlight.js 样式
+@import url('highlight.js/styles/github.css');
+
 .message-group {
     display: flex;
     gap: 16px;
-    padding: 16px;
+    padding: 20px 24px;
     transition: background-color 0.3s;
 
     &:hover {
@@ -55,100 +58,117 @@
 
                 .message-text {
                     font-size: 14px;
-                    line-height: 1.6;
+                    line-height: 1.7;
                     color: #333;
                     word-wrap: break-word;
                     overflow-wrap: break-word;
 
-                    p {
-                        margin-bottom: 12px;
-
-                        &:last-child {
-                            margin-bottom: 0;
+                    // MessageRenderer 容器样式
+                    .message-content-renderer {
+                        // 流式加载样式
+                        &.streaming {
+                            opacity: 0.7;
                         }
-                    }
 
-                    // 代码块样式
-                    .code-block-wrapper {
-                        margin: 16px 0;
-                        overflow: hidden;
-                        background: #f8f9fa;
-                        border: 1px solid #e1e4e8;
-                        border-radius: 6px;
+                        // 确保代码块正确显示
+                        .code-block {
+                            margin: 20px 0;
+                        }
 
-                        .code-block-header {
-                            display: flex;
-                            align-items: center;
-                            justify-content: space-between;
-                            padding: 8px 12px;
-                            background: #f1f3f5;
-                            border-bottom: 1px solid #e1e4e8;
+                        // 段落样式
+                        p {
+                            margin-bottom: 16px;
 
-                            .code-language {
-                                font-size: 12px;
-                                color: #666;
-                                text-transform: uppercase;
+                            &:last-child {
+                                margin-bottom: 0;
+                            }
+                        }
+
+                        // 数学公式样式
+                        .math-inline {
+                            display: inline-block;
+                            padding: 6px 16px;
+                            margin: 0 6px;
+                            font-family: 'Times New Roman', 'KaTeX_Main', serif;
+                            font-size: 1.15em;
+                            line-height: 1.6;
+                            vertical-align: middle;
+                            background: #f8f9fa;
+                            border: 1px solid #e1e4e8;
+                            border-radius: 6px;
+                        }
+
+                        .math-block {
+                            display: block;
+                            min-height: 80px;
+                            padding: 40px 60px;
+                            margin: 36px 0;
+                            overflow-x: auto;
+                            font-family: 'Times New Roman', 'KaTeX_Main', serif;
+                            font-size: 1.4em;
+                            line-height: 2.2;
+                            text-align: center;
+                            background: #f8f9fa;
+                            border: 1px solid #e1e4e8;
+                            border-radius: 12px;
+                            box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
+
+                            // 确保数学公式在块中居中
+                            &:empty::before {
+                                display: inline-block;
+                                content: '';
                             }
 
-                            .copy-code-button {
-                                padding: 4px 8px;
-                                cursor: pointer;
-                                font-size: 12px;
-                                color: #666;
-                                background: transparent;
-                                border: 1px solid #d1d5db;
+                            // 处理长公式的滚动
+                            &::-webkit-scrollbar {
+                                height: 8px;
+                            }
+
+                            &::-webkit-scrollbar-track {
+                                background: #f1f3f5;
                                 border-radius: 4px;
-                                transition: all 0.2s;
+                            }
+
+                            &::-webkit-scrollbar-thumb {
+                                background: #d1d5db;
+                                border-radius: 4px;
 
                                 &:hover {
-                                    color: #333;
-                                    background: #fff;
-                                    border-color: #999;
+                                    background: #9ca3af;
                                 }
                             }
                         }
 
-                        pre {
-                            padding: 16px;
-                            margin: 0;
-                            overflow-x: auto;
+                        // 表情符号样式
+                        .emoji {
+                            display: inline-block;
+                            padding: 0 4px;
+                            font-family: sans-serif;
+                        }
 
-                            code {
-                                font-family: monospace;
-                                font-size: 13px;
-                                line-height: 1.5;
+                        // 链接样式
+                        .message-link {
+                            display: inline-flex;
+                            gap: 4px;
+                            align-items: center;
+                            color: #0969da;
+                            text-decoration: none;
+                            transition: color 0.2s;
+
+                            .external-link-icon {
+                                opacity: 0.7;
+                                transition: opacity 0.2s;
+                            }
+
+                            &:hover {
+                                color: #1a7fd4;
+                                text-decoration: underline;
+
+                                .external-link-icon {
+                                    opacity: 1;
+                                }
                             }
                         }
-                    }
-
-                    // 数学公式样式
-                    .math-inline {
-                        padding: 0 4px;
-                        font-family: serif;
-                        background: #f8f9fa;
-                        border-radius: 4px;
-                    }
-
-                    .math-block {
-                        padding: 16px;
-                        margin: 16px 0;
-                        font-family: serif;
-                        background: #f8f9fa;
-                        border: 1px solid #e1e4e8;
-                        border-radius: 6px;
-                        overflow-x: auto;
-                    }
-
-                    // 表情符号样式
-                    .emoji {
-                        display: inline-block;
-                        padding: 0 4px;
-                        font-family: sans-serif;
-                    }
-
-                    // 流式加载样式
-                    &.streaming {
-                        opacity: 0.7;
                     }
                 }
 
@@ -208,6 +228,10 @@
         flex-direction: row-reverse;
 
         .message-content {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+
             .message-header {
                 text-align: right;
             }
@@ -219,6 +243,110 @@
             .message-actions {
                 justify-content: flex-end;
             }
+
+            .message-body {
+                display: flex;
+                flex-direction: column;
+                align-items: flex-end;
+                width: 100%;
+
+                .message-item {
+                    display: flex;
+                    justify-content: flex-end;
+                    width: 100%;
+
+                    .message-text {
+                        width: fit-content;
+                        min-width: 120px;
+                        max-width: 90%;
+                        padding: 12px 16px;
+                        color: white;
+                        background-color: #1890ff;
+                        border-radius: 18px 18px 4px;
+                        box-shadow: 0 1px 2px rgb(0 0 0 / 10%);
+
+                        .message-content-renderer {
+                            code {
+                                color: white;
+                                background-color: rgb(255 255 255 / 20%);
+                            }
+
+                            pre {
+                                background-color: rgb(255 255 255 / 10%);
+
+                                code {
+                                    background: none;
+                                }
+                            }
+
+                            .message-link {
+                                color: white;
+                                text-decoration: underline;
+                                opacity: 0.9;
+
+                                &:hover {
+                                    color: white;
+                                    opacity: 1;
+                                }
+
+                                .external-link-icon {
+                                    fill: white;
+                                }
+                            }
+
+                            // 用户消息中的代码块需要特殊处理
+                            .code-block {
+                                margin: 8px 0;
+                                background: rgb(255 255 255 / 15%);
+                                border: 1px solid rgb(255 255 255 / 20%);
+
+                                .code-header {
+                                    background: rgb(255 255 255 / 10%);
+                                    border-color: rgb(255 255 255 / 20%);
+
+                                    .code-info {
+                                        .code-language,
+                                        .code-lines {
+                                            color: rgb(255 255 255 / 90%);
+                                        }
+                                    }
+
+                                    .code-toolbar .toolbar-button {
+                                        color: rgb(255 255 255 / 80%);
+                                        border-color: rgb(255 255 255 / 30%);
+
+                                        &:hover {
+                                            color: white;
+                                            background: rgb(255 255 255 / 15%);
+                                            border-color: rgb(255 255 255 / 50%);
+                                        }
+                                    }
+                                }
+
+                                .code-content {
+                                    pre code {
+                                        color: rgb(255 255 255 / 95%);
+                                    }
+                                }
+                            }
+
+                            // 用户消息中的数学公式需要特殊处理
+                            .math-inline {
+                                color: #333;
+                                background: rgb(255 255 255 / 90%);
+                                border-color: rgb(255 255 255 / 60%);
+                            }
+
+                            .math-block {
+                                color: #333;
+                                background: rgb(255 255 255 / 95%);
+                                border-color: rgb(255 255 255 / 70%);
+                                box-shadow: 0 2px 6px rgb(0 0 0 / 15%);
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -226,41 +354,73 @@
         flex-direction: row;
 
         .message-content {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
             text-align: left;
+
+            .message-body {
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+                width: 100%;
+
+                .message-item {
+                    display: flex;
+                    justify-content: flex-start;
+                    width: 100%;
+
+                    .message-text {
+                        max-width: 85%;
+                        padding: 20px 24px;
+                        background-color: #fff;
+                        border: 1px solid #f0f0f0;
+                        border-radius: 4px 18px 18px;
+                        box-shadow: 0 1px 3px rgb(0 0 0 / 5%);
+
+                        .message-content-renderer {
+                            // 确保代码块在助手消息中正常显示
+                            .code-block {
+                                margin: 16px 0;
+
+                                // 第一个和最后一个代码块的间距调整
+                                &:first-child {
+                                    margin-top: 0;
+                                }
+
+                                &:last-child {
+                                    margin-bottom: 0;
+                                }
+                            }
+
+                            // 助手消息中的数学公式间距优化
+                            .math-block {
+                                margin: 32px 0;
+
+                                &:first-child {
+                                    margin-top: 0;
+                                }
+
+                                &:last-child {
+                                    margin-bottom: 0;
+                                }
+                            }
+
+                            .math-inline {
+                                margin: 0 4px;
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
 
-// 用户消息特殊样式
-.message-group.user-group .message-content .message-body .message-item .message-text {
-    display: inline-block;
-    max-width: 80%;
-    padding: 12px 16px;
-    color: white;
-    background-color: #1890ff;
-    border-radius: 18px;
-
-    code {
-        color: white;
-        background-color: rgb(255 255 255 / 20%);
-    }
-
-    pre {
-        background-color: rgb(255 255 255 / 10%);
-
-        code {
-            background: none;
-        }
-    }
-}
-
-// 助手消息特殊样式
-.message-group.assistant-group .message-content .message-body .message-item .message-text {
-    padding: 16px;
-    background-color: #fff;
-    border: 1px solid #f0f0f0;
-    border-radius: 12px;
-    box-shadow: 0 1px 3px rgb(0 0 0 / 5%);
+// 适配 highlight.js
+.hljs {
+    padding: 0 !important;
+    background: transparent !important;
 }
 
 // 动画
@@ -284,7 +444,7 @@
 // 响应式设计
 @media (max-width: 768px) {
     .message-group {
-        padding: 12px;
+        padding: 16px 20px;
         margin-bottom: 16px;
 
         .message-avatar .ant-avatar {
@@ -294,11 +454,29 @@
 
         .message-content .message-body .message-item .message-text {
             font-size: 14px;
+
+            // 移动设备上的数学公式优化
+            .message-content-renderer {
+                .math-inline {
+                    padding: 4px 10px;
+                    margin: 0 3px;
+                    font-size: 1.05em;
+                }
+
+                .math-block {
+                    padding: 24px 20px;
+                    margin: 20px 0;
+                    font-size: 1.2em;
+                    line-height: 1.8;
+                }
+            }
         }
 
         &.user-group .message-content .message-body .message-item .message-text {
-            max-width: 90%;
-            padding: 10px 14px;
+            width: fit-content;
+            min-width: 100px;
+            max-width: 95%;
+            padding: 12px 16px;
         }
     }
 }
