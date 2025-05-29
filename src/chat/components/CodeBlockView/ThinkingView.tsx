@@ -1,4 +1,4 @@
-import React, { memo, useState } from 'react';
+import React, { memo, useState, useEffect } from 'react';
 import { EyeOutlined, EyeInvisibleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { t } from '@/locales/i18n';
 import './ThinkingView.scss';
@@ -14,7 +14,15 @@ interface Props {
  * 显示AI的思考过程，可折叠展开
  */
 const ThinkingView: React.FC<Props> = ({ children, thinking_millsec, isStreaming = false }) => {
-    const [isExpanded, setIsExpanded] = useState(false);
+    // 流式思考内容默认展开，让用户能立即看到思考过程
+    const [isExpanded, setIsExpanded] = useState(isStreaming);
+
+    // 当开始流式处理时，自动展开思考内容
+    useEffect(() => {
+        if (isStreaming) {
+            setIsExpanded(true);
+        }
+    }, [isStreaming]);
 
     // 格式化思考时间
     const formatThinkingTime = (millsec?: number): string => {

@@ -8,7 +8,7 @@ import { message as AntdMessage } from 'antd';
 import { t } from '@/locales/i18n';
 
 export const useMessageOperations = (streamingMessageId: string | null) => {
-    // 获取消息内容（从 MessageBlock 中获取）
+    // 获取消息的正文内容（不包含思考内容）
     const getMessageContent = useCallback((message: Message): string => {
         if (!message.blocks || message.blocks.length === 0) {
             console.log(`[getMessageContent] Message ${message.id} has no blocks`);
@@ -30,15 +30,14 @@ export const useMessageOperations = (streamingMessageId: string | null) => {
             return '';
         }
 
-        // 获取所有类型的块内容（暂时恢复原逻辑以确保内容显示）
+        // 只获取正文内容，不包含思考内容
         const content = blocks
             .filter((block): block is NonNullable<typeof block> => {
                 if (!block) return false;
 
-                // 包含所有有内容的块类型
+                // 只包含正文内容类型的块，明确排除 THINKING 类型
                 const hasContent =
                     block.type === MessageBlockType.MAIN_TEXT ||
-                    // block.type === MessageBlockType.THINKING ||
                     block.type === MessageBlockType.CODE;
 
                 const hasContentProperty = 'content' in block;
@@ -51,7 +50,7 @@ export const useMessageOperations = (streamingMessageId: string | null) => {
             })
             .join('');
 
-        console.log(`[getMessageContent] Message ${message.id} content (all blocks):`, {
+        console.log(`[getMessageContent] Message ${message.id} main content only:`, {
             totalBlocks: blocks.length,
             thinkingBlocks: blocks.filter((b) => b?.type === MessageBlockType.THINKING).length,
             mainTextBlocks: blocks.filter((b) => b?.type === MessageBlockType.MAIN_TEXT).length,
@@ -61,6 +60,40 @@ export const useMessageOperations = (streamingMessageId: string | null) => {
         });
 
         return content;
+    }, []);
+
+    // 获取消息的思考内容
+    const getMessageThinking = useCallback((message: Message): string => {
+        if (!message.blocks || message.blocks.length === 0) {
+            return '';
+        }
+
+        const blocks = message.blocks
+            .map((blockId) => {
+                const block = rootStore.messageBlockStore.getBlockById(blockId);
+                return block;
+            })
+            .filter(Boolean);
+
+        // 只获取思考内容
+        const thinkingContent = blocks
+            .filter((block): block is NonNullable<typeof block> => {
+                if (!block) return false;
+                return block.type === MessageBlockType.THINKING && 'content' in block;
+            })
+            .map((block) => {
+                const content = (block as any).content || '';
+                return content;
+            })
+            .join('');
+
+        console.log(`[getMessageThinking] Message ${message.id} thinking content:`, {
+            thinkingBlocks: blocks.filter((b) => b?.type === MessageBlockType.THINKING).length,
+            thinkingContentLength: thinkingContent.length,
+            preview: thinkingContent.substring(0, 100),
+        });
+
+        return thinkingContent;
     }, []);
 
     // 检查消息是否正在流式显示
@@ -137,6 +170,7 @@ export const useMessageOperations = (streamingMessageId: string | null) => {
 
     return {
         getMessageContent,
+        getMessageThinking,
         isMessageStreaming,
         handleCopyMessage,
         handleRegenerateResponse,

@@ -244,22 +244,20 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({
                     (block: MessageBlock) => block.type === MessageBlockType.THINKING,
                 );
                 thinkingBlocks.forEach((block: MessageBlock) => {
-                    if (
-                        block.type === MessageBlockType.THINKING &&
-                        'content' in block &&
-                        block.content
-                    ) {
+                    if (block.type === MessageBlockType.THINKING && 'content' in block) {
                         const thinkingBlock = block as ThinkingMessageBlock;
                         const isThinkingStreaming =
                             thinkingBlock.status === MessageBlockStatus.STREAMING;
                         console.log('Adding THINKING block:', {
                             id: thinkingBlock.id,
-                            contentLength: thinkingBlock.content.length,
+                            contentLength: thinkingBlock.content?.length || 0,
                             isStreaming: isThinkingStreaming,
+                            status: thinkingBlock.status,
                         });
+                        // 即使内容为空也要显示思考块，这样用户可以立即看到思考开始了
                         parts.push({
                             type: 'thinking',
-                            content: thinkingBlock.content,
+                            content: thinkingBlock.content || '',
                             thinking_millsec: thinkingBlock.thinking_millsec,
                             isStreaming: isThinkingStreaming,
                             id: `thinking-${thinkingBlock.id}`,
