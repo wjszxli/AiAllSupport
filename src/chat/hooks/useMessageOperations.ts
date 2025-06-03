@@ -87,12 +87,6 @@ export const useMessageOperations = (streamingMessageId: string | null) => {
             })
             .join('');
 
-        console.log(`[getMessageThinking] Message ${message.id} thinking content:`, {
-            thinkingBlocks: blocks.filter((b) => b?.type === MessageBlockType.THINKING).length,
-            thinkingContentLength: thinkingContent.length,
-            preview: thinkingContent.substring(0, 100),
-        });
-
         return thinkingContent;
     }, []);
 
@@ -100,16 +94,47 @@ export const useMessageOperations = (streamingMessageId: string | null) => {
     const isMessageStreaming = useCallback(
         (message: Message): boolean => {
             // 首先检查是否是当前流式消息
-            if (streamingMessageId === message.id) {
+            if (streamingMessageId && streamingMessageId === message.id) {
                 return true;
             }
 
             // 其次检查消息的块是否有流式状态
             if (message.blocks && message.blocks.length > 0) {
-                return message.blocks.some((blockId) => {
+                // 直接从 store 获取最新的块状态
+                const hasStreamingBlock = message.blocks.some((blockId) => {
                     const block = rootStore.messageBlockStore.getBlockById(blockId);
-                    return block && block.status === MessageBlockStatus.STREAMING;
+                    if (!block) {
+                        console.warn(`[isMessageStreaming] Block ${blockId} not found in store`);
+                        return false;
+                    }
+                    // 检查块是否处于流式状态
+                    const isStreaming =
+                        block.status === MessageBlockStatus.STREAMING ||
+                        block.status === MessageBlockStatus.PROCESSING;
+
+                    return isStreaming;
                 });
+
+                // 调试信息：只在开发环境下输出
+                if (process.env.NODE_ENV === 'development') {
+                    console.log(`[isMessageStreaming] Message ${message.id} streaming check:`, {
+                        messageId: message.id,
+                        streamingMessageId,
+                        isStreamingMessage: streamingMessageId === message.id,
+                        hasStreamingBlock,
+                        blocks: message.blocks.map((blockId) => {
+                            const block = rootStore.messageBlockStore.getBlockById(blockId);
+                            return {
+                                blockId,
+                                type: block?.type,
+                                status: block?.status,
+                                exists: !!block,
+                            };
+                        }),
+                    });
+                }
+
+                return hasStreamingBlock;
             }
 
             return false;

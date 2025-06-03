@@ -38,7 +38,8 @@ function preprocessMath(text: string) {
         brackets: /[()[\]{}]/g,
         blockFormula: /\\\[([\S\s]*?)\\]/g,
         inlineFormula: /\\\(([\S\s]*?)\\\)/g,
-        subscripts: /(\d+|[A-Za-z])([^_])(\d+)(?!})/g,
+        // 修复：只在有明确下标标记（如 _）的情况下处理下标
+        subscripts: /([A-Za-z]+)_(\d+)/g,
         specialSymbols: /\\(pm|mp|times|div|gamma|ln|int|infty|leq|geq|neq|approx)\b/g,
     };
 
@@ -54,10 +55,10 @@ function preprocessMath(text: string) {
     // 优化行内公式处理
     processed = processed.replace(patterns.inlineFormula, (_, p1) => `$${p1.trim()}$`);
 
-    // 优化上下标处理
-    processed = processed.replace(patterns.subscripts, '$1$2{$3}');
+    // 修复：只处理明确的下标（如 H_2O）
+    processed = processed.replace(patterns.subscripts, '$1_{$2}');
 
-    // 使用 Map 优化特殊字符替换
+    // 只在数学公式环境中替换特殊字符
     const specialChars = new Map([
         ['∫', '\\int '],
         ['±', '\\pm '],
@@ -71,10 +72,23 @@ function preprocessMath(text: string) {
         ['≈', '\\approx '],
     ]);
 
-    // 批量处理特殊字符
-    for (const [char, replacement] of specialChars) {
-        processed = processed.replaceAll(char, replacement);
-    }
+    // 处理块级公式中的特殊字符
+    processed = processed.replace(/\$\$([\s\S]*?)\$\$/g, (match, content) => {
+        let processedContent = content;
+        for (const [char, replacement] of specialChars) {
+            processedContent = processedContent.replaceAll(char, replacement);
+        }
+        return `$$${processedContent}$$`;
+    });
+
+    // 处理行内公式中的特殊字符
+    processed = processed.replace(/\$([^$]+?)\$/g, (match, content) => {
+        let processedContent = content;
+        for (const [char, replacement] of specialChars) {
+            processedContent = processedContent.replaceAll(char, replacement);
+        }
+        return `$${processedContent}$`;
+    });
 
     return processed;
 }

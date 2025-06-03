@@ -21,7 +21,6 @@ export function createStreamProcessor(callbacks: StreamProcessorCallbacks = {}) 
     // The returned function processes a single chunk or a final signal
     return (chunk: Chunk) => {
         try {
-            console.log('[DEBUG] createStreamProcessor', chunk?.type);
             // Logger.log(`[${new Date().toLocaleString()}] createStreamProcessor ${chunk.type}`, chunk)
             // 1. Handle the manual final signal first
             if (chunk?.type === ChunkType.BLOCK_COMPLETE) {
@@ -61,7 +60,6 @@ export const createStreamCallback: StreamProcessorCallbacks = {
         // handleBlockTransition(baseBlock as PlaceholderMessageBlock, MessageBlockType.UNKNOWN);
     },
     onTextChunk: (text) => {
-        console.log('onTextChunk', text);
         // accumulatedContent += text;
         // if (lastBlockId) {
         //     if (lastBlockType === MessageBlockType.UNKNOWN) {

@@ -44,6 +44,11 @@ export class MessageThunkService {
 
     private cancelThrottledBlockUpdate = this.throttledBlockUpdate.cancel;
 
+    // 新增：仅保存到数据库的节流函数，不更新store
+    private throttledSaveBlockToDB = throttle((blockId: string) => {
+        this.saveBlockToDB(blockId);
+    }, 150);
+
     // 保存消息和块到数据库
     private async saveMessageAndBlocksToDB(
         message: Message,
@@ -55,7 +60,6 @@ export class MessageThunkService {
                 // 序列化 MobX 对象
                 const serializedBlocks = blocks.map((block) => JSON.parse(JSON.stringify(block)));
                 await db.message_blocks.bulkPut(serializedBlocks);
-                console.log('blocks', serializedBlocks);
             }
 
             const topic = await db.topics.get(message.topicId);
@@ -75,7 +79,6 @@ export class MessageThunkService {
                         updatedMessages.push(serializedMessage);
                     }
                 }
-                console.log('updatedMessages', updatedMessages, message.topicId);
                 await db.topics.update(message.topicId, { messages: updatedMessages });
             }
         } catch (error) {
@@ -94,12 +97,6 @@ export class MessageThunkService {
                 // 将 MobX 对象转换为纯 JavaScript 对象
                 const serializedBlock = JSON.parse(JSON.stringify(block));
                 await db.message_blocks.put(serializedBlock);
-                console.log(`[saveBlockToDB] Saved block ${blockId}:`, {
-                    id: serializedBlock.id,
-                    type: serializedBlock.type,
-                    status: serializedBlock.status,
-                    contentLength: serializedBlock.content?.length || 0,
-                });
             } catch (error) {
                 console.error(`[saveBlockToDB] Failed to save block ${blockId}:`, error);
             }
@@ -200,6 +197,17 @@ export class MessageThunkService {
                     );
                 });
 
+                // 调试信息：只在开发环境下输出
+                if (process.env.NODE_ENV === 'development') {
+                    console.log('[handleBlockTransition] Block added to message:', {
+                        blockId: newBlock.id,
+                        blockType,
+                        assistantMsgId,
+                        messageBlocks:
+                            this.rootStore.messageStore.getMessageById(assistantMsgId)?.blocks,
+                    });
+                }
+
                 // 保存到数据库
                 await this.saveBlockToDB(newBlock.id);
             };
@@ -223,11 +231,17 @@ export class MessageThunkService {
             callbacks = {
                 // 开始响应
                 onLLMResponseCreated: () => {
-                    console.log('onLLMResponseCreated');
-                    // 设置流式消息ID
                     runInAction(() => {
                         this.rootStore.messageStore.setStreamingMessageId(assistantMsgId);
                     });
+
+                    // 调试信息：只在开发环境下输出
+                    if (process.env.NODE_ENV === 'development') {
+                        console.log('[onLLMResponseCreated] Setting streamingMessageId:', {
+                            assistantMsgId,
+                            streamingMessageId: this.rootStore.messageStore.streamingMessageId,
+                        });
+                    }
 
                     const baseBlock = createBaseMessageBlock(
                         assistantMsgId,
@@ -241,13 +255,26 @@ export class MessageThunkService {
 
                 // 思考内容流处理
                 onThinkingChunk: (text: string, thinking_millsec?: number) => {
-                    console.log('onThinkingChunk', text, thinking_millsec);
-                    // 累积思考内容
                     accumulatedThinkingContent += text;
+
+                    // 调试信息：只在开发环境下输出
+                    if (process.env.NODE_ENV === 'development') {
+                        console.log(
+                            '[onThinkingChunk] First thinking chunk, converting block type:',
+                            {
+                                currentBlockId,
+                                assistantMsgId,
+                                streamingMessageId: this.rootStore.messageStore.streamingMessageId,
+                                currentBlockType: currentBlockType,
+                                messageHasBlock: this.rootStore.messageStore
+                                    .getMessageById(assistantMsgId)
+                                    ?.blocks?.includes(currentBlockId || ''),
+                            },
+                        );
+                    }
 
                     if (currentBlockId) {
                         if (currentBlockType === MessageBlockType.UNKNOWN) {
-                            // 首次确定为思考块
                             runInAction(() => {
                                 this.rootStore.messageBlockStore.updateBlock(currentBlockId!, {
                                     type: MessageBlockType.THINKING,
@@ -257,10 +284,8 @@ export class MessageThunkService {
                                 });
                             });
                             currentBlockType = MessageBlockType.THINKING;
-                            // 保存首次类型转换到数据库
                             this.saveBlockToDB(currentBlockId);
                         } else if (currentBlockType === MessageBlockType.THINKING) {
-                            // 实时更新思考内容
                             runInAction(() => {
                                 this.rootStore.messageBlockStore.updateBlock(currentBlockId!, {
                                     content: accumulatedThinkingContent,
@@ -268,12 +293,7 @@ export class MessageThunkService {
                                     thinking_millsec: thinking_millsec,
                                 });
                             });
-                            // 节流保存到数据库
-                            this.throttledBlockUpdate(currentBlockId, {
-                                content: accumulatedThinkingContent,
-                                status: MessageBlockStatus.STREAMING,
-                                thinking_millsec: thinking_millsec,
-                            });
+                            this.throttledSaveBlockToDB(currentBlockId);
                         } else {
                             const newBlock = createThinkingBlock(
                                 assistantMsgId,
@@ -290,7 +310,6 @@ export class MessageThunkService {
 
                 // 思考完成
                 onThinkingComplete: async (finalText: string, thinking_millsec?: number) => {
-                    console.log('onThinkingComplete', finalText, thinking_millsec);
                     this.cancelThrottledBlockUpdate();
 
                     if (currentBlockType === MessageBlockType.THINKING && currentBlockId) {
@@ -312,23 +331,40 @@ export class MessageThunkService {
 
                 // 文本流处理
                 onTextChunk: (text: string) => {
-                    console.log('onTextChunk', {
-                        text: text.substring(0, 50) + (text.length > 50 ? '...' : ''),
-                        currentBlockId,
-                        currentBlockType,
-                        accumulatedContentLength: accumulatedContent.length,
-                        accumulatedThinkingContentLength: accumulatedThinkingContent.length,
-                    });
-
+                    if (process.env.NODE_ENV === 'development') {
+                        console.log('[onTextChunk] First thinking chunk, converting block type:', {
+                            currentBlockId,
+                            assistantMsgId,
+                            streamingMessageId: this.rootStore.messageStore.streamingMessageId,
+                            currentBlockType: currentBlockType,
+                            messageHasBlock: this.rootStore.messageStore
+                                .getMessageById(assistantMsgId)
+                                ?.blocks?.includes(currentBlockId || ''),
+                        });
+                    }
                     accumulatedContent += text;
 
                     if (currentBlockId) {
-                        if (currentBlockType === MessageBlockType.UNKNOWN) {
-                            // 首次确定为文本块
-                            console.log(
-                                'Converting to MAIN_TEXT block, content length:',
-                                accumulatedContent.length,
+                        // 如果当前块是思考块，需要先完成它
+                        if (currentBlockType === MessageBlockType.THINKING) {
+                            // 完成思考块
+                            runInAction(() => {
+                                this.rootStore.messageBlockStore.updateBlock(currentBlockId!, {
+                                    status: MessageBlockStatus.SUCCESS,
+                                });
+                            });
+                            this.saveBlockToDB(currentBlockId!);
+
+                            // 创建新的文本块
+                            const newBlock = createMainTextBlock(
+                                assistantMsgId,
+                                accumulatedContent,
+                                {
+                                    status: MessageBlockStatus.STREAMING,
+                                },
                             );
+                            handleBlockTransition(newBlock, MessageBlockType.MAIN_TEXT);
+                        } else if (currentBlockType === MessageBlockType.UNKNOWN) {
                             runInAction(() => {
                                 this.rootStore.messageBlockStore.updateBlock(currentBlockId!, {
                                     type: MessageBlockType.MAIN_TEXT,
@@ -337,14 +373,15 @@ export class MessageThunkService {
                                 });
                             });
                             currentBlockType = MessageBlockType.MAIN_TEXT;
-                            // 保存首次类型转换到数据库
-                            this.saveBlockToDB(currentBlockId);
+                            this.throttledSaveBlockToDB(currentBlockId);
                         } else if (currentBlockType === MessageBlockType.MAIN_TEXT) {
-                            // 节流更新文本内容
-                            this.throttledBlockUpdate(currentBlockId, {
-                                content: accumulatedContent,
-                                status: MessageBlockStatus.STREAMING,
+                            runInAction(() => {
+                                this.rootStore.messageBlockStore.updateBlock(currentBlockId!, {
+                                    content: accumulatedContent,
+                                    status: MessageBlockStatus.STREAMING,
+                                });
                             });
+                            this.throttledSaveBlockToDB(currentBlockId);
                         } else {
                             const newBlock = createMainTextBlock(
                                 assistantMsgId,
@@ -362,25 +399,20 @@ export class MessageThunkService {
                 onTextComplete: async (finalText: string) => {
                     this.cancelThrottledBlockUpdate();
                     if (currentBlockType === MessageBlockType.MAIN_TEXT && currentBlockId) {
-                        // 确保使用最终的干净文本内容
                         await updateBlockContent(finalText, MessageBlockStatus.SUCCESS);
-                        console.log('Text content finalized for block:', currentBlockId);
                     }
                 },
 
                 // 错误处理
                 onError: async (error: { name: string; message: string; stack: any }) => {
-                    console.log('onError', error);
                     this.cancelThrottledBlockUpdate();
 
-                    // 清除流式消息ID
                     runInAction(() => {
                         this.rootStore.messageStore.setStreamingMessageId(null);
                     });
 
                     const isAbort = isAbortError(error);
 
-                    // 更新当前块状态
                     if (currentBlockId) {
                         runInAction(() => {
                             this.rootStore.messageBlockStore.updateBlock(currentBlockId!, {
@@ -392,7 +424,6 @@ export class MessageThunkService {
                         await this.saveBlockToDB(currentBlockId);
                     }
 
-                    // 创建错误块
                     const errorBlock = createErrorBlock(
                         assistantMsgId,
                         {
@@ -405,7 +436,6 @@ export class MessageThunkService {
 
                     await handleBlockTransition(errorBlock, MessageBlockType.ERROR);
 
-                    // 更新消息状态
                     const messageUpdate = {
                         status: isAbort ? RobotMessageStatus.SUCCESS : RobotMessageStatus.ERROR,
                     };
@@ -413,28 +443,16 @@ export class MessageThunkService {
                         this.rootStore.messageStore.updateMessage(assistantMsgId, messageUpdate);
                     });
                     await this.saveUpdatesToDB(assistantMsgId, topicId, messageUpdate, []);
-
-                    // // 发送完成事件
-                    // EventEmitter.emit(EVENT_NAMES.MESSAGE_COMPLETE, {
-                    //     id: assistantMsgId,
-                    //     topicId,
-                    //     status: isAbort ? 'pause' : 'error',
-                    //     error: error.message,
-                    // });
                 },
 
                 // 完成处理
                 onComplete: async (status: RobotMessageStatus, response?: any) => {
-                    console.log('onComplete', status, response);
                     this.cancelThrottledBlockUpdate();
 
-                    // 清除流式消息ID
                     runInAction(() => {
                         this.rootStore.messageStore.setStreamingMessageId(null);
                     });
 
-                    // 注意：不要在这里重复更新块内容，因为 onTextComplete 已经处理了
-                    // 只需要确保块状态是 SUCCESS（如果还不是的话）
                     if (currentBlockId && status === 'success') {
                         const currentBlock =
                             this.rootStore.messageBlockStore.getBlockById(currentBlockId);
@@ -448,7 +466,6 @@ export class MessageThunkService {
                         }
                     }
 
-                    // 更新消息状态和使用量
                     const messageUpdates: Partial<Message> = {
                         status,
                         metrics: response?.metrics,
@@ -460,23 +477,14 @@ export class MessageThunkService {
                     });
                     await this.saveUpdatesToDB(assistantMsgId, topicId, messageUpdates, []);
 
-                    // 自动重命名主题
                     if (status === 'success') {
                         // autoRenameTopic(assistant, topicId);
                     }
-
-                    // // 发送完成事件
-                    // EventEmitter.emit(EVENT_NAMES.MESSAGE_COMPLETE, {
-                    //     id: assistantMsgId,
-                    //     topicId,
-                    //     status,
-                    // });
                 },
             };
 
             // 7. 创建流处理器并发起请求
             const streamProcessorCallbacks = createStreamProcessor(callbacks);
-            console.log('messagesForContext', messagesForContext);
             await fetchChatCompletion({
                 messages: messagesForContext,
                 robot: robot,
@@ -489,7 +497,37 @@ export class MessageThunkService {
             }
             throw error;
         } finally {
-            // 重置加载状态和流式状态
+            // Clean up any remaining blocks in PROCESSING/STREAMING state
+            const message = this.rootStore.messageStore.getMessageById(assistantMsgId);
+            if (message && message.blocks) {
+                const blocksToCleanup: string[] = [];
+                message.blocks.forEach((blockId: string) => {
+                    const block = this.rootStore.messageBlockStore.getBlockById(blockId);
+                    if (
+                        block &&
+                        (block.status === MessageBlockStatus.PROCESSING ||
+                            block.status === MessageBlockStatus.STREAMING)
+                    ) {
+                        blocksToCleanup.push(blockId);
+                    }
+                });
+
+                if (blocksToCleanup.length > 0) {
+                    runInAction(() => {
+                        blocksToCleanup.forEach((blockId) => {
+                            this.rootStore.messageBlockStore.updateBlock(blockId, {
+                                status: MessageBlockStatus.SUCCESS,
+                            });
+                        });
+                    });
+
+                    // Save the cleaned up blocks to database
+                    for (const blockId of blocksToCleanup) {
+                        await this.saveBlockToDB(blockId);
+                    }
+                }
+            }
+
             runInAction(() => {
                 this.rootStore.messageStore.setTopicLoading(topicId, false);
                 this.rootStore.messageStore.setStreamingMessageId(null);
@@ -578,14 +616,6 @@ export class MessageThunkService {
                     .anyOf(messageIds)
                     .toArray();
 
-                console.log(`[loadTopicMessages] Loading topic ${topicId}:`, {
-                    messagesCount: messagesFromDB.length,
-                    blocksCount: blocks.length,
-                    messageIds,
-                    blockIds: blocks.map((b) => b.id),
-                });
-
-                // 重建消息的blocks数组
                 const blocksByMessageId = new Map<string, string[]>();
                 blocks.forEach((block) => {
                     if (!blocksByMessageId.has(block.messageId)) {
@@ -594,7 +624,6 @@ export class MessageThunkService {
                     blocksByMessageId.get(block.messageId)!.push(block.id);
                 });
 
-                // 更新消息对象的blocks数组
                 const correctedMessages = messagesFromDB.map((message) => {
                     const messageBlocks = blocksByMessageId.get(message.id) || [];
                     return {
@@ -603,19 +632,41 @@ export class MessageThunkService {
                     };
                 });
 
-                console.log(`[loadTopicMessages] Corrected messages blocks:`, {
-                    corrections: correctedMessages.map((m) => ({
-                        id: m.id,
-                        role: m.role,
-                        originalBlocks:
-                            messagesFromDB.find((orig) => orig.id === m.id)?.blocks?.length || 0,
-                        correctedBlocks: m.blocks.length,
-                    })),
-                });
-
                 runInAction(() => {
                     if (blocks && blocks.length > 0) {
-                        this.rootStore.messageBlockStore.upsertManyBlocks(blocks);
+                        // Clean up any stale PROCESSING/STREAMING blocks from previous sessions
+                        const cleanedBlocks = blocks.map((block) => {
+                            if (
+                                block.status === MessageBlockStatus.PROCESSING ||
+                                block.status === MessageBlockStatus.STREAMING
+                            ) {
+                                return {
+                                    ...block,
+                                    status: MessageBlockStatus.SUCCESS,
+                                };
+                            }
+                            return block;
+                        });
+
+                        this.rootStore.messageBlockStore.upsertManyBlocks(cleanedBlocks);
+
+                        // Update database with cleaned blocks if any were modified
+                        const modifiedBlocks = cleanedBlocks.filter(
+                            (cleanedBlock, index) => cleanedBlock.status !== blocks[index].status,
+                        );
+                        if (modifiedBlocks.length > 0) {
+                            // Save modified blocks to database asynchronously
+                            Promise.all(
+                                modifiedBlocks.map((block) =>
+                                    db.message_blocks.put(JSON.parse(JSON.stringify(block))),
+                                ),
+                            ).catch((error) => {
+                                console.error(
+                                    '[loadTopicMessages] Failed to save cleaned blocks:',
+                                    error,
+                                );
+                            });
+                        }
                     }
                     this.rootStore.messageStore.messagesReceived(topicId, correctedMessages);
                 });

@@ -111,23 +111,77 @@
 .markdown-content table {
     width: 100%;
     margin: 16px 0;
-    border-collapse: collapse;
+    overflow: hidden;
+    font-size: 14px;
+    background-color: #ffffff;
+    border: 1px solid #e1e4e8;
+    border-spacing: 0;
+    border-collapse: separate;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .markdown-content th,
 .markdown-content td {
-    padding: 8px 12px;
+    padding: 12px 16px;
     text-align: left;
-    border: 1px solid #dfe2e5;
+    border-right: 1px solid #e1e4e8;
+    border-bottom: 1px solid #e1e4e8;
+}
+
+.markdown-content th:last-child,
+.markdown-content td:last-child {
+    border-right: none;
+}
+
+.markdown-content tr:last-child td {
+    border-bottom: none;
 }
 
 .markdown-content th {
+    font-size: 14px;
     font-weight: 600;
+    color: #24292e;
     background-color: #f6f8fa;
 }
 
+.markdown-content tr {
+    transition: background-color 0.1s ease;
+}
+
 .markdown-content tr:nth-child(even) {
-    background-color: #f6f8fa;
+    background-color: #fafbfc;
+}
+
+.markdown-content tr:hover {
+    background-color: #f0f3f6;
+}
+
+.markdown-content tbody tr:first-child td {
+    border-top: 1px solid #e1e4e8;
+}
+
+/* 添加表格容器样式以支持横向滚动 */
+.markdown-content .table-wrapper {
+    margin: 16px 0;
+    overflow-x: auto;
+    border-radius: 6px;
+}
+
+.markdown-content .table-wrapper table {
+    margin: 0;
+}
+
+/* 在较小屏幕上的响应式处理 */
+@media (max-width: 768px) {
+    .markdown-content table {
+        font-size: 13px;
+    }
+
+    .markdown-content th,
+    .markdown-content td {
+        padding: 8px 12px;
+    }
 }
 
 .markdown-content ul,
@@ -190,6 +244,29 @@
     text-decoration: underline;
 }
 
+/* User message table styles */
+.message-user .markdown-content table {
+    background-color: rgba(255, 255, 255, 0.95);
+    color: #24292e;
+}
+
+.message-user .markdown-content th {
+    background-color: rgba(246, 248, 250, 0.95);
+    color: #24292e;
+}
+
+.message-user .markdown-content td {
+    color: #24292e;
+}
+
+.message-user .markdown-content tr:nth-child(even) {
+    background-color: rgba(250, 251, 252, 0.95);
+}
+
+.message-user .markdown-content tr:hover {
+    background-color: rgba(240, 243, 246, 0.95);
+}
+
 /* Prevent page scrolling when input is focused in chat */
 .chat-interface-container:focus-within {
     contain: content;
@@ -205,7 +282,7 @@
     position: relative;
     margin: 16px 0;
     overflow: hidden;
-    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+    font-family: SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
     border-radius: 8px;
     background-color: #0d1117;
     border: 1px solid #30363d;
@@ -300,9 +377,15 @@
 }
 
 @keyframes copy-success-animation {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); }
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
 }
 
 .copy-icon {
@@ -312,23 +395,34 @@
 }
 
 /* Syntax highlighting colors - GitHub Dark theme */
-.hljs-keyword, .hljs-selector-tag {
+.hljs-keyword,
+.hljs-selector-tag {
     color: #ff7b72;
 }
 
-.hljs-built_in, .hljs-name {
+.hljs-built_in,
+.hljs-name {
     color: #79c0ff;
 }
 
-.hljs-attr, .hljs-attribute, .hljs-number, .hljs-selector-attr {
+.hljs-attr,
+.hljs-attribute,
+.hljs-number,
+.hljs-selector-attr {
     color: #d2a8ff;
 }
 
-.hljs-string, .hljs-selector-id, .hljs-selector-class, .hljs-quote, .hljs-template-tag, .hljs-deletion {
+.hljs-string,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-quote,
+.hljs-template-tag,
+.hljs-deletion {
     color: #a5d6ff;
 }
 
-.hljs-title, .hljs-section {
+.hljs-title,
+.hljs-section {
     color: #d2a8ff;
 }
 
@@ -336,15 +430,18 @@
     color: #8b949e;
 }
 
-.hljs-meta, .hljs-meta-keyword {
+.hljs-meta,
+.hljs-meta-keyword {
     color: #f0883e;
 }
 
-.hljs-variable, .hljs-template-variable {
+.hljs-variable,
+.hljs-template-variable {
     color: #ffa657;
 }
 
-.hljs-type, .hljs-params {
+.hljs-type,
+.hljs-params {
     color: #79c0ff;
 }
 
@@ -386,7 +483,8 @@
     --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 10%), 0 4px 6px -2px rgb(0 0 0 / 5%);
 
     /* Typography */
-    --font-sans: -apple-system, blinkmacsystemfont, Segoe UI, roboto, Helvetica Neue, arial, sans-serif;
+    --font-sans: -apple-system, blinkmacsystemfont, Segoe UI, roboto, Helvetica Neue, arial,
+        sans-serif;
 
     /* Spacing */
     --space-2: 0.5rem;
@@ -684,7 +782,6 @@
 }
 
 @keyframes gentle-pulse {
-
     0%,
     100% {
         opacity: 0.95;
@@ -714,7 +811,6 @@
 }
 
 @keyframes cursor-blink {
-
     0%,
     100% {
         opacity: 0;
@@ -744,7 +840,7 @@
 
 /* Hide thinking indicator completely when streaming */
 .message-bubble.streaming-message .thinking-indicator,
-.streaming-message+.message-bubble.thinking,
+.streaming-message + .message-bubble.thinking,
 .message-bubble.thinking:has(+ .streaming-message) {
     display: none !important;
     height: 0 !important;

@@ -35,7 +35,6 @@ const ChatBody: React.FC<ChatBodyProps> = observer(
 
         const messages = useMemo(() => {
             const data = rootStore.messageStore.getMessagesForTopic(selectedTopicId || '');
-            console.log('data', data);
             return data;
         }, [
             selectedTopicId,
@@ -70,11 +69,10 @@ const ChatBody: React.FC<ChatBodyProps> = observer(
         // 当话题变化时加载消息
         useEffect(() => {
             if (selectedTopicId) {
-                console.log('加载消息 for topic:', selectedTopicId);
                 const messageService = new MessageThunkService(rootStore);
                 messageService.loadTopicMessages(selectedTopicId);
             }
-        }, [selectedTopicId]);
+        }, [selectedTopicId, rootStore]);
 
         const handleSendMessage = () => {
             if (!userInput.trim() || isLoading) return;

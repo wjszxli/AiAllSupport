@@ -185,9 +185,9 @@ export default class OpenAiLlmProvider extends BaseLlmProvider {
         const processStream = async (stream: any) => {
             // 流式处理主要逻辑
             let content = '';
-            let thinkingContent = '';
             let isFirstChunk = true;
             let time_first_token_millsec = 0;
+            let thinkingContent = '';
 
             console.log('stream', stream);
 
@@ -219,7 +219,7 @@ export default class OpenAiLlmProvider extends BaseLlmProvider {
 
             // 处理流式响应
             for await (const chunk of readableStreamAsyncIterable(processedStream)) {
-                // console.log('chunk', chunk);
+                console.log('chunk', chunk);
                 const typedChunk = chunk as OpenAIStreamChunk;
 
                 switch (typedChunk.type) {
@@ -227,33 +227,39 @@ export default class OpenAiLlmProvider extends BaseLlmProvider {
                         if (time_first_token_millsec === 0) {
                             time_first_token_millsec = new Date().getTime();
                         }
+
+                        thinkingContent += typedChunk.textDelta;
                         // 处理推理/思考内容
                         onChunk({
                             type: ChunkType.THINKING_DELTA,
                             text: typedChunk.textDelta,
                             thinking_millsec: new Date().getTime() - time_first_token_millsec,
                         });
+                        onChunk({
+                            type: ChunkType.THINKING_COMPLETE,
+                            text: thinkingContent,
+                        });
                         break;
                     }
                     case 'text-delta': {
                         let textDelta = typedChunk.textDelta;
 
-                        console.log('isFirstChunk', isFirstChunk);
                         if (isFirstChunk) {
                             isFirstChunk = false;
                         }
+
                         content += textDelta;
                         onChunk({ type: ChunkType.TEXT_DELTA, text: textDelta });
                         break;
                     }
                     case 'finish': {
                         // 处理完成事件
-                        // if (thinkingContent) {
-                        //     onChunk({
-                        //         type: ChunkType.THINKING_COMPLETE,
-                        //         text: thinkingContent,
-                        //     });
-                        // }
+                        if (thinkingContent) {
+                            onChunk({
+                                type: ChunkType.THINKING_COMPLETE,
+                                text: thinkingContent,
+                            });
+                        }
                         if (content) {
                             onChunk({ type: ChunkType.TEXT_COMPLETE, text: content });
                         }

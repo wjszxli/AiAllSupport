@@ -20,7 +20,6 @@ import rootStore from '@/store';
 
 // 更新单个块的逻辑，用于更新消息中的单个块
 const throttledBlockUpdate = throttle(async (id, blockUpdate) => {
-    console.log('throttledBlockUpdate', id, blockUpdate);
     rootStore.messageBlockStore.updateBlock(id, blockUpdate);
     await db.message_blocks.update(id, blockUpdate);
 }, 150);
@@ -51,7 +50,6 @@ export async function fetchChatCompletion({
     robot: Robot;
     onChunkReceived: (chunk: Chunk) => void;
 }) {
-    console.log('fetchChatCompletion', messages, robot);
     const provider = llmStore.providers.find((p) => p.id === robot.model?.provider);
 
     if (!provider) {
@@ -62,7 +60,6 @@ export async function fetchChatCompletion({
 
     // Make sure that 'Clear Context' works for all scenarios including external tool and normal chat.
     messages = filterContextMessages(messages);
-    console.log('filterContextMessages', messages);
 
     const lastUserMessage = findLast(messages, (m) => m.role === 'user');
     if (!lastUserMessage) {
@@ -71,7 +68,6 @@ export async function fetchChatCompletion({
     }
 
     const filteredMessages = filterUsefulMessages(messages);
-    console.log('filterUsefulMessages', filteredMessages);
 
     await AI.completions({
         messages: filteredMessages,
@@ -95,7 +91,6 @@ export const fetchAndProcessAssistantResponseImpl = async (
         // const messagesForContext = [message];
 
         const allMessages = rootStore.messageStore.getMessagesForTopic(topicId);
-        console.log('allMessages', allMessages);
         const userMessageIndex = allMessages.findIndex((m) => m?.id === message.askId);
         const messagesForContext =
             userMessageIndex !== -1
@@ -115,7 +110,6 @@ export const fetchAndProcessAssistantResponseImpl = async (
 
         const updateBlockContent = async (content: string, status: MessageBlockStatus) => {
             if (!currentBlockId) return;
-            console.log('updateBlockContent', currentBlockId, content, status);
         };
 
         callbacks = {
@@ -163,7 +157,6 @@ export const fetchAndProcessAssistantResponseImpl = async (
 
             // 错误处理
             onError: async (error) => {
-                console.log('onError', error);
                 cancelThrottledBlockUpdate();
                 // const isAbort = isAbortError(error);
 
@@ -213,7 +206,6 @@ export const fetchAndProcessAssistantResponseImpl = async (
 
             // 完成处理
             onComplete: async (status: RobotMessageStatus, response?: Response) => {
-                console.log('onComplete', status, response);
                 cancelThrottledBlockUpdate();
 
                 // 更新最后一个块状态

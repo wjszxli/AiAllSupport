@@ -145,7 +145,7 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
                                         />
                                     </div>
                                     {/* 流式加载指示器 */}
-                                    {isStreaming && (
+                                    {/* {isStreaming && (
                                         <div className="streaming-indicator">
                                             <span className="typing-dots">
                                                 <span></span>
@@ -153,7 +153,7 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
                                                 <span></span>
                                             </span>
                                         </div>
-                                    )}
+                                    )} */}
                                 </div>
                             );
                         })}

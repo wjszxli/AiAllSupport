@@ -129,7 +129,7 @@ const Robot: React.FC<RobotProps> = ({ onSwitchToTopics }) => {
                 editForm.resetFields();
             })
             .catch((info) => {
-                console.log('验证失败:', info);
+                // 处理验证失败的情况，但不输出到控制台
             });
     };
 
