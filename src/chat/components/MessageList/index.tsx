@@ -14,26 +14,15 @@ import './index.scss';
 interface MessageListProps {
     messages: Message[];
     selectedProvider: string;
-    isLoading: boolean;
     onEditMessage: (text: string) => void;
 }
 
 const MessageList: React.FC<MessageListProps> = observer(
-    ({ messages, selectedProvider, isLoading, onEditMessage }) => {
+    ({ messages, selectedProvider, onEditMessage }) => {
         const messagesWrapperRef = useRef<HTMLDivElement>(null);
         const streamingMessageId = rootStore.messageStore.streamingMessageId;
 
-        // 使用消息操作 hook
-        const {
-            getMessageContent,
-            isMessageStreaming,
-            handleCopyMessage,
-            handleRegenerateResponse,
-        } = useMessageOperations(streamingMessageId);
-
-        // 使用提示词 hook
         const { suggestedPrompts, handleSelectPrompt } = usePromptSuggestions();
-
         const groupedMessages = Object.entries(getGroupedMessages(messages));
 
         // 自动滚动到底部
@@ -80,18 +69,9 @@ const MessageList: React.FC<MessageListProps> = observer(
                             messages={groupMessages}
                             selectedProvider={selectedProvider}
                             streamingMessageId={streamingMessageId}
-                            getMessageContent={getMessageContent}
-                            isMessageStreaming={isMessageStreaming}
-                            onCopyMessage={handleCopyMessage}
-                            onRegenerateResponse={handleRegenerateResponse}
                             onEditMessage={onEditMessage}
                         />
                     ))
-                )}
-                {isLoading && streamingMessageId === null && (
-                    <div className="loading-indicator">
-                        <Spin size="small" /> <span>{t('thinking')}</span>
-                    </div>
                 )}
             </div>
         );

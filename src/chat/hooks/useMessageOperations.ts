@@ -11,7 +11,7 @@ export const useMessageOperations = (streamingMessageId: string | null) => {
     // 获取消息的正文内容（不包含思考内容）
     const getMessageContent = useCallback((message: Message): string => {
         if (!message.blocks || message.blocks.length === 0) {
-            console.log(`[getMessageContent] Message ${message.id} has no blocks`);
+            // console.log(`[getMessageContent] Message ${message.id} has no blocks`);
             return '';
         }
 
@@ -30,6 +30,8 @@ export const useMessageOperations = (streamingMessageId: string | null) => {
             return '';
         }
 
+        console.log('blocks', blocks);
+
         // 只获取正文内容，不包含思考内容
         const content = blocks
             .filter((block): block is NonNullable<typeof block> => {
@@ -39,7 +41,6 @@ export const useMessageOperations = (streamingMessageId: string | null) => {
                 const hasContent =
                     block.type === MessageBlockType.MAIN_TEXT ||
                     block.type === MessageBlockType.CODE;
-
                 const hasContentProperty = 'content' in block;
 
                 return hasContent && hasContentProperty;
@@ -49,15 +50,6 @@ export const useMessageOperations = (streamingMessageId: string | null) => {
                 return content;
             })
             .join('');
-
-        console.log(`[getMessageContent] Message ${message.id} main content only:`, {
-            totalBlocks: blocks.length,
-            thinkingBlocks: blocks.filter((b) => b?.type === MessageBlockType.THINKING).length,
-            mainTextBlocks: blocks.filter((b) => b?.type === MessageBlockType.MAIN_TEXT).length,
-            codeBlocks: blocks.filter((b) => b?.type === MessageBlockType.CODE).length,
-            contentLength: content.length,
-            preview: content.substring(0, 100),
-        });
 
         return content;
     }, []);
@@ -115,25 +107,6 @@ export const useMessageOperations = (streamingMessageId: string | null) => {
                     return isStreaming;
                 });
 
-                // 调试信息：只在开发环境下输出
-                if (process.env.NODE_ENV === 'development') {
-                    console.log(`[isMessageStreaming] Message ${message.id} streaming check:`, {
-                        messageId: message.id,
-                        streamingMessageId,
-                        isStreamingMessage: streamingMessageId === message.id,
-                        hasStreamingBlock,
-                        blocks: message.blocks.map((blockId) => {
-                            const block = rootStore.messageBlockStore.getBlockById(blockId);
-                            return {
-                                blockId,
-                                type: block?.type,
-                                status: block?.status,
-                                exists: !!block,
-                            };
-                        }),
-                    });
-                }
-
                 return hasStreamingBlock;
             }
 
@@ -156,8 +129,6 @@ export const useMessageOperations = (streamingMessageId: string | null) => {
 
     // 重新生成响应
     const handleRegenerateResponse = useCallback((assistantMessage: Message) => {
-        console.log('开始重新生成响应', assistantMessage);
-
         try {
             // 获取当前选中的话题ID
             const selectedTopicId = robotStore.selectedRobot.selectedTopicId;

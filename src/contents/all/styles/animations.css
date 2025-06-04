@@ -41,6 +41,7 @@
     max-width: 100%;
     overflow-x: auto;
     line-height: 1.6;
+    white-space: pre-wrap;
 }
 
 .markdown-content h1,
@@ -52,6 +53,7 @@
     margin-top: 16px;
     margin-bottom: 8px;
     font-weight: 600;
+    white-space: normal;
 }
 
 .markdown-content h1 {
@@ -68,6 +70,7 @@
 
 .markdown-content p {
     margin: 8px 0;
+    white-space: pre-wrap;
 }
 
 .markdown-content pre {
@@ -77,6 +80,7 @@
     background-color: #f6f8fa;
     border: 1px solid #eaecef;
     border-radius: 6px;
+    white-space: pre;
 }
 
 .markdown-content code {
@@ -85,6 +89,7 @@
     font-size: 0.9em;
     background-color: rgba(27, 31, 35, 0.05);
     border-radius: 3px;
+    white-space: pre;
 }
 
 .markdown-content pre code {
@@ -92,6 +97,7 @@
     font-size: 0.9em;
     background-color: transparent;
     border-radius: 0;
+    white-space: pre;
 }
 
 .markdown-content img {

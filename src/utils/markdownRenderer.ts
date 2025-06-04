@@ -99,6 +99,7 @@ const md = new MarkdownIt({
     html: true,
     linkify: true,
     typographer: true,
+    breaks: true,
     // @ts-ignore
     highlight: (str, lang) => {
         if (!lang || !hljs.getLanguage(lang)) {

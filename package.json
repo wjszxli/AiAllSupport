@@ -66,6 +66,7 @@
         "lodash": "4.17.21",
         "markdown-it": "14.1.0",
         "markdown-it-mathjax3": "4.3.2",
+        "mermaid": "11.6.0",
         "mobx": "6.13.7",
         "mobx-persist-store": "1.1.8",
         "mobx-react": "9.2.0",

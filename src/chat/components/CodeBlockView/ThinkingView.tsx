@@ -1,28 +1,91 @@
-import React, { memo, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { EyeOutlined, EyeInvisibleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { t } from '@/locales/i18n';
+import { MessageBlockStatus, type ThinkingMessageBlock } from '@/types/messageBlock';
 import './ThinkingView.scss';
 
 interface Props {
-    children: string;
-    thinking_millsec?: number;
-    isStreaming?: boolean;
+    thinkingBlock: ThinkingMessageBlock;
 }
 
 /**
  * 思考内容视图组件
  * 显示AI的思考过程，可折叠展开
+ * 内部自主判断思考状态，减少外部耦合
  */
-const ThinkingView: React.FC<Props> = ({ children, thinking_millsec, isStreaming = false }) => {
+const ThinkingView: React.FC<Props> = ({ thinkingBlock }) => {
+    console.log('thinkingBlock', {
+        id: thinkingBlock.id,
+        status: thinkingBlock.status,
+        content: thinkingBlock.content?.substring(0, 50) + '...',
+        contentLength: thinkingBlock.content?.length || 0,
+        thinking_millsec: thinkingBlock.thinking_millsec,
+        timestamp: new Date().toISOString(),
+    });
+
+    // 内部判断思考状态
+    const isStreaming = thinkingBlock.status === MessageBlockStatus.STREAMING;
+    const isCompleted = thinkingBlock.status === MessageBlockStatus.SUCCESS;
+    const hasContent = Boolean(thinkingBlock.content && thinkingBlock.content.trim());
+
+    console.log('[ThinkingView] State calculation:', {
+        blockId: thinkingBlock.id,
+        isStreaming,
+        isCompleted,
+        hasContent,
+        status: thinkingBlock.status,
+    });
+
     // 流式思考内容默认展开，让用户能立即看到思考过程
-    const [isExpanded, setIsExpanded] = useState(isStreaming);
+    // 如果有内容或正在流式处理，默认展开
+    const [isExpanded, setIsExpanded] = useState(() => {
+        const initialExpanded = isStreaming || hasContent;
+        console.log('[ThinkingView] Initial expanded state:', {
+            blockId: thinkingBlock.id,
+            isStreaming,
+            hasContent,
+            initialExpanded,
+        });
+        return initialExpanded;
+    });
+
+    // 处理展开/折叠切换
+    const handleToggleExpanded = () => {
+        console.log('[ThinkingView] Toggle expanded:', {
+            from: isExpanded,
+            to: !isExpanded,
+            blockId: thinkingBlock.id,
+        });
+        setIsExpanded(!isExpanded);
+    };
+
+    // 监控思考状态变化，用于调试
+    useEffect(() => {
+        console.log('[ThinkingView] Status changed:', {
+            blockId: thinkingBlock.id,
+            status: thinkingBlock.status,
+            isStreaming,
+            isCompleted,
+            timestamp: new Date().toISOString(),
+        });
+    }, [thinkingBlock.status, isStreaming, isCompleted, thinkingBlock.id]);
 
     // 当开始流式处理时，自动展开思考内容
     useEffect(() => {
         if (isStreaming) {
+            console.log('[ThinkingView] Auto-expanding for streaming:', thinkingBlock.id);
             setIsExpanded(true);
         }
     }, [isStreaming]);
+
+    // 简化内容变化监听逻辑，避免过度干预用户的折叠/展开选择
+    // 只在思考刚开始且有内容时自动展开一次
+    useEffect(() => {
+        if (isStreaming && hasContent && !isExpanded) {
+            console.log('[ThinkingView] Auto-expanding for new content:', thinkingBlock.id);
+            setIsExpanded(true);
+        }
+    }, [isStreaming, hasContent]); // 移除 isExpanded 依赖，避免无限循环
 
     // 格式化思考时间
     const formatThinkingTime = (millsec?: number): string => {
@@ -33,25 +96,58 @@ const ThinkingView: React.FC<Props> = ({ children, thinking_millsec, isStreaming
         return `${(millsec / 1000).toFixed(1)}s`;
     };
 
-    // 确定显示状态
-    const isCompleted = !isStreaming && thinking_millsec !== undefined;
-    const displayTitle = isStreaming ? t('thinking') || 'AI 正在思考...' : t('think') || '思考过程';
+    // 确定显示状态和标题
+    const getDisplayInfo = () => {
+        if (isStreaming) {
+            return {
+                title: t('thinking') || 'AI 正在思考...',
+                icon: <LoadingOutlined spin />,
+                showStatus: true,
+                statusText: t('processing') || '思考中...',
+                showTime: true,
+            };
+        }
+
+        if (isCompleted) {
+            return {
+                title: t('think') || '思考过程',
+                icon: '🧠',
+                showStatus: true,
+                statusText: '',
+                showTime: Boolean(thinkingBlock.thinking_millsec),
+            };
+        }
+
+        // 其他状态（如初始化、错误等）
+        return {
+            title: t('think') || '思考过程',
+            icon: '🧠',
+            showStatus: true,
+            statusText: '',
+            showTime: true,
+        };
+    };
+
+    const displayInfo = getDisplayInfo();
+
+    // 如果没有内容且不在流式处理中，不显示组件
+    if (!hasContent && !isStreaming) {
+        return null;
+    }
 
     return (
         <div className={`thinking-view ${isStreaming ? 'streaming' : 'completed'}`}>
-            <div className="thinking-header" onClick={() => setIsExpanded(!isExpanded)}>
+            <div className="thinking-header" onClick={handleToggleExpanded}>
                 <div className="thinking-title">
-                    <span className="thinking-icon">
-                        {isStreaming ? <LoadingOutlined spin /> : '🧠'}
-                    </span>
-                    <span className="thinking-label">{displayTitle}</span>
-                    {isCompleted && thinking_millsec && (
+                    <span className="thinking-icon">{displayInfo.icon}</span>
+                    <span className="thinking-label">{displayInfo.title}</span>
+                    {displayInfo.showTime && thinkingBlock.thinking_millsec && (
                         <span className="thinking-time">
-                            ({formatThinkingTime(thinking_millsec)})
+                            ({formatThinkingTime(thinkingBlock.thinking_millsec)})
                         </span>
                     )}
-                    {isStreaming && (
-                        <span className="thinking-status">{t('processing') || '思考中...'}</span>
+                    {displayInfo.showStatus && (
+                        <span className="thinking-status">{displayInfo.statusText}</span>
                     )}
                 </div>
                 <button className="thinking-toggle" title={isExpanded ? '收起' : '展开'}>
@@ -61,7 +157,7 @@ const ThinkingView: React.FC<Props> = ({ children, thinking_millsec, isStreaming
             {isExpanded && (
                 <div className="thinking-content">
                     <div className="thinking-text">
-                        {children}
+                        {thinkingBlock.content || ''}
                         {isStreaming && <span className="thinking-cursor">▋</span>}
                     </div>
                 </div>
@@ -70,4 +166,4 @@ const ThinkingView: React.FC<Props> = ({ children, thinking_millsec, isStreaming
     );
 };
 
-export default memo(ThinkingView);
+export default ThinkingView;

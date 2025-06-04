@@ -58,6 +58,7 @@ const ChatBody: React.FC<ChatBodyProps> = observer(
 
         useEffect(() => {
             const newDisplayMessages = computeDisplayMessages(messages, 100);
+            console.log('newDisplayMessages', newDisplayMessages);
             setDisplayMessages(newDisplayMessages);
         }, [messages, computeDisplayMessages]);
 
@@ -70,9 +71,13 @@ const ChatBody: React.FC<ChatBodyProps> = observer(
         useEffect(() => {
             if (selectedTopicId) {
                 const messageService = new MessageThunkService(rootStore);
-                messageService.loadTopicMessages(selectedTopicId);
+                // 只有在没有正在流式处理的消息时才重新加载
+                // 避免在流式过程中清理当前的流式块
+                if (!streamingMessageId) {
+                    messageService.loadTopicMessages(selectedTopicId);
+                }
             }
-        }, [selectedTopicId, rootStore]);
+        }, [selectedTopicId, rootStore, streamingMessageId]);
 
         const handleSendMessage = () => {
             if (!userInput.trim() || isLoading) return;
@@ -105,7 +110,6 @@ const ChatBody: React.FC<ChatBodyProps> = observer(
                 <MessageList
                     messages={displayMessages}
                     selectedProvider={selectedProvider}
-                    isLoading={isLoading}
                     onEditMessage={handleEditMessage}
                 />
                 <div className="chat-footer">

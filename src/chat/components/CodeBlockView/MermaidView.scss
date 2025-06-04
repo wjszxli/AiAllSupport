@@ -1,0 +1,262 @@
+.mermaid-view {
+    margin: 12px 0;
+    border: 1px solid #e1e4e8;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+
+    .mermaid-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 12px;
+        background: #f8f9fa;
+        border-bottom: 1px solid #e1e4e8;
+        font-size: 12px;
+        font-weight: 500;
+
+        .mermaid-label {
+            color: #586069;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .mermaid-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .mermaid-button {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            background: transparent;
+            border: 1px solid #d1d5da;
+            border-radius: 4px;
+            color: #586069;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+
+            &:hover {
+                background: #f3f4f6;
+                border-color: #a1a8b0;
+                color: #24292e;
+            }
+
+            &:active {
+                background: #e1e4e8;
+                transform: translateY(1px);
+            }
+
+            svg {
+                width: 14px;
+                height: 14px;
+            }
+        }
+    }
+
+    .mermaid-container {
+        position: relative;
+        min-height: 100px;
+        padding: 16px;
+        background: #ffffff;
+    }
+
+    .mermaid-loading {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+        color: #586069;
+        font-size: 14px;
+
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #e1e4e8;
+            border-top: 2px solid #0366d6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 8px;
+        }
+    }
+
+    .mermaid-content {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        overflow-x: auto;
+
+        &.loading {
+            opacity: 0.5;
+        }
+
+        &.error {
+            .mermaid-error {
+                width: 100%;
+                text-align: left;
+
+                .error-message {
+                    color: #d73a49;
+                    background: #ffeef0;
+                    padding: 8px 12px;
+                    border-radius: 4px;
+                    margin-bottom: 12px;
+                    border-left: 4px solid #d73a49;
+                    font-size: 14px;
+                }
+
+                .error-code {
+                    background: #f6f8fa;
+                    border: 1px solid #e1e4e8;
+                    border-radius: 4px;
+                    overflow-x: auto;
+
+                    pre {
+                        margin: 0;
+                        padding: 12px;
+                        background: transparent;
+                        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+                        font-size: 12px;
+                        line-height: 1.4;
+                        color: #586069;
+                    }
+
+                    code {
+                        background: transparent;
+                        padding: 0;
+                        border-radius: 0;
+                    }
+                }
+            }
+        }
+
+        // Mermaid 图表样式优化
+        svg {
+            max-width: 100%;
+            height: auto;
+            display: block;
+
+            // 优化文本样式
+            text {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial,
+                    sans-serif;
+                font-size: 14px;
+            }
+
+            // 优化连接线和形状
+            .edgePath path {
+                stroke-width: 1.5px;
+            }
+
+            .node rect,
+            .node circle,
+            .node ellipse,
+            .node polygon {
+                stroke-width: 1.5px;
+            }
+
+            // 优化序列图样式
+            .actor {
+                stroke-width: 1.5px;
+            }
+
+            .messageLine0,
+            .messageLine1 {
+                stroke-width: 1.5px;
+            }
+
+            // 优化甘特图样式
+            .section0,
+            .section1,
+            .section2,
+            .section3 {
+                stroke-width: 1px;
+            }
+
+            // 优化饼图样式
+            .pieCircle {
+                stroke-width: 1px;
+            }
+        }
+    }
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+// 黑暗模式支持（如果需要）
+@media (prefers-color-scheme: dark) {
+    .mermaid-view {
+        background: #161b22;
+        border-color: #30363d;
+
+        .mermaid-header {
+            background: #21262d;
+            border-color: #30363d;
+
+            .mermaid-label {
+                color: #8b949e;
+            }
+        }
+
+        .mermaid-button {
+            border-color: #30363d;
+            color: #8b949e;
+
+            &:hover {
+                background: #30363d;
+                border-color: #8b949e;
+                color: #f0f6fc;
+            }
+
+            &:active {
+                background: #262c36;
+            }
+        }
+
+        .mermaid-container {
+            background: #161b22;
+        }
+
+        .mermaid-loading {
+            color: #8b949e;
+
+            .loading-spinner {
+                border-color: #30363d;
+                border-top-color: #58a6ff;
+            }
+        }
+
+        .mermaid-content.error {
+            .mermaid-error {
+                .error-message {
+                    color: #f85149;
+                    background: #490202;
+                    border-left-color: #f85149;
+                }
+
+                .error-code {
+                    background: #0d1117;
+                    border-color: #30363d;
+
+                    pre {
+                        color: #8b949e;
+                    }
+                }
+            }
+        }
+    }
+}

@@ -113,28 +113,32 @@ export class MessageThunkService {
         blocksToUpdate: MessageBlock[],
     ) {
         try {
-            if (blocksToUpdate.length > 0) {
-                // 序列化 MobX 对象
-                const serializedBlocks = blocksToUpdate.map((block) =>
-                    JSON.parse(JSON.stringify(block)),
-                );
-                await db.message_blocks.bulkPut(serializedBlocks);
-            }
+            await db.transaction('rw', db.topics, db.message_blocks, async () => {
+                if (blocksToUpdate.length > 0) {
+                    // 序列化 MobX 对象
+                    const serializedBlocks = blocksToUpdate.map((block) =>
+                        JSON.parse(JSON.stringify(block)),
+                    );
+                    await db.message_blocks.bulkPut(serializedBlocks);
+                }
 
-            if (Object.keys(messageUpdates).length > 0) {
-                await db.topics
-                    .where('id')
-                    .equals(topicId)
-                    .modify((topic) => {
-                        if (!topic) return;
-                        const messageIndex = topic.messages.findIndex((m) => m.id === messageId);
-                        if (messageIndex !== -1) {
-                            Object.assign(topic.messages[messageIndex], messageUpdates);
-                        }
-                    });
-            }
+                if (Object.keys(messageUpdates).length > 0) {
+                    await db.topics
+                        .where('id')
+                        .equals(topicId)
+                        .modify((topic) => {
+                            if (!topic) return;
+                            const messageIndex = topic.messages.findIndex(
+                                (m) => m.id === messageId,
+                            );
+                            if (messageIndex !== -1) {
+                                Object.assign(topic.messages[messageIndex], messageUpdates);
+                            }
+                        });
+                }
+            });
         } catch (error) {
-            console.error(`[saveUpdatesToDB] Failed for message ${messageId}:`, error);
+            console.error(`[saveUpdatesToDB] Failed for message ${messageId}:`);
         }
     }
 
@@ -157,6 +161,7 @@ export class MessageThunkService {
             let currentBlockType: MessageBlockType | null = null;
             let accumulatedContent = '';
             let accumulatedThinkingContent = '';
+            let isThinkingComplete = false; // 添加标志防止思考完成后继续处理thinking chunks
 
             // 3. 准备上下文消息
             const allMessages = this.rootStore.messageStore.getMessagesForTopic(topicId);
@@ -183,12 +188,16 @@ export class MessageThunkService {
                 if (currentBlockType !== MessageBlockType.MAIN_TEXT) {
                     accumulatedContent = '';
                 }
+
                 if (currentBlockType !== MessageBlockType.THINKING) {
                     accumulatedThinkingContent = '';
                 }
 
                 // MobX 状态更新
                 runInAction(() => {
+                    this.rootStore.messageStore.updateMessage(assistantMsgId, {
+                        blockInstruction: { id: newBlock.id },
+                    });
                     this.rootStore.messageBlockStore.upsertBlock(newBlock);
                     this.rootStore.messageStore.upsertBlockReference(
                         assistantMsgId,
@@ -209,7 +218,19 @@ export class MessageThunkService {
                 }
 
                 // 保存到数据库
-                await this.saveBlockToDB(newBlock.id);
+                // const updatedMessage = this.rootStore.messageStore.getMessageById(assistantMsgId);
+                // if (updatedMessage) {
+                //     await this.saveUpdatesToDB(
+                //         assistantMsgId,
+                //         topicId,
+                //         { blocks: updatedMessage.blocks },
+                //         [newBlock],
+                //     );
+                // } else {
+                //     console.warn(
+                //         `[handleBlockTransition] Message ${assistantMsgId} not found in store`,
+                //     );
+                // }
             };
 
             // 5. 更新块内容的通用函数
@@ -255,6 +276,15 @@ export class MessageThunkService {
 
                 // 思考内容流处理
                 onThinkingChunk: (text: string, thinking_millsec?: number) => {
+                    // 如果思考已完成，跳过后续的思考块处理
+                    if (isThinkingComplete) {
+                        console.log('[onThinkingChunk] Skipping - thinking already complete:', {
+                            currentBlockId,
+                            text: text.substring(0, 30) + '...',
+                        });
+                        return;
+                    }
+
                     accumulatedThinkingContent += text;
 
                     // 调试信息：只在开发环境下输出
@@ -284,7 +314,24 @@ export class MessageThunkService {
                                 });
                             });
                             currentBlockType = MessageBlockType.THINKING;
-                            this.saveBlockToDB(currentBlockId);
+
+                            // const newBlock = createThinkingBlock(
+                            //     assistantMsgId,
+                            //     accumulatedThinkingContent,
+                            //     {
+                            //         status: MessageBlockStatus.STREAMING,
+                            //         thinking_millsec: 0,
+                            //     },
+                            // );
+
+                            // this.saveUpdatesToDB(
+                            //     assistantMsgId,
+                            //     topicId,
+                            //     {
+                            //         blocks: [],
+                            //     },
+                            //     [newBlock],
+                            // );
                         } else if (currentBlockType === MessageBlockType.THINKING) {
                             runInAction(() => {
                                 this.rootStore.messageBlockStore.updateBlock(currentBlockId!, {
@@ -293,7 +340,7 @@ export class MessageThunkService {
                                     thinking_millsec: thinking_millsec,
                                 });
                             });
-                            this.throttledSaveBlockToDB(currentBlockId);
+                            // this.throttledSaveBlockToDB(currentBlockId);
                         } else {
                             const newBlock = createThinkingBlock(
                                 assistantMsgId,
@@ -310,9 +357,18 @@ export class MessageThunkService {
 
                 // 思考完成
                 onThinkingComplete: async (finalText: string, thinking_millsec?: number) => {
-                    this.cancelThrottledBlockUpdate();
+                    // this.cancelThrottledBlockUpdate();
+
+                    // 设置思考完成标志，防止后续的thinking chunk覆盖状态
+                    isThinkingComplete = true;
 
                     if (currentBlockType === MessageBlockType.THINKING && currentBlockId) {
+                        console.log('[onThinkingComplete] Updating thinking block to SUCCESS:', {
+                            blockId: currentBlockId,
+                            finalText: finalText.substring(0, 50) + '...',
+                            thinking_millsec,
+                        });
+
                         runInAction(() => {
                             this.rootStore.messageBlockStore.updateBlock(currentBlockId!, {
                                 type: MessageBlockType.THINKING,
@@ -321,7 +377,11 @@ export class MessageThunkService {
                                 thinking_millsec: thinking_millsec,
                             });
                         });
+
+                        // 确保保存到数据库
                         await this.saveBlockToDB(currentBlockId);
+
+                        console.log('[onThinkingComplete] Thinking block updated to SUCCESS');
                     } else {
                         console.warn(
                             `[onThinkingComplete] Received thinking.complete but last block was not THINKING (was ${currentBlockType}) or lastBlockId is null.`,
@@ -343,28 +403,9 @@ export class MessageThunkService {
                         });
                     }
                     accumulatedContent += text;
-
                     if (currentBlockId) {
                         // 如果当前块是思考块，需要先完成它
-                        if (currentBlockType === MessageBlockType.THINKING) {
-                            // 完成思考块
-                            runInAction(() => {
-                                this.rootStore.messageBlockStore.updateBlock(currentBlockId!, {
-                                    status: MessageBlockStatus.SUCCESS,
-                                });
-                            });
-                            this.saveBlockToDB(currentBlockId!);
-
-                            // 创建新的文本块
-                            const newBlock = createMainTextBlock(
-                                assistantMsgId,
-                                accumulatedContent,
-                                {
-                                    status: MessageBlockStatus.STREAMING,
-                                },
-                            );
-                            handleBlockTransition(newBlock, MessageBlockType.MAIN_TEXT);
-                        } else if (currentBlockType === MessageBlockType.UNKNOWN) {
+                        if (currentBlockType === MessageBlockType.UNKNOWN) {
                             runInAction(() => {
                                 this.rootStore.messageBlockStore.updateBlock(currentBlockId!, {
                                     type: MessageBlockType.MAIN_TEXT,
@@ -405,81 +446,70 @@ export class MessageThunkService {
 
                 // 错误处理
                 onError: async (error: { name: string; message: string; stack: any }) => {
-                    this.cancelThrottledBlockUpdate();
-
-                    runInAction(() => {
-                        this.rootStore.messageStore.setStreamingMessageId(null);
-                    });
-
-                    const isAbort = isAbortError(error);
-
-                    if (currentBlockId) {
-                        runInAction(() => {
-                            this.rootStore.messageBlockStore.updateBlock(currentBlockId!, {
-                                status: isAbort
-                                    ? MessageBlockStatus.PAUSED
-                                    : MessageBlockStatus.ERROR,
-                            });
-                        });
-                        await this.saveBlockToDB(currentBlockId);
-                    }
-
-                    const errorBlock = createErrorBlock(
-                        assistantMsgId,
-                        {
-                            name: error.name,
-                            message: error.message || 'Stream processing error',
-                            stack: error.stack,
-                        },
-                        { status: MessageBlockStatus.SUCCESS },
-                    );
-
-                    await handleBlockTransition(errorBlock, MessageBlockType.ERROR);
-
-                    const messageUpdate = {
-                        status: isAbort ? RobotMessageStatus.SUCCESS : RobotMessageStatus.ERROR,
-                    };
-                    runInAction(() => {
-                        this.rootStore.messageStore.updateMessage(assistantMsgId, messageUpdate);
-                    });
-                    await this.saveUpdatesToDB(assistantMsgId, topicId, messageUpdate, []);
+                    // this.cancelThrottledBlockUpdate();
+                    // runInAction(() => {
+                    //     this.rootStore.messageStore.setStreamingMessageId(null);
+                    // });
+                    // const isAbort = isAbortError(error);
+                    // if (currentBlockId) {
+                    //     runInAction(() => {
+                    //         this.rootStore.messageBlockStore.updateBlock(currentBlockId!, {
+                    //             status: isAbort
+                    //                 ? MessageBlockStatus.PAUSED
+                    //                 : MessageBlockStatus.ERROR,
+                    //         });
+                    //     });
+                    //     await this.saveBlockToDB(currentBlockId);
+                    // }
+                    // const errorBlock = createErrorBlock(
+                    //     assistantMsgId,
+                    //     {
+                    //         name: error.name,
+                    //         message: error.message || 'Stream processing error',
+                    //         stack: error.stack,
+                    //     },
+                    //     { status: MessageBlockStatus.SUCCESS },
+                    // );
+                    // await handleBlockTransition(errorBlock, MessageBlockType.ERROR);
+                    // const messageUpdate = {
+                    //     status: isAbort ? RobotMessageStatus.SUCCESS : RobotMessageStatus.ERROR,
+                    // };
+                    // runInAction(() => {
+                    //     this.rootStore.messageStore.updateMessage(assistantMsgId, messageUpdate);
+                    // });
+                    // await this.saveUpdatesToDB(assistantMsgId, topicId, messageUpdate, []);
                 },
 
                 // 完成处理
                 onComplete: async (status: RobotMessageStatus, response?: any) => {
-                    this.cancelThrottledBlockUpdate();
-
-                    runInAction(() => {
-                        this.rootStore.messageStore.setStreamingMessageId(null);
-                    });
-
-                    if (currentBlockId && status === 'success') {
-                        const currentBlock =
-                            this.rootStore.messageBlockStore.getBlockById(currentBlockId);
-                        if (currentBlock && currentBlock.status !== MessageBlockStatus.SUCCESS) {
-                            runInAction(() => {
-                                this.rootStore.messageBlockStore.updateBlock(currentBlockId!, {
-                                    status: MessageBlockStatus.SUCCESS,
-                                });
-                            });
-                            await this.saveBlockToDB(currentBlockId);
-                        }
-                    }
-
-                    const messageUpdates: Partial<Message> = {
-                        status,
-                        metrics: response?.metrics,
-                        usage: response?.usage,
-                    };
-
-                    runInAction(() => {
-                        this.rootStore.messageStore.updateMessage(assistantMsgId, messageUpdates);
-                    });
-                    await this.saveUpdatesToDB(assistantMsgId, topicId, messageUpdates, []);
-
-                    if (status === 'success') {
-                        // autoRenameTopic(assistant, topicId);
-                    }
+                    // this.cancelThrottledBlockUpdate();
+                    // runInAction(() => {
+                    //     this.rootStore.messageStore.setStreamingMessageId(null);
+                    // });
+                    // if (currentBlockId && status === 'success') {
+                    //     const currentBlock =
+                    //         this.rootStore.messageBlockStore.getBlockById(currentBlockId);
+                    //     if (currentBlock && currentBlock.status !== MessageBlockStatus.SUCCESS) {
+                    //         runInAction(() => {
+                    //             this.rootStore.messageBlockStore.updateBlock(currentBlockId!, {
+                    //                 status: MessageBlockStatus.SUCCESS,
+                    //             });
+                    //         });
+                    //         await this.saveBlockToDB(currentBlockId);
+                    //     }
+                    // }
+                    // const messageUpdates: Partial<Message> = {
+                    //     status,
+                    //     metrics: response?.metrics,
+                    //     usage: response?.usage,
+                    // };
+                    // runInAction(() => {
+                    //     this.rootStore.messageStore.updateMessage(assistantMsgId, messageUpdates);
+                    // });
+                    // await this.saveUpdatesToDB(assistantMsgId, topicId, messageUpdates, []);
+                    // if (status === 'success') {
+                    //     // autoRenameTopic(assistant, topicId);
+                    // }
                 },
             };
 
@@ -498,6 +528,7 @@ export class MessageThunkService {
             throw error;
         } finally {
             // Clean up any remaining blocks in PROCESSING/STREAMING state
+            // 但要小心不要覆盖已经正确完成的思考块
             const message = this.rootStore.messageStore.getMessageById(assistantMsgId);
             if (message && message.blocks) {
                 const blocksToCleanup: string[] = [];
@@ -508,11 +539,18 @@ export class MessageThunkService {
                         (block.status === MessageBlockStatus.PROCESSING ||
                             block.status === MessageBlockStatus.STREAMING)
                     ) {
+                        // 只清理确实还在处理中的块
+                        console.log('[finally cleanup] Found block to cleanup:', {
+                            blockId,
+                            type: block.type,
+                            status: block.status,
+                        });
                         blocksToCleanup.push(blockId);
                     }
                 });
 
                 if (blocksToCleanup.length > 0) {
+                    console.log('[finally cleanup] Cleaning up blocks:', blocksToCleanup);
                     runInAction(() => {
                         blocksToCleanup.forEach((blockId) => {
                             this.rootStore.messageBlockStore.updateBlock(blockId, {
@@ -635,7 +673,20 @@ export class MessageThunkService {
                 runInAction(() => {
                     if (blocks && blocks.length > 0) {
                         // Clean up any stale PROCESSING/STREAMING blocks from previous sessions
+                        // 但要避免清理当前正在流式处理的块
+                        const currentStreamingMessageId =
+                            this.rootStore.messageStore.streamingMessageId;
+
                         const cleanedBlocks = blocks.map((block) => {
+                            // 如果当前有正在流式的消息，且这个块属于该消息，则保持其原状态
+                            if (
+                                currentStreamingMessageId &&
+                                block.messageId === currentStreamingMessageId
+                            ) {
+                                return block;
+                            }
+
+                            // 否则清理过期的流式块
                             if (
                                 block.status === MessageBlockStatus.PROCESSING ||
                                 block.status === MessageBlockStatus.STREAMING

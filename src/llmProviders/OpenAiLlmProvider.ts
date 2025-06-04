@@ -164,7 +164,7 @@ export default class OpenAiLlmProvider extends BaseLlmProvider {
     }: CompletionsParams): Promise<void> {
         const model = store.llmStore.defaultModel;
         const contextCount = 5;
-        console.log('messages', messages);
+        // console.log('messages', messages);
         // 准备请求消息
         const userMessages: ChatCompletionMessageParam[] = [];
         const _messages = takeRight(messages, contextCount + 1);
@@ -178,7 +178,7 @@ export default class OpenAiLlmProvider extends BaseLlmProvider {
 
         // 构建最终请求消息
         let reqMessages: ChatCompletionMessageParam[] = [...userMessages];
-        console.log('reqMessages', reqMessages);
+        // console.log('reqMessages', reqMessages);
 
         reqMessages = processReqMessages(model, reqMessages);
 
@@ -189,7 +189,7 @@ export default class OpenAiLlmProvider extends BaseLlmProvider {
             let time_first_token_millsec = 0;
             let thinkingContent = '';
 
-            console.log('stream', stream);
+            // console.log('stream', stream);
 
             const reasoningTags = [
                 { openingTag: '<think>', closingTag: '</think>', separator: '\n' },
@@ -235,10 +235,10 @@ export default class OpenAiLlmProvider extends BaseLlmProvider {
                             text: typedChunk.textDelta,
                             thinking_millsec: new Date().getTime() - time_first_token_millsec,
                         });
-                        onChunk({
-                            type: ChunkType.THINKING_COMPLETE,
-                            text: thinkingContent,
-                        });
+                        // onChunk({
+                        //     type: ChunkType.THINKING_COMPLETE,
+                        //     text: thinkingContent,
+                        // });
                         break;
                     }
                     case 'text-delta': {

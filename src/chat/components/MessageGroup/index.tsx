@@ -12,31 +12,28 @@ import { t } from '@/locales/i18n';
 import { observer } from 'mobx-react-lite';
 import MessageRenderer from './MessageRenderer';
 import './index.scss';
+import { useMessageOperations } from '@/chat/hooks/useMessageOperations';
 
 interface MessageGroupProps {
     groupKey: string;
     messages: (Message & { index: number })[];
     selectedProvider: string;
     streamingMessageId: string | null;
-    getMessageContent: (message: Message) => string;
-    isMessageStreaming: (message: Message) => boolean;
-    onCopyMessage: (text: string) => void;
-    onRegenerateResponse: (assistantMessage: Message) => void;
     onEditMessage: (text: string) => void;
 }
 
 const MessageGroup: React.FC<MessageGroupProps> = observer(
-    ({
-        messages,
-        selectedProvider,
-        streamingMessageId,
-        getMessageContent,
-        isMessageStreaming,
-        onCopyMessage,
-        onRegenerateResponse,
-        onEditMessage,
-    }) => {
+    ({ messages, selectedProvider, streamingMessageId, onEditMessage }) => {
         if (!messages || messages.length === 0) return null;
+
+        // 使用消息操作 hook
+        const {
+            getMessageThinking,
+            getMessageContent,
+            isMessageStreaming,
+            handleRegenerateResponse,
+            handleCopyMessage,
+        } = useMessageOperations(streamingMessageId);
 
         // 获取第一条消息来确定消息类型
         const firstMessage = messages[0];
@@ -134,18 +131,20 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
                         {messages.map((message) => {
                             const content = getMessageContent(message);
                             const isStreaming = isMessageStreaming(message);
+                            const thinkingContent = getMessageThinking(message);
 
                             return (
                                 <div key={message.id} className="message-item">
                                     <div className="message-text">
                                         <MessageRenderer
+                                            thinkingContent={thinkingContent}
                                             content={content}
                                             messageId={message.id}
                                             isStreaming={isStreaming}
                                         />
                                     </div>
                                     {/* 流式加载指示器 */}
-                                    {/* {isStreaming && (
+                                    {isStreaming && (
                                         <div className="streaming-indicator">
                                             <span className="typing-dots">
                                                 <span></span>
@@ -153,7 +152,7 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
                                                 <span></span>
                                             </span>
                                         </div>
-                                    )} */}
+                                    )}
                                 </div>
                             );
                         })}
@@ -169,7 +168,7 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
                                     size="small"
                                     onClick={() => {
                                         const content = getMessageContent(firstMessage);
-                                        onCopyMessage(content);
+                                        handleCopyMessage(content);
                                     }}
                                     title={t('copy') || '复制'}
                                 >
@@ -179,7 +178,7 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
                                     type="text"
                                     icon={<ReloadOutlined />}
                                     size="small"
-                                    onClick={() => onRegenerateResponse(firstMessage)}
+                                    onClick={() => handleRegenerateResponse(firstMessage)}
                                     title={t('regenerate') || '重新生成'}
                                 >
                                     {t('regenerate') || '重新生成'}
