@@ -28,61 +28,36 @@ const ThinkingView: React.FC<Props> = ({ thinkingBlock }) => {
     const isCompleted = thinkingBlock.status === MessageBlockStatus.SUCCESS;
     const hasContent = Boolean(thinkingBlock.content && thinkingBlock.content.trim());
 
-    console.log('[ThinkingView] State calculation:', {
-        blockId: thinkingBlock.id,
-        isStreaming,
-        isCompleted,
-        hasContent,
-        status: thinkingBlock.status,
-    });
-
     // 流式思考内容默认展开，让用户能立即看到思考过程
     // 如果有内容或正在流式处理，默认展开
     const [isExpanded, setIsExpanded] = useState(() => {
         const initialExpanded = isStreaming || hasContent;
-        console.log('[ThinkingView] Initial expanded state:', {
-            blockId: thinkingBlock.id,
-            isStreaming,
-            hasContent,
-            initialExpanded,
-        });
         return initialExpanded;
     });
 
     // 处理展开/折叠切换
     const handleToggleExpanded = () => {
-        console.log('[ThinkingView] Toggle expanded:', {
-            from: isExpanded,
-            to: !isExpanded,
-            blockId: thinkingBlock.id,
-        });
         setIsExpanded(!isExpanded);
     };
-
-    // 监控思考状态变化，用于调试
-    useEffect(() => {
-        console.log('[ThinkingView] Status changed:', {
-            blockId: thinkingBlock.id,
-            status: thinkingBlock.status,
-            isStreaming,
-            isCompleted,
-            timestamp: new Date().toISOString(),
-        });
-    }, [thinkingBlock.status, isStreaming, isCompleted, thinkingBlock.id]);
 
     // 当开始流式处理时，自动展开思考内容
     useEffect(() => {
         if (isStreaming) {
-            console.log('[ThinkingView] Auto-expanding for streaming:', thinkingBlock.id);
             setIsExpanded(true);
         }
     }, [isStreaming]);
+
+    // 当思考完成时，自动折叠思考内容
+    useEffect(() => {
+        if (isCompleted && !isStreaming) {
+            setIsExpanded(false);
+        }
+    }, [isCompleted, isStreaming, thinkingBlock.id]);
 
     // 简化内容变化监听逻辑，避免过度干预用户的折叠/展开选择
     // 只在思考刚开始且有内容时自动展开一次
     useEffect(() => {
         if (isStreaming && hasContent && !isExpanded) {
-            console.log('[ThinkingView] Auto-expanding for new content:', thinkingBlock.id);
             setIsExpanded(true);
         }
     }, [isStreaming, hasContent]); // 移除 isExpanded 依赖，避免无限循环
@@ -104,7 +79,7 @@ const ThinkingView: React.FC<Props> = ({ thinkingBlock }) => {
                 icon: <LoadingOutlined spin />,
                 showStatus: true,
                 statusText: t('processing') || '思考中...',
-                showTime: true,
+                showTime: Boolean(thinkingBlock.thinking_millsec), // 流式时如果有时间也显示
             };
         }
 
@@ -124,7 +99,7 @@ const ThinkingView: React.FC<Props> = ({ thinkingBlock }) => {
             icon: '🧠',
             showStatus: true,
             statusText: '',
-            showTime: true,
+            showTime: Boolean(thinkingBlock.thinking_millsec),
         };
     };
 

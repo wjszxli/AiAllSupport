@@ -278,30 +278,10 @@ export class MessageThunkService {
                 onThinkingChunk: (text: string, thinking_millsec?: number) => {
                     // 如果思考已完成，跳过后续的思考块处理
                     if (isThinkingComplete) {
-                        console.log('[onThinkingChunk] Skipping - thinking already complete:', {
-                            currentBlockId,
-                            text: text.substring(0, 30) + '...',
-                        });
                         return;
                     }
 
                     accumulatedThinkingContent += text;
-
-                    // 调试信息：只在开发环境下输出
-                    if (process.env.NODE_ENV === 'development') {
-                        console.log(
-                            '[onThinkingChunk] First thinking chunk, converting block type:',
-                            {
-                                currentBlockId,
-                                assistantMsgId,
-                                streamingMessageId: this.rootStore.messageStore.streamingMessageId,
-                                currentBlockType: currentBlockType,
-                                messageHasBlock: this.rootStore.messageStore
-                                    .getMessageById(assistantMsgId)
-                                    ?.blocks?.includes(currentBlockId || ''),
-                            },
-                        );
-                    }
 
                     if (currentBlockId) {
                         if (currentBlockType === MessageBlockType.UNKNOWN) {
@@ -315,23 +295,23 @@ export class MessageThunkService {
                             });
                             currentBlockType = MessageBlockType.THINKING;
 
-                            // const newBlock = createThinkingBlock(
-                            //     assistantMsgId,
-                            //     accumulatedThinkingContent,
-                            //     {
-                            //         status: MessageBlockStatus.STREAMING,
-                            //         thinking_millsec: 0,
-                            //     },
-                            // );
+                            const newBlock = createThinkingBlock(
+                                assistantMsgId,
+                                accumulatedThinkingContent,
+                                {
+                                    status: MessageBlockStatus.STREAMING,
+                                    thinking_millsec: thinking_millsec,
+                                },
+                            );
 
-                            // this.saveUpdatesToDB(
-                            //     assistantMsgId,
-                            //     topicId,
-                            //     {
-                            //         blocks: [],
-                            //     },
-                            //     [newBlock],
-                            // );
+                            this.saveUpdatesToDB(
+                                assistantMsgId,
+                                topicId,
+                                {
+                                    blocks: [],
+                                },
+                                [newBlock],
+                            );
                         } else if (currentBlockType === MessageBlockType.THINKING) {
                             runInAction(() => {
                                 this.rootStore.messageBlockStore.updateBlock(currentBlockId!, {
@@ -340,14 +320,14 @@ export class MessageThunkService {
                                     thinking_millsec: thinking_millsec,
                                 });
                             });
-                            // this.throttledSaveBlockToDB(currentBlockId);
+                            this.throttledSaveBlockToDB(currentBlockId);
                         } else {
                             const newBlock = createThinkingBlock(
                                 assistantMsgId,
                                 accumulatedThinkingContent,
                                 {
                                     status: MessageBlockStatus.STREAMING,
-                                    thinking_millsec: 0,
+                                    thinking_millsec: thinking_millsec,
                                 },
                             );
                             handleBlockTransition(newBlock, MessageBlockType.THINKING);
@@ -357,18 +337,12 @@ export class MessageThunkService {
 
                 // 思考完成
                 onThinkingComplete: async (finalText: string, thinking_millsec?: number) => {
-                    // this.cancelThrottledBlockUpdate();
+                    this.cancelThrottledBlockUpdate();
 
                     // 设置思考完成标志，防止后续的thinking chunk覆盖状态
                     isThinkingComplete = true;
 
                     if (currentBlockType === MessageBlockType.THINKING && currentBlockId) {
-                        console.log('[onThinkingComplete] Updating thinking block to SUCCESS:', {
-                            blockId: currentBlockId,
-                            finalText: finalText.substring(0, 50) + '...',
-                            thinking_millsec,
-                        });
-
                         runInAction(() => {
                             this.rootStore.messageBlockStore.updateBlock(currentBlockId!, {
                                 type: MessageBlockType.THINKING,
@@ -380,8 +354,6 @@ export class MessageThunkService {
 
                         // 确保保存到数据库
                         await this.saveBlockToDB(currentBlockId);
-
-                        console.log('[onThinkingComplete] Thinking block updated to SUCCESS');
                     } else {
                         console.warn(
                             `[onThinkingComplete] Received thinking.complete but last block was not THINKING (was ${currentBlockType}) or lastBlockId is null.`,
@@ -391,17 +363,6 @@ export class MessageThunkService {
 
                 // 文本流处理
                 onTextChunk: (text: string) => {
-                    if (process.env.NODE_ENV === 'development') {
-                        console.log('[onTextChunk] First thinking chunk, converting block type:', {
-                            currentBlockId,
-                            assistantMsgId,
-                            streamingMessageId: this.rootStore.messageStore.streamingMessageId,
-                            currentBlockType: currentBlockType,
-                            messageHasBlock: this.rootStore.messageStore
-                                .getMessageById(assistantMsgId)
-                                ?.blocks?.includes(currentBlockId || ''),
-                        });
-                    }
                     accumulatedContent += text;
                     if (currentBlockId) {
                         // 如果当前块是思考块，需要先完成它
@@ -446,70 +407,70 @@ export class MessageThunkService {
 
                 // 错误处理
                 onError: async (error: { name: string; message: string; stack: any }) => {
-                    // this.cancelThrottledBlockUpdate();
-                    // runInAction(() => {
-                    //     this.rootStore.messageStore.setStreamingMessageId(null);
-                    // });
-                    // const isAbort = isAbortError(error);
-                    // if (currentBlockId) {
-                    //     runInAction(() => {
-                    //         this.rootStore.messageBlockStore.updateBlock(currentBlockId!, {
-                    //             status: isAbort
-                    //                 ? MessageBlockStatus.PAUSED
-                    //                 : MessageBlockStatus.ERROR,
-                    //         });
-                    //     });
-                    //     await this.saveBlockToDB(currentBlockId);
-                    // }
-                    // const errorBlock = createErrorBlock(
-                    //     assistantMsgId,
-                    //     {
-                    //         name: error.name,
-                    //         message: error.message || 'Stream processing error',
-                    //         stack: error.stack,
-                    //     },
-                    //     { status: MessageBlockStatus.SUCCESS },
-                    // );
-                    // await handleBlockTransition(errorBlock, MessageBlockType.ERROR);
-                    // const messageUpdate = {
-                    //     status: isAbort ? RobotMessageStatus.SUCCESS : RobotMessageStatus.ERROR,
-                    // };
-                    // runInAction(() => {
-                    //     this.rootStore.messageStore.updateMessage(assistantMsgId, messageUpdate);
-                    // });
-                    // await this.saveUpdatesToDB(assistantMsgId, topicId, messageUpdate, []);
+                    this.cancelThrottledBlockUpdate();
+                    runInAction(() => {
+                        this.rootStore.messageStore.setStreamingMessageId(null);
+                    });
+                    const isAbort = isAbortError(error);
+                    if (currentBlockId) {
+                        runInAction(() => {
+                            this.rootStore.messageBlockStore.updateBlock(currentBlockId!, {
+                                status: isAbort
+                                    ? MessageBlockStatus.PAUSED
+                                    : MessageBlockStatus.ERROR,
+                            });
+                        });
+                        await this.saveBlockToDB(currentBlockId);
+                    }
+                    const errorBlock = createErrorBlock(
+                        assistantMsgId,
+                        {
+                            name: error.name,
+                            message: error.message || 'Stream processing error',
+                            stack: error.stack,
+                        },
+                        { status: MessageBlockStatus.SUCCESS },
+                    );
+                    await handleBlockTransition(errorBlock, MessageBlockType.ERROR);
+                    const messageUpdate = {
+                        status: isAbort ? RobotMessageStatus.SUCCESS : RobotMessageStatus.ERROR,
+                    };
+                    runInAction(() => {
+                        this.rootStore.messageStore.updateMessage(assistantMsgId, messageUpdate);
+                    });
+                    await this.saveUpdatesToDB(assistantMsgId, topicId, messageUpdate, []);
                 },
 
                 // 完成处理
                 onComplete: async (status: RobotMessageStatus, response?: any) => {
-                    // this.cancelThrottledBlockUpdate();
-                    // runInAction(() => {
-                    //     this.rootStore.messageStore.setStreamingMessageId(null);
-                    // });
-                    // if (currentBlockId && status === 'success') {
-                    //     const currentBlock =
-                    //         this.rootStore.messageBlockStore.getBlockById(currentBlockId);
-                    //     if (currentBlock && currentBlock.status !== MessageBlockStatus.SUCCESS) {
-                    //         runInAction(() => {
-                    //             this.rootStore.messageBlockStore.updateBlock(currentBlockId!, {
-                    //                 status: MessageBlockStatus.SUCCESS,
-                    //             });
-                    //         });
-                    //         await this.saveBlockToDB(currentBlockId);
-                    //     }
-                    // }
-                    // const messageUpdates: Partial<Message> = {
-                    //     status,
-                    //     metrics: response?.metrics,
-                    //     usage: response?.usage,
-                    // };
-                    // runInAction(() => {
-                    //     this.rootStore.messageStore.updateMessage(assistantMsgId, messageUpdates);
-                    // });
-                    // await this.saveUpdatesToDB(assistantMsgId, topicId, messageUpdates, []);
-                    // if (status === 'success') {
-                    //     // autoRenameTopic(assistant, topicId);
-                    // }
+                    this.cancelThrottledBlockUpdate();
+                    runInAction(() => {
+                        this.rootStore.messageStore.setStreamingMessageId(null);
+                    });
+                    if (currentBlockId && status === 'success') {
+                        const currentBlock =
+                            this.rootStore.messageBlockStore.getBlockById(currentBlockId);
+                        if (currentBlock && currentBlock.status !== MessageBlockStatus.SUCCESS) {
+                            runInAction(() => {
+                                this.rootStore.messageBlockStore.updateBlock(currentBlockId!, {
+                                    status: MessageBlockStatus.SUCCESS,
+                                });
+                            });
+                            await this.saveBlockToDB(currentBlockId);
+                        }
+                    }
+                    const messageUpdates: Partial<Message> = {
+                        status,
+                        metrics: response?.metrics,
+                        usage: response?.usage,
+                    };
+                    runInAction(() => {
+                        this.rootStore.messageStore.updateMessage(assistantMsgId, messageUpdates);
+                    });
+                    await this.saveUpdatesToDB(assistantMsgId, topicId, messageUpdates, []);
+                    if (status === 'success') {
+                        // autoRenameTopic(assistant, topicId);
+                    }
                 },
             };
 

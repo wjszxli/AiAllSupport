@@ -224,7 +224,7 @@ export default class OpenAiLlmProvider extends BaseLlmProvider {
 
                 switch (typedChunk.type) {
                     case 'reasoning': {
-                        if (time_first_token_millsec === 0) {
+                        if (!time_first_token_millsec) {
                             time_first_token_millsec = new Date().getTime();
                         }
 
@@ -235,10 +235,6 @@ export default class OpenAiLlmProvider extends BaseLlmProvider {
                             text: typedChunk.textDelta,
                             thinking_millsec: new Date().getTime() - time_first_token_millsec,
                         });
-                        // onChunk({
-                        //     type: ChunkType.THINKING_COMPLETE,
-                        //     text: thinkingContent,
-                        // });
                         break;
                     }
                     case 'text-delta': {
@@ -246,6 +242,17 @@ export default class OpenAiLlmProvider extends BaseLlmProvider {
 
                         if (isFirstChunk) {
                             isFirstChunk = false;
+
+                            if (!time_first_token_millsec) {
+                                time_first_token_millsec = new Date().getTime();
+                            } else {
+                                onChunk({
+                                    type: ChunkType.THINKING_COMPLETE,
+                                    text: thinkingContent,
+                                    thinking_millsec:
+                                        new Date().getTime() - time_first_token_millsec,
+                                });
+                            }
                         }
 
                         content += textDelta;

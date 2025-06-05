@@ -8,7 +8,6 @@ import { useStore } from '@/store';
 import { observer } from 'mobx-react-lite';
 import {
     MessageBlockType,
-    MessageBlockStatus,
     type MessageBlock,
     type ThinkingMessageBlock,
 } from '@/types/messageBlock';

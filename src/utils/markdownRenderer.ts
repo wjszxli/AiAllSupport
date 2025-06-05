@@ -73,7 +73,7 @@ function preprocessMath(text: string) {
     ]);
 
     // 处理块级公式中的特殊字符
-    processed = processed.replace(/\$\$([\s\S]*?)\$\$/g, (match, content) => {
+    processed = processed.replace(/\$\$([\s\S]*?)\$\$/g, (_, content) => {
         let processedContent = content;
         for (const [char, replacement] of specialChars) {
             processedContent = processedContent.replaceAll(char, replacement);
@@ -82,7 +82,7 @@ function preprocessMath(text: string) {
     });
 
     // 处理行内公式中的特殊字符
-    processed = processed.replace(/\$([^$]+?)\$/g, (match, content) => {
+    processed = processed.replace(/\$([^$]+?)\$/g, (_, content) => {
         let processedContent = content;
         for (const [char, replacement] of specialChars) {
             processedContent = processedContent.replaceAll(char, replacement);

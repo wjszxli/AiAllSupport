@@ -130,6 +130,7 @@ const Robot: React.FC<RobotProps> = ({ onSwitchToTopics }) => {
             })
             .catch((info) => {
                 // 处理验证失败的情况，但不输出到控制台
+                console.warn('Failed to update robot:', info);
             });
     };
 
