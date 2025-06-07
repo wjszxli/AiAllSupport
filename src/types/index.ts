@@ -200,6 +200,7 @@ export interface CompletionsParams {
     messages: Message[];
     onChunk: (chunk: Chunk) => void;
     onFilterMessages: (messages: Message[]) => void;
+    abortController?: AbortController;
 }
 
 export type Topic = {

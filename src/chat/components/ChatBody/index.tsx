@@ -9,10 +9,10 @@ import { Message } from '@/types/message';
 import robotStore from '@/store/robot';
 
 import rootStore from '@/store';
-import { MessageThunkService } from '@/store/messageThunk';
 import { observer } from 'mobx-react-lite';
 import MessageList from '../MessageList';
 import { useMessageSender } from '@/chat/hooks/useMessageSender';
+import { getMessageService } from '@/services/MessageService';
 
 const { TextArea } = Input;
 
@@ -29,7 +29,7 @@ const ChatBody: React.FC<ChatBodyProps> = observer(
         const inputRef = useRef<any>(null);
 
         const selectedTopicId = useMemo(
-            () => robotStore.selectedRobot.selectedTopicId,
+            () => robotStore.selectedRobot.selectedTopicId || '',
             [robotStore.selectedRobot.selectedTopicId],
         );
 
@@ -47,6 +47,9 @@ const ChatBody: React.FC<ChatBodyProps> = observer(
         // 使用消息发送 hook
         const { handleSendMessage: sendMessage } = useMessageSender();
 
+        // 获取 MessageService 实例
+        const messageService = useMemo(() => getMessageService(rootStore), []);
+
         const computeDisplayMessages = useCallback((messages: Message[], displayCount: number) => {
             const orderedMessages = [...messages];
             if (orderedMessages.length <= displayCount) {
@@ -58,26 +61,34 @@ const ChatBody: React.FC<ChatBodyProps> = observer(
 
         useEffect(() => {
             const newDisplayMessages = computeDisplayMessages(messages, 100);
-            console.log('newDisplayMessages', newDisplayMessages);
             setDisplayMessages(newDisplayMessages);
         }, [messages, computeDisplayMessages]);
 
         const cancelStreamingResponse = useCallback(() => {
-            rootStore.messageStore.setStreamingMessageId(null);
+            console.log(
+                '[ChatBody] Cancel streaming response called, streamingMessageId:',
+                streamingMessageId,
+            );
+
+            // 使用独立的 MessageService 来正确取消流式响应
+            messageService.cancelCurrentStream(selectedTopicId);
+
+            // cancelCurrentStream 已经设置了 streamingMessageId 为 null，不需要重复设置
             setIsLoading(false);
-        }, []);
+
+            console.log('[ChatBody] Cancel streaming response completed');
+        }, [streamingMessageId, messageService]);
 
         // 当话题变化时加载消息
         useEffect(() => {
             if (selectedTopicId) {
-                const messageService = new MessageThunkService(rootStore);
                 // 只有在没有正在流式处理的消息时才重新加载
                 // 避免在流式过程中清理当前的流式块
                 if (!streamingMessageId) {
                     messageService.loadTopicMessages(selectedTopicId);
                 }
             }
-        }, [selectedTopicId, rootStore, streamingMessageId]);
+        }, [selectedTopicId, streamingMessageId, messageService]);
 
         const handleSendMessage = () => {
             if (!userInput.trim() || isLoading) return;

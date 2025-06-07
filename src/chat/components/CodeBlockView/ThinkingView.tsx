@@ -14,15 +14,6 @@ interface Props {
  * 内部自主判断思考状态，减少外部耦合
  */
 const ThinkingView: React.FC<Props> = ({ thinkingBlock }) => {
-    console.log('thinkingBlock', {
-        id: thinkingBlock.id,
-        status: thinkingBlock.status,
-        content: thinkingBlock.content?.substring(0, 50) + '...',
-        contentLength: thinkingBlock.content?.length || 0,
-        thinking_millsec: thinkingBlock.thinking_millsec,
-        timestamp: new Date().toISOString(),
-    });
-
     // 内部判断思考状态
     const isStreaming = thinkingBlock.status === MessageBlockStatus.STREAMING;
     const isCompleted = thinkingBlock.status === MessageBlockStatus.SUCCESS;

@@ -36,23 +36,6 @@ const MessageRenderer: React.FC<MessageRendererProps> = observer(
         // 在 useMemo 外部获取 messageBlocks，让 MobX 正确观察到变化
         const messageBlocks = messageId ? messageBlockStore.getBlocksForMessage(messageId) : [];
 
-        // 添加调试信息来跟踪 messageBlocks 的变化
-        if (process.env.NODE_ENV === 'development' && messageId) {
-            console.log(`[MessageRenderer] Component render for message ${messageId}:`, {
-                messageId,
-                isStreaming,
-                messageBlocksLength: messageBlocks.length,
-                messageBlocks: messageBlocks.map((block) => ({
-                    id: block.id,
-                    type: block.type,
-                    status: block.status,
-                    hasContent: 'content' in block ? !!block.content : false,
-                    contentLength: 'content' in block ? block.content?.length || 0 : 0,
-                })),
-                timestamp: new Date().toISOString(),
-            });
-        }
-
         // 处理 HTML 内容（链接、表情等）
         const processHtmlContent = useCallback((html: string): string => {
             // 处理特殊字符和表情符号
@@ -412,8 +395,6 @@ const MessageRenderer: React.FC<MessageRendererProps> = observer(
                 .map((block) => block.status),
             thinkingContent,
         ]);
-
-        console.log('parsedContent', parsedContent);
 
         return (
             <div className={`message-content-renderer ${isStreaming ? 'streaming' : ''}`}>

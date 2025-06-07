@@ -3,9 +3,8 @@ import { message as AntdMessage } from 'antd';
 import robotStore from '@/store/robot';
 import llmStore from '@/store/llm';
 import rootStore from '@/store';
-import { MessageThunkService } from '@/store/messageThunk';
-import { InputMessage } from '@/types/message';
-import { getUserMessage } from '@/services/MessageService';
+import { InputMessage, getUserMessage } from '@/utils/message/input';
+import { getMessageService } from '@/services/MessageService';
 
 export const useMessageSender = () => {
     const handleSendMessage = useCallback((userInput: string, onSuccess?: () => void) => {
@@ -37,7 +36,8 @@ export const useMessageSender = () => {
         const { message, blocks } = getUserMessage(userMessage);
         console.log(message, blocks);
 
-        const messageService = new MessageThunkService(rootStore);
+        // 使用独立的 MessageService
+        const messageService = getMessageService(rootStore);
         messageService.sendMessage(message, blocks, selectedRobot, selectedTopicId);
 
         // 调用成功回调

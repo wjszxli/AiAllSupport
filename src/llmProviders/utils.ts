@@ -49,8 +49,17 @@ export function asyncGeneratorToReadableStream<T>(gen: AsyncGenerator<T>): Reada
     });
 }
 
-export async function* openAIChunkToTextDelta(stream: any): AsyncGenerator<OpenAIStreamChunk> {
+export async function* openAIChunkToTextDelta(
+    stream: any,
+    abortController?: AbortController,
+): AsyncGenerator<OpenAIStreamChunk> {
     for await (const chunk of stream) {
+        // 检查是否已被中止
+        if (abortController?.signal.aborted) {
+            console.log('[openAIChunkToTextDelta] Stream aborted');
+            throw new DOMException('Request was aborted.', 'AbortError');
+        }
+
         // if (window.keyv.get(EVENT_NAMES.CHAT_COMPLETION_PAUSED)) {
         //     break;
         // }

@@ -26,10 +26,12 @@ export async function fetchChatCompletion({
     messages,
     robot,
     onChunkReceived,
+    abortController,
 }: {
     messages: Message[];
     robot: Robot;
     onChunkReceived: (chunk: Chunk) => void;
+    abortController?: AbortController;
 }) {
     const provider = llmStore.providers.find((p) => p.id === robot.model?.provider);
 
@@ -54,5 +56,6 @@ export async function fetchChatCompletion({
         messages: filteredMessages,
         onFilterMessages: () => {},
         onChunk: onChunkReceived,
+        abortController,
     });
 }

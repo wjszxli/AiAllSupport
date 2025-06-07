@@ -28,9 +28,46 @@ import { MessageBlock } from '@/types/messageBlock';
 
 export class MessageThunkService {
     private rootStore: RootStore;
+    private currentAbortController: AbortController | null = null;
+    private currentTopicId: string | null = null;
 
     constructor(rootStore: RootStore) {
         this.rootStore = rootStore;
+    }
+
+    // 取消当前流式响应
+    public cancelCurrentStream() {
+        console.log(
+            '[MessageThunkService] cancelCurrentStream called, currentAbortController:',
+            this.currentAbortController,
+        );
+
+        if (this.currentAbortController) {
+            console.log('[MessageThunkService] Aborting current stream...');
+            this.currentAbortController.abort();
+            this.currentAbortController = null;
+
+            // 立即更新状态
+            runInAction(() => {
+                this.rootStore.messageStore.setStreamingMessageId(null);
+                const currentTopicId = this.rootStore.messageStore.currentTopicId;
+                if (currentTopicId) {
+                    this.rootStore.messageStore.setTopicLoading(currentTopicId, false);
+                }
+            });
+
+            console.log('[MessageThunkService] Stream cancelled successfully');
+        } else {
+            console.log('[MessageThunkService] No active stream to cancel');
+        }
+
+        // 清空当前话题的队列，防止队列中的任务继续执行
+        if (this.currentTopicId) {
+            console.log('[MessageThunkService] Clearing queue for topic:', this.currentTopicId);
+            const queue = getTopicQueue(this.currentTopicId);
+            queue.clear();
+            this.currentTopicId = null;
+        }
     }
 
     // 节流更新函数
@@ -150,6 +187,26 @@ export class MessageThunkService {
         const assistantMsgId = assistantMessage.id;
         let callbacks: StreamProcessorCallbacks = {};
 
+        // 设置当前话题ID，用于取消时清空队列
+        this.currentTopicId = topicId;
+
+        // 创建新的 AbortController
+        this.currentAbortController = new AbortController();
+        const abortController = this.currentAbortController;
+
+        console.log(
+            '[MessageThunkService] Created new AbortController for message:',
+            assistantMsgId,
+        );
+
+        // 监听中止信号
+        abortController.signal.addEventListener('abort', () => {
+            console.log(
+                '[MessageThunkService] AbortController signal fired for message:',
+                assistantMsgId,
+            );
+        });
+
         try {
             // 1. 设置加载状态
             runInAction(() => {
@@ -206,31 +263,20 @@ export class MessageThunkService {
                     );
                 });
 
-                // 调试信息：只在开发环境下输出
-                if (process.env.NODE_ENV === 'development') {
-                    console.log('[handleBlockTransition] Block added to message:', {
-                        blockId: newBlock.id,
-                        blockType,
-                        assistantMsgId,
-                        messageBlocks:
-                            this.rootStore.messageStore.getMessageById(assistantMsgId)?.blocks,
-                    });
-                }
-
                 // 保存到数据库
-                // const updatedMessage = this.rootStore.messageStore.getMessageById(assistantMsgId);
-                // if (updatedMessage) {
-                //     await this.saveUpdatesToDB(
-                //         assistantMsgId,
-                //         topicId,
-                //         { blocks: updatedMessage.blocks },
-                //         [newBlock],
-                //     );
-                // } else {
-                //     console.warn(
-                //         `[handleBlockTransition] Message ${assistantMsgId} not found in store`,
-                //     );
-                // }
+                const updatedMessage = this.rootStore.messageStore.getMessageById(assistantMsgId);
+                if (updatedMessage) {
+                    await this.saveUpdatesToDB(
+                        assistantMsgId,
+                        topicId,
+                        { blocks: updatedMessage.blocks },
+                        [newBlock],
+                    );
+                } else {
+                    console.warn(
+                        `[handleBlockTransition] Message ${assistantMsgId} not found in store`,
+                    );
+                }
             };
 
             // 5. 更新块内容的通用函数
@@ -480,6 +526,7 @@ export class MessageThunkService {
                 messages: messagesForContext,
                 robot: robot,
                 onChunkReceived: streamProcessorCallbacks,
+                abortController,
             });
         } catch (error: any) {
             console.error('Error fetching chat completion:', error);
@@ -531,6 +578,16 @@ export class MessageThunkService {
                 this.rootStore.messageStore.setTopicLoading(topicId, false);
                 this.rootStore.messageStore.setStreamingMessageId(null);
             });
+
+            // 清理 AbortController
+            if (this.currentAbortController === abortController) {
+                this.currentAbortController = null;
+            }
+
+            // 清理当前话题ID
+            if (this.currentTopicId === topicId) {
+                this.currentTopicId = null;
+            }
         }
     }
 

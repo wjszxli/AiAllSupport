@@ -161,10 +161,10 @@ export default class OpenAiLlmProvider extends BaseLlmProvider {
         messages,
         onChunk,
         onFilterMessages,
+        abortController,
     }: CompletionsParams): Promise<void> {
         const model = store.llmStore.defaultModel;
         const contextCount = 5;
-        // console.log('messages', messages);
         // 准备请求消息
         const userMessages: ChatCompletionMessageParam[] = [];
         const _messages = takeRight(messages, contextCount + 1);
@@ -178,7 +178,6 @@ export default class OpenAiLlmProvider extends BaseLlmProvider {
 
         // 构建最终请求消息
         let reqMessages: ChatCompletionMessageParam[] = [...userMessages];
-        // console.log('reqMessages', reqMessages);
 
         reqMessages = processReqMessages(model, reqMessages);
 
@@ -188,8 +187,6 @@ export default class OpenAiLlmProvider extends BaseLlmProvider {
             let isFirstChunk = true;
             let time_first_token_millsec = 0;
             let thinkingContent = '';
-
-            // console.log('stream', stream);
 
             const reasoningTags = [
                 { openingTag: '<think>', closingTag: '</think>', separator: '\n' },
@@ -213,13 +210,20 @@ export default class OpenAiLlmProvider extends BaseLlmProvider {
                 },
             ).onMessage({
                 doStream: async () => ({
-                    stream: asyncGeneratorToReadableStream(openAIChunkToTextDelta(stream)),
+                    stream: asyncGeneratorToReadableStream(
+                        openAIChunkToTextDelta(stream, abortController),
+                    ),
                 }),
             });
 
             // 处理流式响应
             for await (const chunk of readableStreamAsyncIterable(processedStream)) {
-                console.log('chunk', chunk);
+                // 检查是否已被中止
+                if (abortController?.signal.aborted) {
+                    console.log('Stream processing aborted');
+                    throw new DOMException('Request was aborted.', 'AbortError');
+                }
+
                 const typedChunk = chunk as OpenAIStreamChunk;
 
                 switch (typedChunk.type) {
@@ -281,11 +285,19 @@ export default class OpenAiLlmProvider extends BaseLlmProvider {
 
         onChunk({ type: ChunkType.LLM_RESPONSE_CREATED });
         // const start_time_millsec = new Date().getTime();
-        const stream = await this.sdk.chat.completions.create({
+
+        // 传递 AbortController signal 给 OpenAI SDK
+        const requestOptions: any = {
             model: model.id,
             messages: reqMessages,
             stream: true,
-        });
+        };
+
+        if (abortController) {
+            requestOptions.signal = abortController.signal;
+        }
+
+        const stream = await this.sdk.chat.completions.create(requestOptions);
 
         await processStream(stream);
     }

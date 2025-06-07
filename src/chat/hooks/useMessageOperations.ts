@@ -3,7 +3,7 @@ import { Message } from '@/types/message';
 import { MessageBlockType, MessageBlockStatus } from '@/types/messageBlock';
 import rootStore from '@/store';
 import robotStore from '@/store/robot';
-import { MessageThunkService } from '@/store/messageThunk';
+import { getMessageService } from '@/services/MessageService';
 import { message as AntdMessage } from 'antd';
 import { t } from '@/locales/i18n';
 
@@ -29,8 +29,6 @@ export const useMessageOperations = (streamingMessageId: string | null) => {
             console.warn(`[getMessageContent] No valid blocks found for message ${message.id}`);
             return '';
         }
-
-        console.log('blocks', blocks);
 
         // 只获取正文内容，不包含思考内容
         const content = blocks
@@ -153,8 +151,8 @@ export const useMessageOperations = (streamingMessageId: string | null) => {
                 return;
             }
 
-            // 创建消息服务实例并调用重新生成
-            const messageService = new MessageThunkService(rootStore);
+            // 使用独立的 MessageService 调用重新生成
+            const messageService = getMessageService(rootStore);
             messageService.regenerateAssistantResponse(selectedTopicId, assistantMessage, robot);
 
             AntdMessage.info(t('regenerating') || '正在重新生成...', 2);

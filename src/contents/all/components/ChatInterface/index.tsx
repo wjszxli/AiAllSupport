@@ -288,7 +288,6 @@ const ChatInterface = ({ initialText }: ChatInterfaceProps) => {
             const code = codeData ? decodeURIComponent(codeData) : null;
 
             if (code) {
-                console.log('code', code);
                 navigator.clipboard
                     .writeText(code)
                     .then(() => {
