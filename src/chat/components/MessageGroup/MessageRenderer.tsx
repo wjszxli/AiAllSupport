@@ -20,12 +20,21 @@ interface MessageRendererProps {
 }
 
 interface ContentPart {
-    type: 'text' | 'code' | 'math-block' | 'math-inline' | 'html' | 'thinking' | 'mermaid';
+    type:
+        | 'text'
+        | 'code'
+        | 'math-block'
+        | 'math-inline'
+        | 'html'
+        | 'thinking'
+        | 'mermaid'
+        | 'error';
     content?: string;
     language?: string;
     thinking_millsec?: number;
     isStreaming?: boolean;
     thinkingBlock?: ThinkingMessageBlock;
+    error?: Record<string, any>;
     id: string;
 }
 
@@ -292,25 +301,36 @@ const MessageRenderer: React.FC<MessageRendererProps> = observer(
                         }
                     });
 
-                    // 添加其他类型的块（如 CODE 块）
+                    // 添加其他类型的块（如 CODE 块、ERROR 块）
                     const otherBlocks = messageBlocks.filter(
                         (block: MessageBlock) =>
                             block.type !== MessageBlockType.THINKING &&
                             block.type !== MessageBlockType.MAIN_TEXT,
                     );
                     otherBlocks.forEach((block: MessageBlock) => {
-                        if ('content' in block && block.content) {
-                            // 根据块类型处理内容
-                            if (block.type === MessageBlockType.CODE) {
-                                parts.push({
-                                    type: 'code',
-                                    content: block.content,
-                                    language: 'language' in block ? (block as any).language : '',
-                                    id: `code-${block.id}`,
-                                });
-                            }
-                            // 可以在这里添加其他块类型的处理
+                        if (
+                            block.type === MessageBlockType.CODE &&
+                            'content' in block &&
+                            block.content
+                        ) {
+                            parts.push({
+                                type: 'code',
+                                content: block.content,
+                                language: 'language' in block ? (block as any).language : '',
+                                id: `code-${block.id}`,
+                            });
+                        } else if (
+                            block.type === MessageBlockType.ERROR &&
+                            'error' in block &&
+                            block.error
+                        ) {
+                            parts.push({
+                                type: 'error',
+                                error: block.error,
+                                id: `error-${block.id}`,
+                            });
                         }
+                        // 可以在这里添加其他块类型的处理
                     });
 
                     // 如果没有任何文本内容部分（只有思考块），但有 content 参数，使用 content 作为补充
@@ -439,6 +459,27 @@ const MessageRenderer: React.FC<MessageRendererProps> = observer(
 
                         case 'mermaid':
                             return <MermaidView key={part.id}>{part.content || ''}</MermaidView>;
+
+                        case 'error':
+                            return (
+                                <div
+                                    key={part.id}
+                                    className="error-block"
+                                    style={{
+                                        backgroundColor: '#ffeef0',
+                                        border: '1px solid #fbb',
+                                        borderRadius: '6px',
+                                        padding: '12px',
+                                        margin: '8px 0',
+                                        color: '#d73a49',
+                                    }}
+                                >
+                                    <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
+                                        {part.error?.name || 'Error'}
+                                    </div>
+                                    <div>{part.error?.message || 'An unknown error occurred'}</div>
+                                </div>
+                            );
 
                         default:
                             return null;

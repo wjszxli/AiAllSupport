@@ -19,5 +19,20 @@ export const isAbortError = (error: any): boolean => {
         return true;
     }
 
+    // 检查 BaseLlmProvider 的中止错误
+    if (error?.message === 'Operation aborted') {
+        return true;
+    }
+
+    // 检查常见的中止错误消息
+    if (
+        error &&
+        typeof error === 'object' &&
+        error.message &&
+        (error.message.includes('abort') || error.message.includes('cancel'))
+    ) {
+        return true;
+    }
+
     return false;
 };

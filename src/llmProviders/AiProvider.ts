@@ -24,13 +24,11 @@ export default class AiProvider {
         messages,
         onChunk,
         onFilterMessages,
-        abortController,
     }: CompletionsParams): Promise<void> {
         return this.sdk.completions({
             messages,
             onChunk,
             onFilterMessages,
-            abortController,
         });
     }
 }

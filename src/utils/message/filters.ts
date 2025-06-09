@@ -1,5 +1,7 @@
 import { Message } from '@/types/message';
-import { remove } from 'lodash';
+import { MessageBlockType } from '@/types/messageBlock';
+import { isEmpty, remove } from 'lodash';
+import rootStore from '@/store';
 
 export function filterContextMessages(messages: Message[]): Message[] {
     const clearIndex = messages.findIndex((message: Message) => message.type === 'clear');
@@ -70,4 +72,31 @@ export function filterUsefulMessages(messages: Message[]): Message[] {
     });
 
     return _messages;
+}
+
+export function filterEmptyMessages(messages: Message[]): Message[] {
+    return messages.filter((message) => {
+        let hasContent = false;
+        for (const blockId of message.blocks) {
+            const block = rootStore.messageBlockStore.getBlockById(blockId);
+            if (!block) continue;
+            if (
+                block.type === MessageBlockType.MAIN_TEXT &&
+                !isEmpty((block as any).content?.trim())
+            ) {
+                // Type assertion needed
+                hasContent = true;
+                break;
+            }
+            if (
+                [MessageBlockType.CODE, MessageBlockType.TOOL, MessageBlockType.CITATION].includes(
+                    block.type,
+                )
+            ) {
+                hasContent = true;
+                break;
+            }
+        }
+        return hasContent;
+    });
 }

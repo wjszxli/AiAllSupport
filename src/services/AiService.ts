@@ -26,7 +26,6 @@ export async function fetchChatCompletion({
     messages,
     robot,
     onChunkReceived,
-    abortController,
 }: {
     messages: Message[];
     robot: Robot;
@@ -56,6 +55,5 @@ export async function fetchChatCompletion({
         messages: filteredMessages,
         onFilterMessages: () => {},
         onChunk: onChunkReceived,
-        abortController,
     });
 }

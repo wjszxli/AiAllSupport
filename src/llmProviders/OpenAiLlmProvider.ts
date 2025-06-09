@@ -18,6 +18,7 @@ import {
     readableStreamAsyncIterable,
 } from './utils';
 import store from '@/store';
+import { filterContextMessages, filterEmptyMessages } from '@/utils/message/filters';
 
 export const NOT_SUPPORTED_REGEX = /(?:^tts|whisper|speech)/i;
 
@@ -161,13 +162,14 @@ export default class OpenAiLlmProvider extends BaseLlmProvider {
         messages,
         onChunk,
         onFilterMessages,
-        abortController,
     }: CompletionsParams): Promise<void> {
         const model = store.llmStore.defaultModel;
         const contextCount = 5;
         // 准备请求消息
         const userMessages: ChatCompletionMessageParam[] = [];
-        const _messages = takeRight(messages, contextCount + 1);
+        const _messages = filterEmptyMessages(
+            filterContextMessages(takeRight(messages, contextCount + 1)),
+        );
 
         onFilterMessages(_messages);
 
@@ -175,6 +177,19 @@ export default class OpenAiLlmProvider extends BaseLlmProvider {
         for (const message of _messages) {
             userMessages.push(await this.getMessageParam(message));
         }
+
+        const lastUserMessage = _messages
+            .slice()
+            .reverse()
+            .find((m: Message) => m.role === 'user');
+        console.log('[OpenAiLlmProvider] lastUserMessage', lastUserMessage);
+
+        const { abortController, cleanup, signalPromise } = this.createAbortController(
+            lastUserMessage?.id,
+            true,
+        );
+
+        const { signal } = abortController;
 
         // 构建最终请求消息
         let reqMessages: ChatCompletionMessageParam[] = [...userMessages];
@@ -297,8 +312,14 @@ export default class OpenAiLlmProvider extends BaseLlmProvider {
             requestOptions.signal = abortController.signal;
         }
 
-        const stream = await this.sdk.chat.completions.create(requestOptions);
+        const stream = await this.sdk.chat.completions.create(requestOptions, {
+            signal,
+        });
 
-        await processStream(stream);
+        await processStream(stream).finally(cleanup);
+
+        await signalPromise?.promise?.catch((error) => {
+            throw error;
+        });
     }
 }

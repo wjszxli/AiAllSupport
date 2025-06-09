@@ -19,12 +19,13 @@ import {
     createThinkingBlock,
 } from '@/utils/message/create';
 // import { getTopicQueue, waitForTopicQueue } from '@/utils/queue';
-import { getTopicQueue } from '@/utils/queue';
+import { getTopicQueue, waitForTopicQueue } from '@/utils/queue';
 import { throttle } from 'lodash';
 import { runInAction } from 'mobx';
 
 import type { RootStore } from '@/store';
 import { MessageBlock } from '@/types/messageBlock';
+import { abortCompletion } from '@/utils/abortController';
 
 export class MessageService {
     private rootStore: RootStore;
@@ -55,29 +56,14 @@ export class MessageService {
             ...new Set(streamingMessages?.map((m) => m.askId).filter((id) => !!id) as string[]),
         ];
 
-        // if (this.currentAbortController) {
-        //     console.log('[MessageService] Aborting current stream...');
-        //     this.currentAbortController.abort();
-        //     this.currentAbortController = null;
-        //     // 立即更新状态
-        //     runInAction(() => {
-        //         this.rootStore.messageStore.setStreamingMessageId(null);
-        //         const currentTopicId = this.rootStore.messageStore.currentTopicId;
-        //         if (currentTopicId) {
-        //             this.rootStore.messageStore.setTopicLoading(currentTopicId, false);
-        //         }
-        //     });
-        //     console.log('[MessageService] Stream cancelled successfully');
-        // } else {
-        //     console.log('[MessageService] No active stream to cancel');
-        // }
-        // // 清空当前话题的队列，防止队列中的任务继续执行
-        // if (this.currentTopicId) {
-        //     console.log('[MessageService] Clearing queue for topic:', this.currentTopicId);
-        //     const queue = getTopicQueue(this.currentTopicId);
-        //     queue.clear();
-        //     this.currentTopicId = null;
-        // }
+        for (const askId of askIds) {
+            abortCompletion(askId);
+        }
+
+        runInAction(() => {
+            // this.rootStore.messageStore.setStreamingMessageId(null);
+            this.rootStore.messageStore.setTopicLoading(currentTopicId, false);
+        });
     }
 
     // 节流更新函数
@@ -475,16 +461,47 @@ export class MessageService {
                         });
                         await this.saveBlockToDB(currentBlockId);
                     }
-                    const errorBlock = createErrorBlock(
-                        assistantMsgId,
-                        {
-                            name: error.name,
-                            message: error.message || 'Stream processing error',
-                            stack: error.stack,
-                        },
-                        { status: MessageBlockStatus.SUCCESS },
-                    );
-                    await handleBlockTransition(errorBlock, MessageBlockType.ERROR);
+
+                    if (isAbort) {
+                        // 用户主动取消，显示"已中断"状态
+                        if (currentBlockId && currentBlockType === MessageBlockType.MAIN_TEXT) {
+                            // 如果当前有正在处理的主文本块，在其内容后追加"已中断"
+                            const currentBlock =
+                                this.rootStore.messageBlockStore.getBlockById(currentBlockId);
+                            if (currentBlock && 'content' in currentBlock) {
+                                const currentContent = currentBlock.content || '';
+                                const abortedContent = currentContent
+                                    ? `${currentContent}\n\n已中断`
+                                    : '已中断';
+                                runInAction(() => {
+                                    this.rootStore.messageBlockStore.updateBlock(currentBlockId!, {
+                                        content: abortedContent,
+                                        status: MessageBlockStatus.SUCCESS,
+                                    });
+                                });
+                                await this.saveBlockToDB(currentBlockId);
+                            }
+                        } else {
+                            // 如果没有当前块或当前块不是主文本，创建新的"已中断"块
+                            const abortedBlock = createMainTextBlock(assistantMsgId, '已中断', {
+                                status: MessageBlockStatus.SUCCESS,
+                            });
+                            await handleBlockTransition(abortedBlock, MessageBlockType.MAIN_TEXT);
+                        }
+                    } else {
+                        // 真正的错误，创建错误块
+                        const errorBlock = createErrorBlock(
+                            assistantMsgId,
+                            {
+                                name: error.name,
+                                message: error.message || 'Stream processing error',
+                                stack: error.stack,
+                            },
+                            { status: MessageBlockStatus.SUCCESS },
+                        );
+                        await handleBlockTransition(errorBlock, MessageBlockType.ERROR);
+                    }
+
                     const messageUpdate = {
                         status: isAbort ? RobotMessageStatus.SUCCESS : RobotMessageStatus.ERROR,
                     };
@@ -540,7 +557,11 @@ export class MessageService {
             if (callbacks.onError) {
                 await callbacks.onError(error);
             }
-            throw error;
+            // 只有在非用户主动取消的情况下才抛出错误
+            const isAbort = isAbortError(error);
+            if (!isAbort) {
+                throw error;
+            }
         } finally {
             // Clean up any remaining blocks in PROCESSING/STREAMING state
             // 但要小心不要覆盖已经正确完成的思考块
@@ -917,7 +938,7 @@ export class MessageService {
 
     // 辅助方法
     private async handleChangeLoadingOfTopic(topicId: string) {
-        // await waitForTopicQueue(topicId);
+        await waitForTopicQueue(topicId);
         runInAction(() => {
             this.rootStore.messageStore.setTopicLoading(topicId, false);
         });
