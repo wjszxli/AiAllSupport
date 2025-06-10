@@ -35,6 +35,7 @@ export const ru = {
     typeMessage: 'Введите ваше сообщение...',
     send: 'Отправка',
     thinking: 'ИИ размышляет...',
+    interrupted: 'Прервано',
     you: 'Ты',
     assistant: 'AI-ассистент',
     includeWebpage: 'Включить содержимое веб-страницы в вопрос.',

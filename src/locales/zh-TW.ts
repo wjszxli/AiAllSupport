@@ -32,6 +32,7 @@ export const zhTW = {
     apiValidFailed: 'API Key 驗證失敗',
     send: '傳送',
     thinking: 'AI 正在思考...',
+    interrupted: '已中斷',
     you: '你',
     assistant: 'AI 助手',
     aiAssistant: 'AI 助手',

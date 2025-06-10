@@ -35,6 +35,7 @@ export const fr = {
     typeMessage: 'Entrez votre message...',
     send: 'Envoyer',
     thinking: "L'IA est en train de réfléchir...",
+    interrupted: 'Interrompu',
     you: 'Vous',
     assistant: 'Assistant IA',
     includeWebpage: 'Dans le problème, incluez le contenu de la page web.',

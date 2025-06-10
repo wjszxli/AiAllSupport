@@ -3,6 +3,7 @@ import { Message } from '@/types/message';
 import {
     BaseMessageBlock,
     ErrorMessageBlock,
+    InterruptedMessageBlock,
     MainTextMessageBlock,
     MessageBlockStatus,
     MessageBlockType,
@@ -98,6 +99,21 @@ export function createErrorBlock(
         ...overrides,
     });
     return baseBlock as ErrorMessageBlock;
+}
+
+export function createInterruptedBlock(
+    messageId: string,
+    content?: string,
+    overrides: Partial<Omit<InterruptedMessageBlock, 'id' | 'messageId' | 'type' | 'content'>> = {},
+): InterruptedMessageBlock {
+    const baseBlock = createBaseMessageBlock(messageId, MessageBlockType.INTERRUPTED, {
+        status: MessageBlockStatus.SUCCESS,
+        ...overrides,
+    });
+    return {
+        ...baseBlock,
+        content,
+    } as InterruptedMessageBlock;
 }
 
 export const resetRobotMessage = (

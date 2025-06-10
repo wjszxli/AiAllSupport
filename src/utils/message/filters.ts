@@ -89,9 +89,12 @@ export function filterEmptyMessages(messages: Message[]): Message[] {
                 break;
             }
             if (
-                [MessageBlockType.CODE, MessageBlockType.TOOL, MessageBlockType.CITATION].includes(
-                    block.type,
-                )
+                [
+                    MessageBlockType.CODE,
+                    MessageBlockType.TOOL,
+                    MessageBlockType.CITATION,
+                    MessageBlockType.INTERRUPTED,
+                ].includes(block.type)
             ) {
                 hasContent = true;
                 break;

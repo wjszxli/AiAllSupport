@@ -32,6 +32,7 @@ export const ko = {
     apiValidSuccess: 'API 키 검증 성공, 도구를 사용할 수 있습니다',
     send: '보내기',
     thinking: 'AI가 생각 중...',
+    interrupted: '중단됨',
     assistant: 'AI 어시스턴트',
     includeWebpage: '질문에 웹페이지 컨텍스트 포함',
     askWebpage: '이 웹페이지에 대해 물어보기...',

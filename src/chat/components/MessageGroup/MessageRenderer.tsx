@@ -4,12 +4,14 @@ import DOMPurify from 'dompurify';
 import CodeBlockView from '@/chat/components/CodeBlockView';
 import MermaidView from '@/chat/components/CodeBlockView/MermaidView';
 import ThinkingView from '@/chat/components/CodeBlockView/ThinkingView';
+import InterruptedView from '@/chat/components/CodeBlockView/InterruptedView';
 import { useStore } from '@/store';
 import { observer } from 'mobx-react-lite';
 import {
     MessageBlockType,
     type MessageBlock,
     type ThinkingMessageBlock,
+    type InterruptedMessageBlock,
 } from '@/types/messageBlock';
 
 interface MessageRendererProps {
@@ -28,14 +30,17 @@ interface ContentPart {
         | 'html'
         | 'thinking'
         | 'mermaid'
-        | 'error';
+        | 'error'
+        | 'interrupted';
     content?: string;
     language?: string;
     thinking_millsec?: number;
     isStreaming?: boolean;
     thinkingBlock?: ThinkingMessageBlock;
+    interruptedBlock?: InterruptedMessageBlock;
     error?: Record<string, any>;
     id: string;
+    forceCollapsed?: boolean;
 }
 
 const MessageRenderer: React.FC<MessageRendererProps> = observer(
@@ -227,7 +232,12 @@ const MessageRenderer: React.FC<MessageRendererProps> = observer(
 
             // 首先检查是否有 messageBlocks
             if (messageId && messageBlocks.length > 0) {
-                // 添加THINKING块
+                // 检查是否有中断块
+                const hasInterruptedBlock = messageBlocks.some(
+                    (block: MessageBlock) => block.type === MessageBlockType.INTERRUPTED,
+                );
+
+                // 添加THINKING块 - 如果存在中断块，折叠思考块
                 const thinkingBlocks = messageBlocks.filter(
                     (block: MessageBlock) => block.type === MessageBlockType.THINKING,
                 );
@@ -240,6 +250,24 @@ const MessageRenderer: React.FC<MessageRendererProps> = observer(
                             type: 'thinking',
                             thinkingBlock: thinkingBlock,
                             id: `thinking-${thinkingBlock.id}`,
+                            // 如果存在中断块，强制折叠思考块
+                            forceCollapsed: hasInterruptedBlock,
+                        });
+                    }
+                });
+
+                // 添加INTERRUPTED块 - 总是显示在思考块之后
+                const interruptedBlocks = messageBlocks.filter(
+                    (block: MessageBlock) => block.type === MessageBlockType.INTERRUPTED,
+                );
+
+                interruptedBlocks.forEach((block: MessageBlock) => {
+                    if (block.type === MessageBlockType.INTERRUPTED) {
+                        const interruptedBlock = block as InterruptedMessageBlock;
+                        parts.push({
+                            type: 'interrupted',
+                            interruptedBlock: interruptedBlock,
+                            id: `interrupted-${interruptedBlock.id}`,
                         });
                     }
                 });
@@ -305,7 +333,8 @@ const MessageRenderer: React.FC<MessageRendererProps> = observer(
                     const otherBlocks = messageBlocks.filter(
                         (block: MessageBlock) =>
                             block.type !== MessageBlockType.THINKING &&
-                            block.type !== MessageBlockType.MAIN_TEXT,
+                            block.type !== MessageBlockType.MAIN_TEXT &&
+                            block.type !== MessageBlockType.INTERRUPTED,
                     );
                     otherBlocks.forEach((block: MessageBlock) => {
                         if (
@@ -440,7 +469,19 @@ const MessageRenderer: React.FC<MessageRendererProps> = observer(
 
                         case 'thinking':
                             return part.thinkingBlock ? (
-                                <ThinkingView key={part.id} thinkingBlock={part.thinkingBlock} />
+                                <ThinkingView
+                                    key={part.id}
+                                    thinkingBlock={part.thinkingBlock}
+                                    forceCollapsed={part.forceCollapsed}
+                                />
+                            ) : null;
+
+                        case 'interrupted':
+                            return part.interruptedBlock ? (
+                                <InterruptedView
+                                    key={part.id}
+                                    content={part.interruptedBlock.content}
+                                />
                             ) : null;
 
                         case 'math-block':

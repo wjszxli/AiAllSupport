@@ -35,10 +35,11 @@ export const useMessageOperations = (streamingMessageId: string | null) => {
             .filter((block): block is NonNullable<typeof block> => {
                 if (!block) return false;
 
-                // 只包含正文内容类型的块，明确排除 THINKING 类型
+                // 只包含正文内容类型的块，明确排除 THINKING 类型，包含中断块
                 const hasContent =
                     block.type === MessageBlockType.MAIN_TEXT ||
-                    block.type === MessageBlockType.CODE;
+                    block.type === MessageBlockType.CODE ||
+                    block.type === MessageBlockType.INTERRUPTED;
                 const hasContentProperty = 'content' in block;
 
                 return hasContent && hasContentProperty;

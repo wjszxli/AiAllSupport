@@ -6,6 +6,7 @@ import './ThinkingView.scss';
 
 interface Props {
     thinkingBlock: ThinkingMessageBlock;
+    forceCollapsed?: boolean;
 }
 
 /**
@@ -13,7 +14,7 @@ interface Props {
  * 显示AI的思考过程，可折叠展开
  * 内部自主判断思考状态，减少外部耦合
  */
-const ThinkingView: React.FC<Props> = ({ thinkingBlock }) => {
+const ThinkingView: React.FC<Props> = ({ thinkingBlock, forceCollapsed }) => {
     // 内部判断思考状态
     const isStreaming = thinkingBlock.status === MessageBlockStatus.STREAMING;
     const isCompleted = thinkingBlock.status === MessageBlockStatus.SUCCESS;
@@ -21,7 +22,11 @@ const ThinkingView: React.FC<Props> = ({ thinkingBlock }) => {
 
     // 流式思考内容默认展开，让用户能立即看到思考过程
     // 如果有内容或正在流式处理，默认展开
+    // 但如果强制折叠，则初始状态为折叠
     const [isExpanded, setIsExpanded] = useState(() => {
+        if (forceCollapsed) {
+            return false;
+        }
         const initialExpanded = isStreaming || hasContent;
         return initialExpanded;
     });
@@ -31,12 +36,12 @@ const ThinkingView: React.FC<Props> = ({ thinkingBlock }) => {
         setIsExpanded(!isExpanded);
     };
 
-    // 当开始流式处理时，自动展开思考内容
+    // 当开始流式处理时，自动展开思考内容（除非强制折叠）
     useEffect(() => {
-        if (isStreaming) {
+        if (isStreaming && !forceCollapsed) {
             setIsExpanded(true);
         }
-    }, [isStreaming]);
+    }, [isStreaming, forceCollapsed]);
 
     // 当思考完成时，自动折叠思考内容
     useEffect(() => {
@@ -46,12 +51,12 @@ const ThinkingView: React.FC<Props> = ({ thinkingBlock }) => {
     }, [isCompleted, isStreaming, thinkingBlock.id]);
 
     // 简化内容变化监听逻辑，避免过度干预用户的折叠/展开选择
-    // 只在思考刚开始且有内容时自动展开一次
+    // 只在思考刚开始且有内容时自动展开一次（除非强制折叠）
     useEffect(() => {
-        if (isStreaming && hasContent && !isExpanded) {
+        if (isStreaming && hasContent && !isExpanded && !forceCollapsed) {
             setIsExpanded(true);
         }
-    }, [isStreaming, hasContent]); // 移除 isExpanded 依赖，避免无限循环
+    }, [isStreaming, hasContent, forceCollapsed]); // 移除 isExpanded 依赖，避免无限循环
 
     // 格式化思考时间
     const formatThinkingTime = (millsec?: number): string => {

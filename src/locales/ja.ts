@@ -70,6 +70,7 @@ export const ja = {
     // Chat interface
     send: '送信',
     thinking: 'AI が考え中...',
+    interrupted: '中断済み',
     think: '思考内容',
     you: 'あなた',
     assistant: 'AI アシスタント',

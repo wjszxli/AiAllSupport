@@ -8,6 +8,7 @@ export enum MessageBlockType {
     CODE = 'code', // 代码块
     TOOL = 'tool', // Added unified tool block type
     ERROR = 'error', // 错误信息
+    INTERRUPTED = 'interrupted', // 中断状态
     CITATION = 'citation', // 引用类型 (Now includes web search, grounding, etc.)
 }
 
@@ -58,9 +59,15 @@ export interface ErrorMessageBlock extends BaseMessageBlock {
     type: MessageBlockType.ERROR;
 }
 
+export interface InterruptedMessageBlock extends BaseMessageBlock {
+    type: MessageBlockType.INTERRUPTED;
+    content?: string; // 可选的中断前的内容
+}
+
 export type MessageBlock =
     | PlaceholderMessageBlock
     | MainTextMessageBlock
     | ThinkingMessageBlock
     | CodeMessageBlock
-    | ErrorMessageBlock;
+    | ErrorMessageBlock
+    | InterruptedMessageBlock;

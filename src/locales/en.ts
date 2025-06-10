@@ -71,6 +71,7 @@ export const en = {
     // Chat interface
     send: 'Send',
     thinking: 'AI is thinking...',
+    interrupted: 'Interrupted',
     assistant: 'AI ASSISTANT',
     includeWebpage: 'Include webpage context in questions',
     includeWebpageTooltip:

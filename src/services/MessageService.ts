@@ -14,6 +14,7 @@ import {
     createRobotMessage,
     createBaseMessageBlock,
     createErrorBlock,
+    createInterruptedBlock,
     resetRobotMessage,
     createMainTextBlock,
     createThinkingBlock,
@@ -463,30 +464,64 @@ export class MessageService {
                     }
 
                     if (isAbort) {
-                        // 用户主动取消，显示"已中断"状态
+                        // 用户主动取消，创建中断状态块
+                        let interruptedContent: string | undefined;
+
                         if (currentBlockId && currentBlockType === MessageBlockType.MAIN_TEXT) {
-                            // 如果当前有正在处理的主文本块，在其内容后追加"已中断"
+                            // 如果当前有正在处理的主文本块，获取已有内容
                             const currentBlock =
                                 this.rootStore.messageBlockStore.getBlockById(currentBlockId);
                             if (currentBlock && 'content' in currentBlock) {
-                                const currentContent = currentBlock.content || '';
-                                const abortedContent = currentContent
-                                    ? `${currentContent}\n\n已中断`
-                                    : '已中断';
-                                runInAction(() => {
-                                    this.rootStore.messageBlockStore.updateBlock(currentBlockId!, {
-                                        content: abortedContent,
-                                        status: MessageBlockStatus.SUCCESS,
-                                    });
-                                });
-                                await this.saveBlockToDB(currentBlockId);
+                                interruptedContent = currentBlock.content || undefined;
                             }
-                        } else {
-                            // 如果没有当前块或当前块不是主文本，创建新的"已中断"块
-                            const abortedBlock = createMainTextBlock(assistantMsgId, '已中断', {
+                        }
+
+                        // 不再删除thinking块，保留思考内容
+
+                        // 创建中断状态块
+                        const interruptedBlock = createInterruptedBlock(
+                            assistantMsgId,
+                            interruptedContent,
+                            {
                                 status: MessageBlockStatus.SUCCESS,
+                                // 添加一个高优先级标记，确保刷新后能正确识别这是中断块
+                                isInterrupted: true,
+                            },
+                        );
+
+                        // 先保存新的中断块到BlockStore
+                        runInAction(() => {
+                            this.rootStore.messageBlockStore.upsertBlock(interruptedBlock);
+                        });
+
+                        // 先同步将块保存到数据库
+                        await db.message_blocks.put(JSON.parse(JSON.stringify(interruptedBlock)));
+
+                        // 然后添加到消息的blocks引用中
+                        await handleBlockTransition(interruptedBlock, MessageBlockType.INTERRUPTED);
+
+                        // 同步更新消息状态到数据库，确保刷新后能恢复
+                        const updatedMessage =
+                            this.rootStore.messageStore.getMessageById(assistantMsgId);
+                        if (updatedMessage) {
+                            await db.transaction('rw', db.topics, async () => {
+                                await db.topics
+                                    .where('id')
+                                    .equals(topicId)
+                                    .modify((topic) => {
+                                        if (!topic) return;
+                                        const messageIndex = topic.messages.findIndex(
+                                            (m) => m.id === assistantMsgId,
+                                        );
+                                        if (messageIndex !== -1) {
+                                            // 深度克隆确保所有属性都被正确序列化
+                                            const deepClonedMessage = JSON.parse(
+                                                JSON.stringify(updatedMessage),
+                                            );
+                                            topic.messages[messageIndex] = deepClonedMessage;
+                                        }
+                                    });
                             });
-                            await handleBlockTransition(abortedBlock, MessageBlockType.MAIN_TEXT);
                         }
                     } else {
                         // 真正的错误，创建错误块

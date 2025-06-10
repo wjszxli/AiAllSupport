@@ -70,6 +70,7 @@ export const de = {
     // Chat interface
     send: 'Senden',
     thinking: 'AI denkt nach...',
+    interrupted: 'Unterbrochen',
     think: 'Denkinhalt',
     you: 'Sie',
     assistant: 'AI-Assistent',
