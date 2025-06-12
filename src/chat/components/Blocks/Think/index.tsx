@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { EyeOutlined, EyeInvisibleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { t } from '@/locales/i18n';
 import { MessageBlockStatus, type ThinkingMessageBlock } from '@/types/messageBlock';
-import './ThinkingView.scss';
+import './index.scss';
 
 interface Props {
     thinkingBlock: ThinkingMessageBlock;

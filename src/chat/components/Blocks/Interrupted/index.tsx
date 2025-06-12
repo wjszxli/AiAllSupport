@@ -1,7 +1,7 @@
 import React from 'react';
 import { StopOutlined } from '@ant-design/icons';
 import { t } from '@/locales/i18n';
-import './InterruptedView.scss';
+import './index.scss';
 
 interface Props {
     content?: string;

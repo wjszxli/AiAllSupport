@@ -251,4 +251,18 @@ Please answer in the same language as the user's question.`,
     startChat: 'Start Chat',
     defaultTopicName: 'New Conversation',
     ai: 'AI',
+
+    // HTTP Error messages
+    errorDefault: 'An unknown error occurred. Please try again later.',
+    error400: 'Bad Request: The server could not understand the request.',
+    error401: 'Unauthorized: Authentication is required and has failed or not yet been provided.',
+    error403: 'Forbidden: You do not have permission to access this resource.',
+    error404: 'Not Found: The requested resource could not be found.',
+    error429: 'Too Many Requests: You have sent too many requests in a given amount of time.',
+    error500:
+        'Internal Server Error: The server has encountered a situation it does not know how to handle.',
+    error502: 'Bad Gateway: The server received an invalid response from an upstream server.',
+    error503: 'Service Unavailable: The server is not ready to handle the request.',
+    error504:
+        'Gateway Timeout: The server did not receive a timely response from an upstream server.',
 };

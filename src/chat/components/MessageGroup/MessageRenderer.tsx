@@ -1,10 +1,10 @@
 import React, { useMemo, useCallback } from 'react';
 import { md } from '@/utils/markdownRenderer';
 import DOMPurify from 'dompurify';
-import CodeBlockView from '@/chat/components/CodeBlockView';
-import MermaidView from '@/chat/components/CodeBlockView/MermaidView';
-import ThinkingView from '@/chat/components/CodeBlockView/ThinkingView';
-import InterruptedView from '@/chat/components/CodeBlockView/InterruptedView';
+import CodeBlockView from '@/chat/components/Blocks/Code';
+import MermaidView from '@/chat/components/Blocks/Mermaid';
+import ThinkingView from '@/chat/components/Blocks/Think';
+import InterruptedView from '@/chat/components/Blocks/Interrupted';
 import { useStore } from '@/store';
 import { observer } from 'mobx-react-lite';
 import {
@@ -12,13 +12,16 @@ import {
     type MessageBlock,
     type ThinkingMessageBlock,
     type InterruptedMessageBlock,
+    ErrorMessageBlock,
 } from '@/types/messageBlock';
+import ErrorBlock from '@/chat/components/Blocks/Error';
 
 interface MessageRendererProps {
     content: string;
     messageId?: string;
     isStreaming?: boolean;
     thinkingContent?: string;
+    errorContent?: string;
 }
 
 interface ContentPart {
@@ -44,7 +47,7 @@ interface ContentPart {
 }
 
 const MessageRenderer: React.FC<MessageRendererProps> = observer(
-    ({ content, messageId, thinkingContent, isStreaming = false }) => {
+    ({ content, messageId, thinkingContent, isStreaming = false, errorContent }) => {
         const { messageBlockStore } = useStore();
 
         // 在 useMemo 外部获取 messageBlocks，让 MobX 正确观察到变化
@@ -272,6 +275,21 @@ const MessageRenderer: React.FC<MessageRendererProps> = observer(
                     }
                 });
 
+                // 添加ERROR块
+                const errorBlocks = messageBlocks.filter(
+                    (block: MessageBlock) => block.type === MessageBlockType.ERROR,
+                );
+                errorBlocks.forEach((block: MessageBlock) => {
+                    if (block.type === MessageBlockType.ERROR) {
+                        const errorBlock = block as ErrorMessageBlock;
+                        parts.push({
+                            type: 'error',
+                            error: errorBlock.error,
+                            id: `error-${errorBlock.id}`,
+                        });
+                    }
+                });
+
                 // 添加MAIN_TEXT块
                 const textBlocks = messageBlocks.filter(
                     (block: MessageBlock) => block.type === MessageBlockType.MAIN_TEXT,
@@ -443,7 +461,11 @@ const MessageRenderer: React.FC<MessageRendererProps> = observer(
                 .filter((block) => block.type === MessageBlockType.THINKING)
                 .map((block) => block.status),
             thinkingContent,
+            errorContent,
         ]);
+
+        console.log('parsedContent', parsedContent);
+        console.log('errorContent', errorContent);
 
         return (
             <div className={`message-content-renderer ${isStreaming ? 'streaming' : ''}`}>
@@ -500,27 +522,8 @@ const MessageRenderer: React.FC<MessageRendererProps> = observer(
 
                         case 'mermaid':
                             return <MermaidView key={part.id}>{part.content || ''}</MermaidView>;
-
                         case 'error':
-                            return (
-                                <div
-                                    key={part.id}
-                                    className="error-block"
-                                    style={{
-                                        backgroundColor: '#ffeef0',
-                                        border: '1px solid #fbb',
-                                        borderRadius: '6px',
-                                        padding: '12px',
-                                        margin: '8px 0',
-                                        color: '#d73a49',
-                                    }}
-                                >
-                                    <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
-                                        {part.error?.name || 'Error'}
-                                    </div>
-                                    <div>{part.error?.message || 'An unknown error occurred'}</div>
-                                </div>
-                            );
+                            return <ErrorBlock part={part as ErrorMessageBlock} />;
 
                         default:
                             return null;

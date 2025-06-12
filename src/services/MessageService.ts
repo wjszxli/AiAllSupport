@@ -446,7 +446,13 @@ export class MessageService {
                 },
 
                 // 错误处理
-                onError: async (error: { name: string; message: string; stack: any }) => {
+                onError: async (error: {
+                    name: string;
+                    message: string;
+                    stack: any;
+                    status?: number;
+                    code?: number;
+                }) => {
                     this.cancelThrottledBlockUpdate();
                     runInAction(() => {
                         this.rootStore.messageStore.setStreamingMessageId(null);
@@ -476,8 +482,6 @@ export class MessageService {
                             }
                         }
 
-                        // 不再删除thinking块，保留思考内容
-
                         // 创建中断状态块
                         const interruptedBlock = createInterruptedBlock(
                             assistantMsgId,
@@ -485,7 +489,7 @@ export class MessageService {
                             {
                                 status: MessageBlockStatus.SUCCESS,
                                 // 添加一个高优先级标记，确保刷新后能正确识别这是中断块
-                                isInterrupted: true,
+                                // isInterrupted: true,
                             },
                         );
 
@@ -531,9 +535,11 @@ export class MessageService {
                                 name: error.name,
                                 message: error.message || 'Stream processing error',
                                 stack: error.stack,
+                                status: error.status || error.code,
                             },
                             { status: MessageBlockStatus.SUCCESS },
                         );
+                        debugger;
                         await handleBlockTransition(errorBlock, MessageBlockType.ERROR);
                     }
 
@@ -592,65 +598,60 @@ export class MessageService {
             if (callbacks.onError) {
                 await callbacks.onError(error);
             }
-            // 只有在非用户主动取消的情况下才抛出错误
-            const isAbort = isAbortError(error);
-            if (!isAbort) {
-                throw error;
-            }
+            // // 只有在非用户主动取消的情况下才抛出错误
+            // const isAbort = isAbortError(error);
+            // if (!isAbort) {
+            // throw error;
+            // }
         } finally {
             // Clean up any remaining blocks in PROCESSING/STREAMING state
             // 但要小心不要覆盖已经正确完成的思考块
-            const message = this.rootStore.messageStore.getMessageById(assistantMsgId);
-            if (message && message.blocks) {
-                const blocksToCleanup: string[] = [];
-                message.blocks.forEach((blockId: string) => {
-                    const block = this.rootStore.messageBlockStore.getBlockById(blockId);
-                    if (
-                        block &&
-                        (block.status === MessageBlockStatus.PROCESSING ||
-                            block.status === MessageBlockStatus.STREAMING)
-                    ) {
-                        // 只清理确实还在处理中的块
-                        console.log('[finally cleanup] Found block to cleanup:', {
-                            blockId,
-                            type: block.type,
-                            status: block.status,
-                        });
-                        blocksToCleanup.push(blockId);
-                    }
-                });
-
-                if (blocksToCleanup.length > 0) {
-                    console.log('[finally cleanup] Cleaning up blocks:', blocksToCleanup);
-                    runInAction(() => {
-                        blocksToCleanup.forEach((blockId) => {
-                            this.rootStore.messageBlockStore.updateBlock(blockId, {
-                                status: MessageBlockStatus.SUCCESS,
-                            });
-                        });
-                    });
-
-                    // Save the cleaned up blocks to database
-                    for (const blockId of blocksToCleanup) {
-                        await this.saveBlockToDB(blockId);
-                    }
-                }
-            }
-
-            runInAction(() => {
-                this.rootStore.messageStore.setTopicLoading(topicId, false);
-                this.rootStore.messageStore.setStreamingMessageId(null);
-            });
-
-            // 清理 AbortController
-            if (this.currentAbortController === abortController) {
-                this.currentAbortController = null;
-            }
-
-            // 清理当前话题ID
-            if (this.currentTopicId === topicId) {
-                this.currentTopicId = null;
-            }
+            // const message = this.rootStore.messageStore.getMessageById(assistantMsgId);
+            // if (message && message.blocks) {
+            //     const blocksToCleanup: string[] = [];
+            //     message.blocks.forEach((blockId: string) => {
+            //         const block = this.rootStore.messageBlockStore.getBlockById(blockId);
+            //         if (
+            //             block &&
+            //             (block.status === MessageBlockStatus.PROCESSING ||
+            //                 block.status === MessageBlockStatus.STREAMING)
+            //         ) {
+            //             // 只清理确实还在处理中的块
+            //             console.log('[finally cleanup] Found block to cleanup:', {
+            //                 blockId,
+            //                 type: block.type,
+            //                 status: block.status,
+            //             });
+            //             blocksToCleanup.push(blockId);
+            //         }
+            //     });
+            //     if (blocksToCleanup.length > 0) {
+            //         console.log('[finally cleanup] Cleaning up blocks:', blocksToCleanup);
+            //         runInAction(() => {
+            //             blocksToCleanup.forEach((blockId) => {
+            //                 this.rootStore.messageBlockStore.updateBlock(blockId, {
+            //                     status: MessageBlockStatus.SUCCESS,
+            //                 });
+            //             });
+            //         });
+            //         // Save the cleaned up blocks to database
+            //         for (const blockId of blocksToCleanup) {
+            //             await this.saveBlockToDB(blockId);
+            //         }
+            //     }
+            // }
+            // runInAction(() => {
+            //     this.rootStore.messageStore.setTopicLoading(topicId, false);
+            //     this.rootStore.messageStore.setStreamingMessageId(null);
+            // });
+            // // 清理 AbortController
+            // if (this.currentAbortController === abortController) {
+            //     this.currentAbortController = null;
+            // }
+            // // 清理当前话题ID
+            // if (this.currentTopicId === topicId) {
+            //     this.currentTopicId = null;
+            // }
         }
     }
 

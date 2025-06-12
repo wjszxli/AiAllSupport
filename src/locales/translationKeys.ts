@@ -139,4 +139,14 @@ export type TranslationKey =
     | 'sogouSearchFailed'
     | 'braveSearchFailed'
     | 'searxngSearchFailed'
-    | 'defaultTopicName';
+    | 'defaultTopicName'
+    | 'errorDefault'
+    | 'error400'
+    | 'error401'
+    | 'error403'
+    | 'error404'
+    | 'error429'
+    | 'error500'
+    | 'error502'
+    | 'error503'
+    | 'error504';

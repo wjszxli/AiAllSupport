@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import mermaid from 'mermaid';
-import './MermaidView.scss';
+import './index.scss';
 
 interface MermaidViewProps {
     children: string;

@@ -25,7 +25,7 @@ export default class AiProvider {
         onChunk,
         onFilterMessages,
     }: CompletionsParams): Promise<void> {
-        return this.sdk.completions({
+        return await this.sdk.completions({
             messages,
             onChunk,
             onFilterMessages,

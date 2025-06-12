@@ -81,6 +81,32 @@ export const useMessageOperations = (streamingMessageId: string | null) => {
         return thinkingContent;
     }, []);
 
+    const getMessageError = useCallback((message: Message): string => {
+        if (!message.blocks || message.blocks.length === 0) {
+            return '';
+        }
+
+        const blocks = message.blocks
+            .map((blockId) => {
+                const block = rootStore.messageBlockStore.getBlockById(blockId);
+                return block;
+            })
+            .filter(Boolean);
+
+        const errorContent = blocks
+            .filter((block): block is NonNullable<typeof block> => {
+                if (!block) return false;
+                return block.type === MessageBlockType.ERROR && 'error' in block;
+            })
+            .map((block) => {
+                const error = (block as any).error.message || '未知错误';
+                return error;
+            })
+            .join('');
+
+        return errorContent;
+    }, []);
+
     // 检查消息是否正在流式显示
     const isMessageStreaming = useCallback(
         (message: Message): boolean => {
@@ -169,5 +195,6 @@ export const useMessageOperations = (streamingMessageId: string | null) => {
         isMessageStreaming,
         handleCopyMessage,
         handleRegenerateResponse,
+        getMessageError,
     };
 };

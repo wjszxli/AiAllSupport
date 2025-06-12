@@ -33,6 +33,7 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
             isMessageStreaming,
             handleRegenerateResponse,
             handleCopyMessage,
+            getMessageError,
         } = useMessageOperations(streamingMessageId);
 
         // 获取第一条消息来确定消息类型
@@ -132,6 +133,7 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
                             const content = getMessageContent(message);
                             const isStreaming = isMessageStreaming(message);
                             const thinkingContent = getMessageThinking(message);
+                            const errorContent = getMessageError(message);
 
                             return (
                                 <div key={message.id} className="message-item">
@@ -141,6 +143,7 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
                                             content={content}
                                             messageId={message.id}
                                             isStreaming={isStreaming}
+                                            errorContent={errorContent}
                                         />
                                     </div>
                                     {/* 流式加载指示器 */}
