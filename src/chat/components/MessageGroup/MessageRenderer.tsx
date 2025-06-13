@@ -235,15 +235,12 @@ const MessageRenderer: React.FC<MessageRendererProps> = observer(
 
             // 首先检查是否有 messageBlocks
             if (messageId && messageBlocks.length > 0) {
-                // 检查是否有中断块
-                const hasInterruptedBlock = messageBlocks.some(
-                    (block: MessageBlock) => block.type === MessageBlockType.INTERRUPTED,
-                );
-
-                // 添加THINKING块 - 如果存在中断块，折叠思考块
+                // 添加THINKING块
                 const thinkingBlocks = messageBlocks.filter(
                     (block: MessageBlock) => block.type === MessageBlockType.THINKING,
                 );
+
+                console.log('thinkingBlocks', thinkingBlocks);
 
                 thinkingBlocks.forEach((block: MessageBlock) => {
                     if (block.type === MessageBlockType.THINKING && 'content' in block) {
@@ -253,24 +250,6 @@ const MessageRenderer: React.FC<MessageRendererProps> = observer(
                             type: 'thinking',
                             thinkingBlock: thinkingBlock,
                             id: `thinking-${thinkingBlock.id}`,
-                            // 如果存在中断块，强制折叠思考块
-                            forceCollapsed: hasInterruptedBlock,
-                        });
-                    }
-                });
-
-                // 添加INTERRUPTED块 - 总是显示在思考块之后
-                const interruptedBlocks = messageBlocks.filter(
-                    (block: MessageBlock) => block.type === MessageBlockType.INTERRUPTED,
-                );
-
-                interruptedBlocks.forEach((block: MessageBlock) => {
-                    if (block.type === MessageBlockType.INTERRUPTED) {
-                        const interruptedBlock = block as InterruptedMessageBlock;
-                        parts.push({
-                            type: 'interrupted',
-                            interruptedBlock: interruptedBlock,
-                            id: `interrupted-${interruptedBlock.id}`,
                         });
                     }
                 });
@@ -416,6 +395,22 @@ const MessageRenderer: React.FC<MessageRendererProps> = observer(
                         }
                     }
                 }
+
+                // 添加INTERRUPTED块 - 总是显示在思考块之后
+                const interruptedBlocks = messageBlocks.filter(
+                    (block: MessageBlock) => block.type === MessageBlockType.INTERRUPTED,
+                );
+
+                interruptedBlocks.forEach((block: MessageBlock) => {
+                    if (block.type === MessageBlockType.INTERRUPTED) {
+                        const interruptedBlock = block as InterruptedMessageBlock;
+                        parts.push({
+                            type: 'interrupted',
+                            interruptedBlock: interruptedBlock,
+                            id: `interrupted-${interruptedBlock.id}`,
+                        });
+                    }
+                });
             } else if (content) {
                 // 如果没有MAIN_TEXT块但有content，处理传入的content作为fallback
                 // 注意：此时需要确保content中不包含thinking标签内容
@@ -464,6 +459,8 @@ const MessageRenderer: React.FC<MessageRendererProps> = observer(
             errorContent,
         ]);
 
+        console.log('parsedContent', parsedContent);
+
         return (
             <div className={`message-content-renderer ${isStreaming ? 'streaming' : ''}`}>
                 {parsedContent.map((part) => {
@@ -495,14 +492,6 @@ const MessageRenderer: React.FC<MessageRendererProps> = observer(
                                 />
                             ) : null;
 
-                        case 'interrupted':
-                            return part.interruptedBlock ? (
-                                <InterruptedView
-                                    key={part.id}
-                                    content={part.interruptedBlock.content}
-                                />
-                            ) : null;
-
                         case 'math-block':
                             return (
                                 <div key={part.id} className="math-block">
@@ -521,6 +510,9 @@ const MessageRenderer: React.FC<MessageRendererProps> = observer(
                             return <MermaidView key={part.id}>{part.content || ''}</MermaidView>;
                         case 'error':
                             return <ErrorBlock part={part as ErrorMessageBlock} />;
+
+                        case 'interrupted':
+                            return part.interruptedBlock ? <InterruptedView key={part.id} /> : null;
 
                         default:
                             return null;

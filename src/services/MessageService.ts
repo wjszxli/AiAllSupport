@@ -488,8 +488,6 @@ export class MessageService {
                             interruptedContent,
                             {
                                 status: MessageBlockStatus.SUCCESS,
-                                // 添加一个高优先级标记，确保刷新后能正确识别这是中断块
-                                // isInterrupted: true,
                             },
                         );
 
@@ -730,10 +728,7 @@ export class MessageService {
 
             if (messagesFromDB.length > 0) {
                 const messageIds = messagesFromDB.map((m) => m.id);
-                const blocks = await db.message_blocks
-                    .where('messageId')
-                    .anyOf(messageIds)
-                    .toArray();
+                let blocks = await db.message_blocks.where('messageId').anyOf(messageIds).toArray();
 
                 const blocksByMessageId = new Map<string, string[]>();
                 blocks.forEach((block) => {
@@ -753,6 +748,102 @@ export class MessageService {
 
                 runInAction(() => {
                     if (blocks && blocks.length > 0) {
+                        // 处理重复的思考块: 为每个消息只保留一个最新/最完整的思考块
+                        const messageIdToThinkingBlocks = new Map<string, MessageBlock[]>();
+                        const blocksToDelete: string[] = [];
+
+                        // 按消息ID分组收集所有思考块
+                        blocks.forEach((block) => {
+                            if (block.type === MessageBlockType.THINKING) {
+                                if (!messageIdToThinkingBlocks.has(block.messageId)) {
+                                    messageIdToThinkingBlocks.set(block.messageId, []);
+                                }
+                                messageIdToThinkingBlocks.get(block.messageId)!.push(block);
+                            }
+                        });
+
+                        // 处理每个消息的思考块
+                        messageIdToThinkingBlocks.forEach((thinkingBlocks, messageId) => {
+                            if (thinkingBlocks.length > 1) {
+                                console.log(
+                                    `[loadTopicMessages] Found ${thinkingBlocks.length} thinking blocks for message ${messageId}`,
+                                );
+
+                                // 根据以下条件选择最佳思考块:
+                                // 1. 优先选择状态为 SUCCESS 的块
+                                // 2. 如果都是 SUCCESS 或都不是，选择内容最长的
+                                // 3. 如果内容长度相同，选择最新创建的
+                                let bestBlock = thinkingBlocks[0];
+
+                                for (let i = 1; i < thinkingBlocks.length; i++) {
+                                    const currentBlock = thinkingBlocks[i];
+
+                                    // 优先选择 SUCCESS 状态的块
+                                    if (
+                                        currentBlock.status === MessageBlockStatus.SUCCESS &&
+                                        bestBlock.status !== MessageBlockStatus.SUCCESS
+                                    ) {
+                                        bestBlock = currentBlock;
+                                        continue;
+                                    }
+
+                                    // 如果状态相同，比较内容长度
+                                    if (currentBlock.status === bestBlock.status) {
+                                        const currentContent =
+                                            'content' in currentBlock
+                                                ? currentBlock.content || ''
+                                                : '';
+                                        const bestContent =
+                                            'content' in bestBlock ? bestBlock.content || '' : '';
+
+                                        if (currentContent.length > bestContent.length) {
+                                            bestBlock = currentBlock;
+                                        }
+                                        // 如果内容长度相同，根据创建时间选择最新的
+                                        else if (
+                                            currentContent.length === bestContent.length &&
+                                            currentBlock.createdAt > bestBlock.createdAt
+                                        ) {
+                                            bestBlock = currentBlock;
+                                        }
+                                    }
+                                }
+
+                                // 将非最佳块添加到待删除列表
+                                thinkingBlocks.forEach((block) => {
+                                    if (block.id !== bestBlock.id) {
+                                        blocksToDelete.push(block.id);
+                                    }
+                                });
+                            }
+                        });
+
+                        // 如果有需要删除的块，从数据库中删除它们
+                        if (blocksToDelete.length > 0) {
+                            console.log(
+                                `[loadTopicMessages] Removing ${blocksToDelete.length} duplicate thinking blocks`,
+                            );
+                            // 从存储中移除多余的块
+                            this.rootStore.messageBlockStore.removeManyBlocks(blocksToDelete);
+                            // 从数据库中删除多余的块
+                            db.message_blocks.bulkDelete(blocksToDelete).catch((error) => {
+                                console.error(
+                                    '[loadTopicMessages] Failed to delete duplicate thinking blocks:',
+                                    error,
+                                );
+                            });
+
+                            // 更新受影响消息的块列表
+                            correctedMessages.forEach((message) => {
+                                message.blocks = message.blocks.filter(
+                                    (blockId) => !blocksToDelete.includes(blockId),
+                                );
+                            });
+
+                            // 从 blocks 数组中移除已删除的块，防止后续处理重新添加它们
+                            blocks = blocks.filter((block) => !blocksToDelete.includes(block.id));
+                        }
+
                         // Clean up any stale PROCESSING/STREAMING blocks from previous sessions
                         // 但要避免清理当前正在流式处理的块
                         const currentStreamingMessageId =
