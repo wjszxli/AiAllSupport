@@ -2,7 +2,6 @@ import { ErrorMessageBlock } from '@/types/messageBlock';
 import { t } from '@/locales/i18n';
 
 export default function ErrorBlock({ part }: { part: ErrorMessageBlock }) {
-    console.log('part', part);
     const HTTP_ERROR_CODES = [400, 401, 403, 404, 429, 500, 502, 503, 504];
 
     // Get error messages for specific HTTP status codes using translations
@@ -38,7 +37,6 @@ export default function ErrorBlock({ part }: { part: ErrorMessageBlock }) {
             <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
                 {part.error?.name || t('httpError')}
                 {errorCode !== undefined && ` (${errorCode})`}
-                {console.log('part.error', part.error)}
             </div>
             <div>{errorMessage}</div>
         </div>

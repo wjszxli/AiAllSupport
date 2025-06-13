@@ -28,9 +28,10 @@ const ChatBody: React.FC<ChatBodyProps> = observer(
         const [isLoading, setIsLoading] = useState(false);
         const inputRef = useRef<any>(null);
 
+        // 使用 robotStore 的 selectedRobot 的 selectedTopicId（现在是从 robotDB 中获取的）
         const selectedTopicId = useMemo(
-            () => robotStore.selectedRobot.selectedTopicId || '',
-            [robotStore.selectedRobot.selectedTopicId],
+            () => robotStore.selectedRobot?.selectedTopicId || '',
+            [robotStore.selectedRobot?.selectedTopicId],
         );
 
         const messages = useMemo(() => {

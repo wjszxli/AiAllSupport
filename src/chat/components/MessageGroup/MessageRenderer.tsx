@@ -464,9 +464,6 @@ const MessageRenderer: React.FC<MessageRendererProps> = observer(
             errorContent,
         ]);
 
-        console.log('parsedContent', parsedContent);
-        console.log('errorContent', errorContent);
-
         return (
             <div className={`message-content-renderer ${isStreaming ? 'streaming' : ''}`}>
                 {parsedContent.map((part) => {

@@ -39,21 +39,6 @@ export async function fetchChatCompletion({
         throw new Error('Provider not found');
     }
 
-    // 确保 provider 有最新的 apiKey
-    if (!provider.apiKey && robot.model?.provider) {
-        // 从 llmStore 重新获取 provider，确保数据是最新的
-        console.log('Provider apiKey is empty, trying to get from store');
-        const freshProvider = llmStore.providers.find((p) => p.id === robot.model?.provider);
-        if (freshProvider && freshProvider.apiKey) {
-            Object.assign(provider, freshProvider);
-        }
-    }
-
-    if (!provider.apiKey) {
-        console.error('Provider apiKey is empty', provider);
-        throw new Error(`API Key for ${provider.name} is not set. Please set it in the settings.`);
-    }
-
     const AI = new AiProvider(provider);
 
     // Make sure that 'Clear Context' works for all scenarios including external tool and normal chat.

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
     List,
     Button,
@@ -24,11 +24,11 @@ import {
 } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { v4 as uuidv4 } from 'uuid';
-import { useStore } from '@/store';
 import { Robot as RobotType } from '@/types';
 import { getDefaultTopic } from '@/services/RobotService';
 import { robotList, getAllGroups } from '@/config/robot';
 import { getShortRobotName, getShortRobotDescription } from '@/utils/robotUtils';
+import robotDB from '@/db/robotDB';
 
 import './index.scss';
 
@@ -39,7 +39,6 @@ interface RobotProps {
 }
 
 const Robot: React.FC<RobotProps> = ({ onSwitchToTopics }) => {
-    const { robotStore } = useStore();
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [isEditModalVisible, setIsEditModalVisible] = useState(false);
     const [editingRobot, setEditingRobot] = useState<RobotType | null>(null);
@@ -50,6 +49,25 @@ const Robot: React.FC<RobotProps> = ({ onSwitchToTopics }) => {
     const [pageSize] = useState(12); // 每页显示12个机器人
     const [form] = Form.useForm();
     const [editForm] = Form.useForm();
+    const [loading, setLoading] = useState(false);
+    const [robotListState, setRobotListState] = useState<RobotType[]>([]);
+
+    const loadRobots = async () => {
+        setLoading(true);
+        try {
+            await robotDB.updateRobotList();
+            setRobotListState(robotDB.robotList);
+        } catch (error) {
+            console.error('Failed to load robots:', error);
+            message.error('加载机器人失败');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        loadRobots();
+    }, []);
 
     const showModal = () => {
         setIsModalVisible(true);
@@ -60,7 +78,7 @@ const Robot: React.FC<RobotProps> = ({ onSwitchToTopics }) => {
         form.resetFields();
     };
 
-    const handleAddRobot = (selectedRobotId: string) => {
+    const handleAddRobot = async (selectedRobotId: string) => {
         const selectedRobot = robotList.find((robot) => robot.id === selectedRobotId);
         if (!selectedRobot) {
             message.error('未找到选中的机器人');
@@ -68,29 +86,39 @@ const Robot: React.FC<RobotProps> = ({ onSwitchToTopics }) => {
         }
 
         // 检查是否已经添加过
-        const existingRobot = robotStore.robotList.find(
-            (robot) => robot.name === selectedRobot.name,
-        );
+        const existingRobot = robotListState.find((robot) => robot.name === selectedRobot.name);
         if (existingRobot) {
             message.warning(`机器人 ${selectedRobot.name} 已经存在`);
             return;
         }
 
-        const defaultTopic = getDefaultTopic(uuidv4());
-        const newRobot: RobotType = {
-            id: uuidv4(),
-            name: selectedRobot.name,
-            prompt: selectedRobot.prompt,
-            description: selectedRobot.description,
-            icon: selectedRobot.icon,
-            type: 'assistant',
-            topics: [defaultTopic],
-            selectedTopicId: defaultTopic.id,
-        };
+        setLoading(true);
+        try {
+            const defaultTopic = getDefaultTopic(uuidv4());
+            const newRobot: RobotType = {
+                id: uuidv4(),
+                name: selectedRobot.name,
+                prompt: selectedRobot.prompt,
+                description: selectedRobot.description,
+                icon: selectedRobot.icon,
+                type: 'assistant',
+                topics: [defaultTopic],
+                selectedTopicId: defaultTopic.id,
+            };
 
-        robotStore.addRobot(newRobot);
-        message.success(`机器人 ${selectedRobot.name} 添加成功`);
-        setIsModalVisible(false);
+            await robotDB.addRobot(newRobot);
+            setRobotListState(robotDB.robotList);
+            message.success(`机器人 ${selectedRobot.name} 添加成功`);
+        } catch (error) {
+            console.error('Failed to add robot:', error);
+            message.error(
+                `添加机器人失败: ${error instanceof Error ? error.message : String(error)}`,
+            );
+        } finally {
+            setLoading(false);
+            setIsModalVisible(false);
+            loadRobots();
+        }
     };
 
     const handleEditRobot = (robot: RobotType) => {
@@ -101,6 +129,7 @@ const Robot: React.FC<RobotProps> = ({ onSwitchToTopics }) => {
             prompt: robot.prompt,
         });
         setIsEditModalVisible(true);
+        loadRobots();
     };
 
     const handleEditCancel = () => {
@@ -109,29 +138,40 @@ const Robot: React.FC<RobotProps> = ({ onSwitchToTopics }) => {
         editForm.resetFields();
     };
 
-    const handleUpdateRobot = () => {
+    const handleUpdateRobot = async () => {
         if (!editingRobot) return;
 
-        editForm
-            .validateFields()
-            .then((values) => {
-                const updatedRobot: RobotType = {
-                    ...editingRobot,
-                    name: values.name,
-                    prompt: values.prompt || '',
-                    description: values.description || '',
-                };
+        try {
+            const values = await editForm.validateFields();
+            setLoading(true);
 
-                robotStore.updateRobot(updatedRobot);
-                message.success(`机器人 ${values.name} 更新成功`);
-                setIsEditModalVisible(false);
-                setEditingRobot(null);
-                editForm.resetFields();
-            })
-            .catch((info) => {
-                // 处理验证失败的情况，但不输出到控制台
-                console.warn('Failed to update robot:', info);
-            });
+            const updatedRobot: RobotType = {
+                ...editingRobot,
+                name: values.name,
+                prompt: values.prompt || '',
+                description: values.description || '',
+            };
+
+            await robotDB.updateRobot(updatedRobot);
+            setRobotListState(robotDB.robotList);
+            message.success(`机器人 ${values.name} 更新成功`);
+            setIsEditModalVisible(false);
+            setEditingRobot(null);
+            editForm.resetFields();
+        } catch (error) {
+            if (error instanceof Error && 'errorFields' in error) {
+                // This is a form validation error, don't show message
+                console.warn('Validation failed:', error);
+            } else {
+                console.error('Failed to update robot:', error);
+                message.error(
+                    `更新机器人失败: ${error instanceof Error ? error.message : String(error)}`,
+                );
+            }
+        } finally {
+            setLoading(false);
+            loadRobots();
+        }
     };
 
     const handleDeleteRobot = (robot: RobotType) => {
@@ -140,25 +180,47 @@ const Robot: React.FC<RobotProps> = ({ onSwitchToTopics }) => {
             content: `确定要删除机器人 "${robot.name}" 吗？`,
             okText: '确定',
             cancelText: '取消',
-            onOk: () => {
-                if (robotStore.robotList.length === 1) {
+            onOk: async () => {
+                if (robotListState.length === 1) {
                     message.error('至少保留一个机器人');
                     return;
                 }
 
-                robotStore.removeRobot(robot.id);
-                message.success(`机器人 ${robot.name} 删除成功`);
+                setLoading(true);
+                try {
+                    await robotDB.removeRobot(robot.id);
+                    setRobotListState(robotDB.robotList);
+                    message.success(`机器人 ${robot.name} 删除成功`);
+                } catch (error) {
+                    console.error('Failed to remove robot:', error);
+                    message.error(
+                        `删除机器人失败: ${error instanceof Error ? error.message : String(error)}`,
+                    );
+                } finally {
+                    setLoading(false);
+                    loadRobots();
+                }
             },
         });
     };
 
-    const handleSelectRobot = (robot: RobotType) => {
-        robotStore.updateSelectedRobot(robot);
-        message.success(`已选中机器人 ${robot.name}`);
+    const handleSelectRobot = async (robot: RobotType) => {
+        setLoading(true);
+        try {
+            await robotDB.updateSelectedRobot(robot);
+            message.success(`已选中机器人 ${robot.name}`);
 
-        // 跳转到话题tab
-        if (onSwitchToTopics) {
-            onSwitchToTopics();
+            // 跳转到话题tab
+            if (onSwitchToTopics) {
+                onSwitchToTopics();
+            }
+        } catch (error) {
+            console.error('Failed to select robot:', error);
+            message.error(
+                `选择机器人失败: ${error instanceof Error ? error.message : String(error)}`,
+            );
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -166,21 +228,23 @@ const Robot: React.FC<RobotProps> = ({ onSwitchToTopics }) => {
     const allGroups = useMemo(() => getAllGroups(), []);
 
     // 过滤后的机器人列表（已添加的机器人）
-    const filteredRobotList = robotStore.robotList.filter((robot) => {
-        const matchesSearch =
-            !robotSearchText ||
-            robot.name.toLowerCase().includes(robotSearchText.toLowerCase()) ||
-            (robot.description &&
-                robot.description.toLowerCase().includes(robotSearchText.toLowerCase()));
+    const filteredRobotList = useMemo(() => {
+        return robotListState.filter((robot) => {
+            const matchesSearch =
+                !robotSearchText ||
+                robot.name.toLowerCase().includes(robotSearchText.toLowerCase()) ||
+                (robot.description &&
+                    robot.description.toLowerCase().includes(robotSearchText.toLowerCase()));
 
-        return matchesSearch;
-    });
+            return matchesSearch;
+        });
+    }, [robotSearchText, robotListState]);
 
     // 过滤后的机器人列表
     const filteredRobots = useMemo(() => {
         return robotList.filter((robot) => {
             // 排除已添加的机器人
-            const isAlreadyAdded = robotStore.robotList.some(
+            const isAlreadyAdded = robotListState.some(
                 (addedRobot) => addedRobot.name === robot.name,
             );
             if (isAlreadyAdded) return false;
@@ -194,7 +258,7 @@ const Robot: React.FC<RobotProps> = ({ onSwitchToTopics }) => {
 
             return matchesSearch && matchesGroup;
         });
-    }, [searchText, selectedGroup, robotStore.robotList]);
+    }, [searchText, selectedGroup, robotListState]);
 
     // 当前页的机器人列表
     const currentPageRobots = useMemo(() => {
@@ -238,10 +302,11 @@ const Robot: React.FC<RobotProps> = ({ onSwitchToTopics }) => {
 
             <div className="robot-list-container">
                 <List
+                    loading={loading}
                     itemLayout="horizontal"
                     dataSource={filteredRobotList}
                     renderItem={(robot) => {
-                        const isSelected = robotStore.selectedRobot?.id === robot.id;
+                        const isSelected = robotDB.selectedRobot?.id === robot.id;
                         return (
                             <List.Item
                                 className={`robot-list-item ${isSelected ? 'selected' : ''}`}
@@ -346,7 +411,7 @@ const Robot: React.FC<RobotProps> = ({ onSwitchToTopics }) => {
                                 <div className="empty-icon">🤖</div>
                                 <div className="empty-title">没有可添加的机器人</div>
                                 <div className="empty-description">
-                                    {filteredRobots.length === 0 && robotStore.robotList.length > 1
+                                    {filteredRobots.length === 0 && robotListState.length > 1
                                         ? '所有机器人都已添加'
                                         : '没有符合条件的机器人'}
                                 </div>
@@ -409,6 +474,7 @@ const Robot: React.FC<RobotProps> = ({ onSwitchToTopics }) => {
                 open={isEditModalVisible}
                 onOk={handleUpdateRobot}
                 onCancel={handleEditCancel}
+                confirmLoading={loading}
             >
                 <Form form={editForm} layout="vertical" name="edit_robot_form">
                     <Form.Item

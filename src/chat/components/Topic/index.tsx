@@ -48,7 +48,7 @@ const Topic: React.FC<TopicProps> = observer(() => {
         topic.name.toLowerCase().includes(searchText.toLowerCase()),
     );
 
-    const handleCreateTopic = () => {
+    const handleCreateTopic = async () => {
         if (!newTopicName.trim()) {
             message.error(t('topicNameRequired') || '请输入话题名称');
             return;
@@ -79,13 +79,19 @@ const Topic: React.FC<TopicProps> = observer(() => {
             isNameManuallyEdited: true,
         };
 
-        robotStore.addTopic(robotStore.selectedRobot.id, newTopic);
-        message.success(`话题 "${newTopicName.trim()}" 创建成功`);
-        setNewTopicName('');
-        setIsCreateModalVisible(false);
+        try {
+            await robotStore.addTopic(robotStore.selectedRobot.id, newTopic);
+            message.success(`话题 "${newTopicName.trim()}" 创建成功`);
+            setNewTopicName('');
+            setIsCreateModalVisible(false);
+        } catch (error) {
+            message.error(
+                `创建话题失败: ${error instanceof Error ? error.message : String(error)}`,
+            );
+        }
     };
 
-    const handleEditTopic = () => {
+    const handleEditTopic = async () => {
         if (!editingTopic || !newTopicName.trim()) {
             message.error(t('topicNameRequired') || '请输入话题名称');
             return;
@@ -109,11 +115,17 @@ const Topic: React.FC<TopicProps> = observer(() => {
         }
 
         const updatedTopic = { ...editingTopic, name: newTopicName.trim() };
-        robotStore.updateTopic(robotStore.selectedRobot.id, updatedTopic);
-        message.success(`话题 "${newTopicName.trim()}" 更新成功`);
-        setNewTopicName('');
-        setEditingTopic(null);
-        setIsEditModalVisible(false);
+        try {
+            await robotStore.updateTopic(robotStore.selectedRobot.id, updatedTopic);
+            message.success(`话题 "${newTopicName.trim()}" 更新成功`);
+            setNewTopicName('');
+            setEditingTopic(null);
+            setIsEditModalVisible(false);
+        } catch (error) {
+            message.error(
+                `更新话题失败: ${error instanceof Error ? error.message : String(error)}`,
+            );
+        }
     };
 
     const handleDeleteTopic = (topic: TopicType) => {
@@ -125,14 +137,20 @@ const Topic: React.FC<TopicProps> = observer(() => {
             okText: t('delete') || '删除',
             okType: 'danger',
             cancelText: t('cancel') || '取消',
-            onOk: () => {
+            onOk: async () => {
                 if (!robotStore.selectedRobot) {
                     message.error('请先选择一个机器人');
                     return;
                 }
 
-                robotStore.removeTopic(robotStore.selectedRobot.id, topic);
-                message.success(`话题 "${topic.name}" 删除成功`);
+                try {
+                    await robotStore.removeTopic(robotStore.selectedRobot.id, topic);
+                    message.success(`话题 "${topic.name}" 删除成功`);
+                } catch (error) {
+                    message.error(
+                        `删除话题失败: ${error instanceof Error ? error.message : String(error)}`,
+                    );
+                }
             },
         });
     };
@@ -143,10 +161,16 @@ const Topic: React.FC<TopicProps> = observer(() => {
         setIsEditModalVisible(true);
     };
 
-    const handleTopicSelect = (topic: TopicType) => {
-        robotStore.updateSelectedTopic(topic.id);
-        console.log('Selected topic:', topic.name);
-        // TODO: 实现话题选择后的具体逻辑，比如加载话题消息等
+    const handleTopicSelect = async (topic: TopicType) => {
+        try {
+            await robotStore.updateSelectedTopic(topic.id);
+            console.log('Selected topic:', topic.name);
+            // TODO: 实现话题选择后的具体逻辑，比如加载话题消息等
+        } catch (error) {
+            message.error(
+                `选择话题失败: ${error instanceof Error ? error.message : String(error)}`,
+            );
+        }
     };
 
     const formatDate = (dateString: string) => {

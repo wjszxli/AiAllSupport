@@ -539,7 +539,6 @@ export class MessageService {
                             },
                             { status: MessageBlockStatus.SUCCESS },
                         );
-                        debugger;
                         await handleBlockTransition(errorBlock, MessageBlockType.ERROR);
                     }
 
