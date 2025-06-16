@@ -1,4 +1,4 @@
-import { Button, message, Select, Tooltip, Tabs } from 'antd';
+import { Button, message as messageApi, Select, Tooltip, Tabs } from 'antd';
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
     GlobalOutlined,
@@ -15,6 +15,7 @@ import { t, getLocale, setLocale } from '@/locales/i18n';
 import type { LocaleType } from '@/locales';
 import { locales } from '@/locales';
 import storage from '@/utils/storage';
+import rootStore from '@/store';
 
 import './App.scss';
 import Robot from './components/Robot';
@@ -101,6 +102,63 @@ const App: React.FC = () => {
         init();
     }, []);
 
+    // Listen for provider settings updates from other parts of the extension
+    useEffect(() => {
+        const handleMessage = async (message: any) => {
+            if (message.action === 'providerSettingsUpdated') {
+                console.log('Provider settings updated, refreshing UI');
+
+                try {
+                    // 1. 首先强制重新加载 llmStore 数据
+                    // 这是必要的，因为 llmStore 使用了 mobx-persist-store，可能需要手动刷新
+                    const providers = await storage.getProviders();
+                    const defaultProvider = await storage.getSelectedProvider();
+
+                    // 2. 更新 selectedProvider 状态
+                    setSelectedProvider(defaultProvider || 'DeepSeek');
+
+                    // 3. 打印当前状态以便调试
+                    console.log('更新后的状态:', {
+                        providers,
+                        defaultProvider,
+                        llmStore: rootStore.llmStore,
+                        robotStore: rootStore.robotStore,
+                    });
+
+                    // 4. 如果有选定的机器人，更新其模型为最新的默认模型
+                    if (rootStore.robotStore.selectedRobot) {
+                        // 强制从存储中获取最新的默认模型
+                        const defaultModel = rootStore.llmStore.defaultModel;
+
+                        // 更新机器人信息
+                        await rootStore.robotStore.updateSelectedRobot({
+                            ...rootStore.robotStore.selectedRobot,
+                            model: defaultModel,
+                        });
+
+                        // 5. 刷新页面以确保所有组件都使用最新数据
+                        // 这是一个临时解决方案，理想情况下我们应该找出为什么数据不同步
+                        window.location.reload();
+                    }
+
+                    // 显示通知
+                    messageApi.info('提供商设置已更新');
+                } catch (error) {
+                    console.error('更新提供商设置时出错:', error);
+                    messageApi.error('更新提供商设置失败');
+                }
+            }
+        };
+
+        // Add listener for messages from background script
+        chrome.runtime.onMessage.addListener(handleMessage);
+
+        // Clean up listener when component unmounts
+        return () => {
+            chrome.runtime.onMessage.removeListener(handleMessage);
+        };
+    }, []);
+
     useEffect(() => {
         const handleCopyButtonClick = (event: MouseEvent) => {
             const target = event.target as HTMLElement;
@@ -121,10 +179,10 @@ const App: React.FC = () => {
                                     buttonText.textContent = originalText;
                                 }, 2000);
                             }
-                            message.success(t('copied'), 2);
+                            messageApi.success(t('copied'), 2);
                         })
                         .catch(() => {
-                            message.error(t('failedCopy'));
+                            messageApi.error(t('failedCopy'));
                         });
                 }
             }
@@ -158,7 +216,7 @@ const App: React.FC = () => {
         await setLocale(locale);
         setCurrentLocale(locale);
 
-        message.success(t('languageChanged'));
+        messageApi.success(t('languageChanged'));
 
         try {
             if (chrome && chrome.tabs) {

@@ -155,6 +155,33 @@ const ApiSettings: React.FC = observer(() => {
                     });
                 }
 
+                // 确保存储中的数据已更新
+                await new Promise((resolve) => setTimeout(resolve, 100));
+
+                // 通知其他页面（如chat页面）配置已更新
+                if (chrome && chrome.runtime) {
+                    try {
+                        // 先尝试使用 chrome.storage 直接更新
+                        await chrome.storage.local.set({
+                            'llm-store': JSON.stringify({
+                                providers: llmStore.providers,
+                                defaultModel: llmStore.defaultModel,
+                            }),
+                        });
+
+                        // 然后发送消息通知
+                        await chrome.runtime.sendMessage({
+                            action: 'providerSettingsUpdated',
+                            provider: currentProvider.id,
+                            timestamp: Date.now(),
+                        });
+
+                        console.log('已通知其他页面配置更新');
+                    } catch (error) {
+                        console.error('Failed to notify about provider settings update:', error);
+                    }
+                }
+
                 message.success(`${getProviderName(currentProvider)} 配置已保存`);
                 setIsModalOpen(false);
             }
@@ -190,6 +217,33 @@ const ApiSettings: React.FC = observer(() => {
                 ...modelObj,
                 provider: currentProvider.id,
             });
+
+            // 确保存储中的数据已更新
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
+            // 通知其他页面（如chat页面）默认提供商已更新
+            if (chrome && chrome.runtime) {
+                try {
+                    // 先尝试使用 chrome.storage 直接更新
+                    await chrome.storage.local.set({
+                        'llm-store': JSON.stringify({
+                            providers: llmStore.providers,
+                            defaultModel: llmStore.defaultModel,
+                        }),
+                    });
+
+                    // 然后发送消息通知
+                    await chrome.runtime.sendMessage({
+                        action: 'providerSettingsUpdated',
+                        provider: currentProvider.id,
+                        timestamp: Date.now(),
+                    });
+
+                    console.log('已通知其他页面默认提供商更新');
+                } catch (error) {
+                    console.error('Failed to notify about default provider update:', error);
+                }
+            }
 
             message.success(`已将 ${getProviderName(currentProvider)} 设为默认提供商`);
         }

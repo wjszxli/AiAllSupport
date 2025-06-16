@@ -54,6 +54,53 @@ const requestControllers = new Map();
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     logger.debug('Message received', { action: request.action, sender });
 
+    // Handle provider settings updates
+    if (request.action === 'providerSettingsUpdated') {
+        logger.info('Provider settings updated, broadcasting to all tabs', request.provider);
+
+        // 强制更新存储中的数据
+        storage.getConfig().then((config) => {
+            logger.info('Current config:', config);
+
+            // 确保所有存储都已更新
+            storage.getSelectedProvider().then((provider) => {
+                logger.info('Selected provider:', provider);
+
+                // 广播到所有标签页
+                chrome.tabs.query({}, (tabs) => {
+                    tabs.forEach((tab) => {
+                        if (tab.id) {
+                            chrome.tabs
+                                .sendMessage(tab.id, {
+                                    action: 'providerSettingsUpdated',
+                                    provider: request.provider,
+                                    timestamp: Date.now(), // 添加时间戳以确保消息唯一性
+                                })
+                                .catch(() => {
+                                    // 忽略无法接收消息的标签页的错误
+                                });
+                        }
+                    });
+                });
+
+                // 通知 popup 和 options 页面
+                chrome.runtime
+                    .sendMessage({
+                        action: 'providerSettingsUpdated',
+                        provider: request.provider,
+                        timestamp: Date.now(),
+                    })
+                    .catch(() => {
+                        // 忽略错误
+                    });
+
+                sendResponse({ success: true });
+            });
+        });
+
+        return true;
+    }
+
     if (request.action === 'fetchData') {
         const controller = new AbortController();
         const tabId = sender?.tab?.id;

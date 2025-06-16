@@ -40,6 +40,9 @@ const ChatBody: React.FC<ChatBodyProps> = observer(
         // 获取当前机器人
         const selectedRobot = useMemo(() => robotStore.selectedRobot, [robotStore.selectedRobot]);
 
+        // 获取 llmStore 以监听默认模型变化
+        const llmStore = useMemo(() => rootStore.llmStore, []);
+
         // 使用 robotStore 的 selectedRobot 的 selectedTopicId（现在是从 robotDB 中获取的）
         const selectedTopicId = useMemo(
             () => selectedRobot?.selectedTopicId || '',
@@ -143,6 +146,26 @@ const ChatBody: React.FC<ChatBodyProps> = observer(
                 }
             }
         }, [selectedTopicId, streamingMessageId, messageService]);
+
+        // 当提供商设置更新时，确保使用最新的模型
+        useEffect(() => {
+            if (selectedRobot && llmStore.defaultModel) {
+                // 检查机器人的模型是否需要更新
+                const currentModel = selectedRobot.model || selectedRobot.defaultModel;
+                const defaultModel = llmStore.defaultModel;
+
+                // 如果模型不同，更新机器人的模型
+                if (
+                    currentModel?.id !== defaultModel.id ||
+                    currentModel?.provider !== defaultModel.provider
+                ) {
+                    robotStore.updateSelectedRobot({
+                        ...selectedRobot,
+                        model: defaultModel,
+                    });
+                }
+            }
+        }, [selectedRobot, llmStore.defaultModel]);
 
         const handleSendMessage = () => {
             if (!userInput.trim() || isLoading) return;

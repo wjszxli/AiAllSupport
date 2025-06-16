@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { Avatar, Button, message } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { Avatar, Button, message as messageApi } from 'antd';
 import {
     UserOutlined,
     RobotOutlined,
@@ -16,6 +16,7 @@ import { useMessageOperations } from '@/chat/hooks/useMessageOperations';
 import robotStore from '@/store/robot';
 import { getProviderName } from '@/utils/i18n';
 import { getProviderLogo } from '@/config/providers';
+import rootStore from '@/store';
 
 interface MessageGroupProps {
     groupKey: string;
@@ -46,6 +47,23 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
 
         // 获取当前机器人信息
         const selectedRobot = robotStore.selectedRobot;
+        // 获取 llmStore 以监听默认模型变化
+        const llmStore = rootStore.llmStore;
+
+        // 状态保存提供商图标和显示名称
+        const [providerIcon, setProviderIcon] = useState<string | null>(null);
+        const [displayName, setDisplayName] = useState<string>(selectedProvider);
+
+        // 当机器人信息、提供商或默认模型变化时更新图标和名称
+        useEffect(() => {
+            updateProviderInfo();
+        }, [selectedRobot, selectedProvider, llmStore.defaultModel]);
+
+        // 更新提供商信息
+        const updateProviderInfo = () => {
+            setProviderIcon(getProviderIcon());
+            setDisplayName(getRobotDisplayName());
+        };
 
         // 获取消息时间
         const getMessageTime = (message: Message) => {
@@ -117,7 +135,7 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
                             const decodedCode = decodeURIComponent(codeData);
                             navigator.clipboard.writeText(decodedCode).then(() => {
                                 // 复制成功提示
-                                message.success(t('copy_success') || '复制成功');
+                                messageApi.success(t('copy_success') || '复制成功');
 
                                 // 更新按钮文本显示复制成功，然后恢复
                                 const textSpan = copyButton.querySelector('span');
@@ -132,7 +150,7 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
                             });
                         } catch (error) {
                             console.error('Copy failed:', error);
-                            message.error(t('copy_failed') || '复制失败');
+                            messageApi.error(t('copy_failed') || '复制失败');
                         }
                     }
                 }
@@ -160,8 +178,8 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
                         />
                     ) : (
                         <Avatar
-                            src={getProviderIcon()}
-                            icon={!getProviderIcon() && <RobotOutlined />}
+                            src={providerIcon}
+                            icon={!providerIcon && <RobotOutlined />}
                             style={{
                                 backgroundColor: '#fff',
                                 color: '#06b6d4',
@@ -175,7 +193,7 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
                     <div className="message-header">
                         <div className="message-sender">
                             <span className="sender-name">
-                                {isUserMessage ? t('you') || '你' : getRobotDisplayName()}
+                                {isUserMessage ? t('you') || '你' : displayName}
                             </span>
                             <span className="message-time">{getMessageTime(firstMessage)}</span>
                         </div>

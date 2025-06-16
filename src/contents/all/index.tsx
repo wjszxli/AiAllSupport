@@ -59,6 +59,19 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         return true;
     }
 
+    // 处理提供商设置更新
+    if (message.action === 'providerSettingsUpdated') {
+        console.log('Provider settings updated in content script');
+        // 通知UI组件刷新
+        window.dispatchEvent(
+            new CustomEvent('providerSettingsUpdated', {
+                detail: { provider: message.provider },
+            }),
+        );
+        sendResponse({ success: true });
+        return true;
+    }
+
     if (message.action === 'openChatWindow') {
         const selectedText = message.selectedText || '';
         console.log('Opening chat window with selected text:', selectedText);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Form, message, Select } from 'antd';
 import { modelList } from '@/services';
 import type { ProviderConfig } from '@/types';

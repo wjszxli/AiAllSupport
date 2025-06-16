@@ -432,6 +432,53 @@ const ChatInterface = ({ initialText }: ChatInterfaceProps) => {
         });
     }, [clearMessages, t]);
 
+    // Listen for provider settings updates
+    useEffect(() => {
+        const handleProviderSettingsUpdated = (event: CustomEvent) => {
+            console.log('Provider settings updated in ChatInterface', event.detail);
+
+            // 强制重新加载聊天界面
+            if (messagesWrapperRef.current) {
+                // 滚动到底部以刷新视图
+                scrollToBottom();
+
+                // 重新加载消息，以确保使用最新的提供商和模型信息
+                if (event.detail?.provider) {
+                    // 如果有当前对话，重新加载
+                    if (messages.length > 0) {
+                        // 通知用户配置已更新
+                        messageNotification.info('提供商设置已更新，正在应用新配置...');
+
+                        // 延迟一点时间以确保通知显示
+                        setTimeout(() => {
+                            // 重新加载当前对话
+                            cancelStreamingResponse();
+                            clearMessages();
+
+                            // 延迟一点时间后重新加载消息
+                            setTimeout(() => {
+                                // 这里会触发 useChatMessages 中的初始化逻辑，重新加载消息
+                                scrollToBottom();
+                            }, 100);
+                        }, 500);
+                    }
+                }
+            }
+        };
+
+        window.addEventListener(
+            'providerSettingsUpdated',
+            handleProviderSettingsUpdated as EventListener,
+        );
+
+        return () => {
+            window.removeEventListener(
+                'providerSettingsUpdated',
+                handleProviderSettingsUpdated as EventListener,
+            );
+        };
+    }, [scrollToBottom, messages, cancelStreamingResponse, clearMessages]);
+
     return (
         <div className="chat-interface-container">
             {showPrompts && filteredPrompts.length > 0 ? (

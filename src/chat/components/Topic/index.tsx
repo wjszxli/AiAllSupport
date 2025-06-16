@@ -5,7 +5,7 @@ import {
     Button,
     Input,
     Modal,
-    message,
+    message as messageApi,
     Empty,
     Typography,
     Space,
@@ -50,12 +50,12 @@ const Topic: React.FC<TopicProps> = observer(() => {
 
     const handleCreateTopic = async () => {
         if (!newTopicName.trim()) {
-            message.error(t('topicNameRequired') || '请输入话题名称');
+            messageApi.error(t('topicNameRequired') || '请输入话题名称');
             return;
         }
 
         if (!robotStore.selectedRobot) {
-            message.error('请先选择一个机器人');
+            messageApi.error('请先选择一个机器人');
             return;
         }
 
@@ -65,7 +65,7 @@ const Topic: React.FC<TopicProps> = observer(() => {
         );
 
         if (existingTopic) {
-            message.error(`话题名称 "${newTopicName.trim()}" 已存在，请使用其他名称`);
+            messageApi.error(`话题名称 "${newTopicName.trim()}" 已存在，请使用其他名称`);
             return;
         }
 
@@ -81,11 +81,11 @@ const Topic: React.FC<TopicProps> = observer(() => {
 
         try {
             await robotStore.addTopic(robotStore.selectedRobot.id, newTopic);
-            message.success(`话题 "${newTopicName.trim()}" 创建成功`);
+            messageApi.success(`话题 "${newTopicName.trim()}" 创建成功`);
             setNewTopicName('');
             setIsCreateModalVisible(false);
         } catch (error) {
-            message.error(
+            messageApi.error(
                 `创建话题失败: ${error instanceof Error ? error.message : String(error)}`,
             );
         }
@@ -93,12 +93,12 @@ const Topic: React.FC<TopicProps> = observer(() => {
 
     const handleEditTopic = async () => {
         if (!editingTopic || !newTopicName.trim()) {
-            message.error(t('topicNameRequired') || '请输入话题名称');
+            messageApi.error(t('topicNameRequired') || '请输入话题名称');
             return;
         }
 
         if (!robotStore.selectedRobot) {
-            message.error('请先选择一个机器人');
+            messageApi.error('请先选择一个机器人');
             return;
         }
 
@@ -110,19 +110,19 @@ const Topic: React.FC<TopicProps> = observer(() => {
         );
 
         if (existingTopic) {
-            message.error(`话题名称 "${newTopicName.trim()}" 已存在，请使用其他名称`);
+            messageApi.error(`话题名称 "${newTopicName.trim()}" 已存在，请使用其他名称`);
             return;
         }
 
         const updatedTopic = { ...editingTopic, name: newTopicName.trim() };
         try {
             await robotStore.updateTopic(robotStore.selectedRobot.id, updatedTopic);
-            message.success(`话题 "${newTopicName.trim()}" 更新成功`);
+            messageApi.success(`话题 "${newTopicName.trim()}" 更新成功`);
             setNewTopicName('');
             setEditingTopic(null);
             setIsEditModalVisible(false);
         } catch (error) {
-            message.error(
+            messageApi.error(
                 `更新话题失败: ${error instanceof Error ? error.message : String(error)}`,
             );
         }
@@ -139,15 +139,15 @@ const Topic: React.FC<TopicProps> = observer(() => {
             cancelText: t('cancel') || '取消',
             onOk: async () => {
                 if (!robotStore.selectedRobot) {
-                    message.error('请先选择一个机器人');
+                    messageApi.error('请先选择一个机器人');
                     return;
                 }
 
                 try {
                     await robotStore.removeTopic(robotStore.selectedRobot.id, topic);
-                    message.success(`话题 "${topic.name}" 删除成功`);
+                    messageApi.success(`话题 "${topic.name}" 删除成功`);
                 } catch (error) {
-                    message.error(
+                    messageApi.error(
                         `删除话题失败: ${error instanceof Error ? error.message : String(error)}`,
                     );
                 }
@@ -167,7 +167,7 @@ const Topic: React.FC<TopicProps> = observer(() => {
             console.log('Selected topic:', topic.name);
             // TODO: 实现话题选择后的具体逻辑，比如加载话题消息等
         } catch (error) {
-            message.error(
+            messageApi.error(
                 `选择话题失败: ${error instanceof Error ? error.message : String(error)}`,
             );
         }

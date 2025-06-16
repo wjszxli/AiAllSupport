@@ -39,6 +39,27 @@ const SidePanel: React.FC = () => {
         });
     }, []);
 
+    // Listen for provider settings updates
+    useEffect(() => {
+        const handleProviderSettingsUpdated = (message: any) => {
+            if (message.action === 'providerSettingsUpdated') {
+                console.log('Provider settings updated in SidePanel');
+                // Force refresh of messages to update provider icons
+                if (messagesWrapperRef.current) {
+                    messagesWrapperRef.current.scrollTop = messagesWrapperRef.current.scrollHeight;
+                }
+            }
+        };
+
+        // Add listener for messages from background script
+        chrome.runtime.onMessage.addListener(handleProviderSettingsUpdated);
+
+        // Clean up listener when component unmounts
+        return () => {
+            chrome.runtime.onMessage.removeListener(handleProviderSettingsUpdated);
+        };
+    }, []);
+
     const {
         messages,
         isLoading,
@@ -80,7 +101,7 @@ const SidePanel: React.FC = () => {
     const handleClearMessages = () => {
         clearMessages();
     };
-    console.log('messages', messages)
+    console.log('messages', messages);
 
     return (
         <div className="side-panel">

@@ -1,4 +1,14 @@
-import { Button, Checkbox, Form, Input, message, Switch, Tag, Tooltip, Typography } from 'antd';
+import {
+    Button,
+    Checkbox,
+    Form,
+    Input,
+    message as messageApi,
+    Switch,
+    Tag,
+    Tooltip,
+    Typography,
+} from 'antd';
 import React, { useEffect, useState } from 'react';
 
 import { t } from '@/locales/i18n';
@@ -64,7 +74,7 @@ const Search: React.FC<SearchProps> = ({ form, onValuesChange }) => {
 
     const handleWebSearchChange = (checked: boolean) => {
         if (checked && form.getFieldValue('useWebpageContext')) {
-            message.warning(t('exclusiveFeatureWarning'));
+            messageApi.warning(t('exclusiveFeatureWarning'));
             form.setFieldsValue({ webSearchEnabled: false });
             return;
         }
