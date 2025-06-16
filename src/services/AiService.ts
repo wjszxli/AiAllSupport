@@ -33,7 +33,7 @@ export async function fetchChatCompletion({
     abortController?: AbortController;
 }) {
     const provider = llmStore.providers.find((p) => p.id === robot.model?.provider);
-    console.log('provider', provider);
+    console.log('robot', robot);
 
     if (!provider) {
         throw new Error('Provider not found');
@@ -54,6 +54,7 @@ export async function fetchChatCompletion({
 
     await AI.completions({
         messages: filteredMessages,
+        robot,
         onFilterMessages: () => {},
         onChunk: onChunkReceived,
     });

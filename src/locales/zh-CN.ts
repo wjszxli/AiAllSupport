@@ -254,4 +254,7 @@ export const zhCN = {
     error502: '网关错误：服务器从上游服务器收到了无效响应。',
     error503: '服务不可用：服务器尚未准备好处理请求。',
     error504: '网关超时：服务器未能及时从上游服务器接收响应。',
+    robotPrompt: '机器人提示词',
+    showLess: '收起',
+    showMore: '展开',
 };

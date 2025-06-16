@@ -1,6 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Input, Tooltip } from 'antd';
-import { SendOutlined, CloseCircleOutlined } from '@ant-design/icons';
+import {
+    SendOutlined,
+    CloseCircleOutlined,
+    DownOutlined,
+    UpOutlined,
+    EditOutlined,
+} from '@ant-design/icons';
 
 import { t } from '@/locales/i18n';
 
@@ -13,6 +19,8 @@ import { observer } from 'mobx-react-lite';
 import MessageList from '../MessageList';
 import { useMessageSender } from '@/chat/hooks/useMessageSender';
 import { getMessageService } from '@/services/MessageService';
+import { md } from '@/utils/markdownRenderer';
+import DOMPurify from 'dompurify';
 
 const { TextArea } = Input;
 
@@ -26,13 +34,58 @@ const ChatBody: React.FC<ChatBodyProps> = observer(
     ({ selectedProvider, userInput, setUserInput }) => {
         const [displayMessages, setDisplayMessages] = useState<Message[]>([]);
         const [isLoading, setIsLoading] = useState(false);
+        const [showFullPrompt, setShowFullPrompt] = useState(false);
         const inputRef = useRef<any>(null);
+
+        // 获取当前机器人
+        const selectedRobot = useMemo(() => robotStore.selectedRobot, [robotStore.selectedRobot]);
 
         // 使用 robotStore 的 selectedRobot 的 selectedTopicId（现在是从 robotDB 中获取的）
         const selectedTopicId = useMemo(
-            () => robotStore.selectedRobot?.selectedTopicId || '',
-            [robotStore.selectedRobot?.selectedTopicId],
+            () => selectedRobot?.selectedTopicId || '',
+            [selectedRobot?.selectedTopicId],
         );
+
+        // 获取当前机器人的prompt
+        const currentRobotPrompt = useMemo(
+            () => selectedRobot?.prompt || '',
+            [selectedRobot?.prompt],
+        );
+
+        // 检查是否应该显示提示词
+        const shouldShowPrompt = useMemo(() => {
+            // 如果明确设置为false则不显示，否则默认显示(true或undefined)
+            return selectedRobot?.showPrompt !== false && !!currentRobotPrompt;
+        }, [selectedRobot?.showPrompt, currentRobotPrompt]);
+
+        // 处理 prompt 的截断与渲染
+        const renderedPrompt = useMemo(() => {
+            if (!currentRobotPrompt) return { short: '', full: '' };
+
+            const fullPrompt = md.render(currentRobotPrompt);
+
+            // 创建一个纯文本版本用于计算字符数
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = fullPrompt;
+            const textContent = tempDiv.textContent || '';
+
+            // 如果总长度小于 100，则不需要截断
+            if (textContent.length <= 100) {
+                return { short: fullPrompt, full: fullPrompt, needsExpand: false };
+            }
+
+            // 截取前 100 个字符的纯文本内容
+            const shortText = textContent.substring(0, 100) + '...';
+
+            // 创建截断的 HTML
+            const shortPrompt = md.render(shortText);
+
+            return {
+                short: shortPrompt,
+                full: fullPrompt,
+                needsExpand: true,
+            };
+        }, [currentRobotPrompt]);
 
         const messages = useMemo(() => {
             const data = rootStore.messageStore.getMessagesForTopic(selectedTopicId || '');
@@ -117,8 +170,52 @@ const ChatBody: React.FC<ChatBodyProps> = observer(
             [setUserInput],
         );
 
+        // 切换显示完整或截断的提示词
+        const toggleShowFullPrompt = (e: React.MouseEvent) => {
+            e.stopPropagation(); // 阻止事件冒泡到容器
+            setShowFullPrompt((prev) => !prev);
+        };
+
+        // 打开编辑机器人对话框
+        const openEditRobot = useCallback(() => {
+            if (!selectedRobot) return;
+
+            // 使用robotDB已有的编辑功能
+            robotStore.openEditRobot?.(selectedRobot);
+        }, [selectedRobot]);
+
         return (
             <div className="chat-body">
+                {shouldShowPrompt && (
+                    <div className="robot-prompt-container" onClick={openEditRobot}>
+                        <div className="robot-prompt-content">
+                            <h4>
+                                {t('robotPrompt') || '机器人提示词'}
+                                <EditOutlined className="edit-prompt-icon" />
+                            </h4>
+                            <div
+                                className="markdown-content prompt-markdown"
+                                dangerouslySetInnerHTML={{
+                                    __html: DOMPurify.sanitize(
+                                        showFullPrompt ? renderedPrompt.full : renderedPrompt.short,
+                                    ),
+                                }}
+                            />
+                            {renderedPrompt.needsExpand && (
+                                <Button
+                                    type="link"
+                                    onClick={toggleShowFullPrompt}
+                                    className="toggle-prompt-btn"
+                                    icon={showFullPrompt ? <UpOutlined /> : <DownOutlined />}
+                                >
+                                    {showFullPrompt
+                                        ? t('showLess') || '收起'
+                                        : t('showMore') || '展开'}
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+                )}
                 <MessageList
                     messages={displayMessages}
                     selectedProvider={selectedProvider}

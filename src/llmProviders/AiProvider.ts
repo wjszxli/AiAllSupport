@@ -22,11 +22,13 @@ export default class AiProvider {
 
     public async completions({
         messages,
+        robot,
         onChunk,
         onFilterMessages,
     }: CompletionsParams): Promise<void> {
         return await this.sdk.completions({
             messages,
+            robot,
             onChunk,
             onFilterMessages,
         });

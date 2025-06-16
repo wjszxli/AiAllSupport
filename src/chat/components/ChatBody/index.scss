@@ -5,6 +5,83 @@
     overflow: hidden;
     background-color: #f8fafc;
 
+    .robot-prompt-container {
+        padding: 12px 24px;
+        margin-bottom: 0;
+        background-color: #f0f7ff;
+        border-bottom: 1px solid #e1e8ed;
+        cursor: pointer;
+        transition: background-color 0.2s;
+
+        &:hover {
+            background-color: #e6f1ff;
+        }
+
+        .robot-prompt-content {
+            max-height: 200px;
+            overflow-y: auto;
+
+            h4 {
+                margin: 0 0 8px;
+                font-size: 14px;
+                font-weight: 600;
+                color: #1677ff;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+
+                .edit-prompt-icon {
+                    margin-left: 8px;
+                    font-size: 14px;
+                    opacity: 0.6;
+                    transition: opacity 0.2s;
+
+                    &:hover {
+                        opacity: 1;
+                    }
+                }
+            }
+
+            .prompt-markdown {
+                font-size: 14px;
+                line-height: 1.6;
+                color: #333;
+
+                p {
+                    margin: 0 0 8px;
+                }
+
+                code {
+                    padding: 2px 4px;
+                    color: #476582;
+                    background-color: rgba(27, 31, 35, 0.05);
+                    border-radius: 3px;
+                    font-family: SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+                }
+
+                pre {
+                    padding: 10px;
+                    margin: 8px 0;
+                    background-color: #f6f8fa;
+                    border-radius: 4px;
+                    overflow-x: auto;
+                }
+            }
+
+            .toggle-prompt-btn {
+                margin-top: 4px;
+                padding: 0;
+                height: auto;
+                font-size: 13px;
+                color: #1677ff;
+
+                &:hover {
+                    color: #4096ff;
+                }
+            }
+        }
+    }
+
     .chat-footer {
         padding: 20px 24px;
         background-color: #fff;
@@ -21,13 +98,13 @@
 
                 textarea {
                     padding: 10px 14px;
+                    resize: none;
                     font-size: 14px;
                     line-height: 1.5;
                     color: #333;
                     background-color: #f5f7fa;
                     border: 1px solid #e1e4e8;
                     border-radius: 8px;
-                    resize: none;
                     transition: all 0.3s;
 
                     &:focus {

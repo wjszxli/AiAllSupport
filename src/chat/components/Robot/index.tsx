@@ -13,6 +13,7 @@ import {
     Typography,
     Tag,
     Pagination,
+    Switch,
 } from 'antd';
 import {
     PlusOutlined,
@@ -29,6 +30,7 @@ import { getDefaultTopic } from '@/services/RobotService';
 import { robotList, getAllGroups } from '@/config/robot';
 import { getShortRobotName, getShortRobotDescription } from '@/utils/robotUtils';
 import robotDB from '@/db/robotDB';
+import robotStore from '@/store/robot';
 
 import './index.scss';
 
@@ -67,6 +69,14 @@ const Robot: React.FC<RobotProps> = ({ onSwitchToTopics }) => {
 
     useEffect(() => {
         loadRobots();
+
+        // 注册编辑机器人的处理函数到robotStore
+        robotStore.setEditRobotHandler(handleEditRobot);
+
+        // 清理函数
+        return () => {
+            robotStore.setEditRobotHandler(null);
+        };
     }, []);
 
     const showModal = () => {
@@ -127,6 +137,7 @@ const Robot: React.FC<RobotProps> = ({ onSwitchToTopics }) => {
             name: robot.name,
             description: robot.description,
             prompt: robot.prompt,
+            showPrompt: robot.showPrompt !== false, // Default to true if undefined
         });
         setIsEditModalVisible(true);
         loadRobots();
@@ -150,6 +161,7 @@ const Robot: React.FC<RobotProps> = ({ onSwitchToTopics }) => {
                 name: values.name,
                 prompt: values.prompt || '',
                 description: values.description || '',
+                showPrompt: values.showPrompt,
             };
 
             await robotDB.updateRobot(updatedRobot);
@@ -489,6 +501,13 @@ const Robot: React.FC<RobotProps> = ({ onSwitchToTopics }) => {
                     </Form.Item>
                     <Form.Item name="prompt" label="提示词">
                         <Input.TextArea placeholder="请输入提示词，用于指导AI的行为" rows={4} />
+                    </Form.Item>
+                    <Form.Item
+                        name="showPrompt"
+                        valuePropName="checked"
+                        label="在聊天界面显示提示词"
+                    >
+                        <Switch checkedChildren="显示" unCheckedChildren="隐藏" />
                     </Form.Item>
                 </Form>
             </Modal>

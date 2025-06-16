@@ -160,6 +160,7 @@ export default class OpenAiLlmProvider extends BaseLlmProvider {
 
     public async completions({
         messages,
+        robot,
         onChunk,
         onFilterMessages,
     }: CompletionsParams): Promise<void> {
@@ -178,6 +179,8 @@ export default class OpenAiLlmProvider extends BaseLlmProvider {
             userMessages.push(await this.getMessageParam(message));
         }
 
+        const systemMessage = { role: 'system', content: robot.prompt || '' };
+
         const lastUserMessage = _messages
             .slice()
             .reverse()
@@ -192,7 +195,19 @@ export default class OpenAiLlmProvider extends BaseLlmProvider {
         const { signal } = abortController;
 
         // 构建最终请求消息
-        let reqMessages: ChatCompletionMessageParam[] = [...userMessages];
+        let reqMessages: ChatCompletionMessageParam[] = [];
+
+        if (!systemMessage.content) {
+            reqMessages = [...userMessages];
+        } else {
+            reqMessages = [
+                {
+                    role: 'system' as const,
+                    content: robot.prompt || '',
+                },
+                ...userMessages,
+            ];
+        }
 
         reqMessages = processReqMessages(model, reqMessages);
 

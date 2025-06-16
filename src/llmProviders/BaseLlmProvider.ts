@@ -84,5 +84,10 @@ export default abstract class BaseLlmProvider {
 
     abstract check(model: Model, stream: boolean): Promise<{ valid: boolean; error: Error | null }>;
     abstract models(provider: Provider): Promise<Model[]>;
-    abstract completions({ messages, onChunk, onFilterMessages }: CompletionsParams): Promise<void>;
+    abstract completions({
+        messages,
+        robot,
+        onChunk,
+        onFilterMessages,
+    }: CompletionsParams): Promise<void>;
 }

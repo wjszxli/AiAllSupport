@@ -195,9 +195,12 @@ export type Robot = {
     messages?: RobotMessage[];
     topics: Topic[];
     selectedTopicId?: string;
+    showPrompt?: boolean; // Whether to display the prompt in the chat interface
 };
+
 export interface CompletionsParams {
     messages: Message[];
+    robot: Robot;
     onChunk: (chunk: Chunk) => void;
     onFilterMessages: (messages: Message[]) => void;
     abortController?: AbortController;

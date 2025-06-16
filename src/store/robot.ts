@@ -3,6 +3,10 @@ import { makeAutoObservable } from 'mobx';
 import { Robot, Model, Topic } from '@/types';
 import robotDB from '@/db/robotDB';
 
+// For exposing the robot edit functionality
+export type EditRobotHandler = (robot: Robot) => void;
+let editRobotHandler: EditRobotHandler | null = null;
+
 /**
  * 这个类现在是一个代理，将所有操作转发到 robotDB
  * 保留此类是为了向后兼容性，新代码应该直接使用 robotDB
@@ -18,6 +22,20 @@ export class RobotStore {
 
     constructor() {
         makeAutoObservable(this, {}, { autoBind: true });
+    }
+
+    // 设置机器人编辑处理函数
+    setEditRobotHandler(handler: EditRobotHandler | null) {
+        editRobotHandler = handler;
+    }
+
+    // 打开机器人编辑界面
+    openEditRobot(robot: Robot) {
+        if (editRobotHandler) {
+            editRobotHandler(robot);
+        } else {
+            console.warn('Robot edit handler not set');
+        }
     }
 
     async updateSelectedRobot(robot: Robot) {
