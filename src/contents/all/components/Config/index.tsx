@@ -1,6 +1,5 @@
+import React, { useState, useEffect } from 'react';
 import { Form, message, Select } from 'antd';
-import { useEffect, useState } from 'react';
-
 import { modelList } from '@/services';
 import type { ProviderConfig } from '@/types';
 import { isLocalhost } from '@/utils';

@@ -98,6 +98,15 @@ export function getProviderLogo(providerId: string) {
     return PROVIDER_LOGO_MAP[providerId as keyof typeof PROVIDER_LOGO_MAP];
 }
 
+// Define supported languages
+export type SupportedLanguage = 'en' | 'zh-CN';
+
+// Create a multilingual text structure
+export interface MultilingualText {
+    'en': string;
+    'zh-CN': string;
+}
+
 export const INITIAL_PROVIDERS: Provider[] = [
     {
         id: 'silicon',

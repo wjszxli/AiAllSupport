@@ -6,6 +6,7 @@ import { Logger } from './logger';
 import storage from './storage';
 
 export * from './logger';
+export * from './i18n';
 
 // Create a logger for this module
 const logger = new Logger('utils');

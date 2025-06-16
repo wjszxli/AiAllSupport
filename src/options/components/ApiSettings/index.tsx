@@ -22,6 +22,7 @@ import { useStore } from '@/store';
 import { Provider } from '@/types';
 import { getProviderLogo, PROVIDER_CONFIG } from '@/config/providers';
 import { checkApiProvider, getModels } from '@/services/AiService';
+import { getProviderName } from '@/utils/i18n';
 
 const { Text } = Typography;
 
@@ -91,6 +92,7 @@ const ApiSettings: React.FC = observer(() => {
     };
 
     const openModal = async (provider: Provider) => {
+        console.log('provider', provider);
         setCurrentProvider(provider);
         setApiKeyValidated(false);
         const { defaultModel } = llmStore;
@@ -153,7 +155,7 @@ const ApiSettings: React.FC = observer(() => {
                     });
                 }
 
-                message.success(`${currentProvider.name} 配置已保存`);
+                message.success(`${getProviderName(currentProvider)} 配置已保存`);
                 setIsModalOpen(false);
             }
         } catch (error) {
@@ -189,9 +191,14 @@ const ApiSettings: React.FC = observer(() => {
                 provider: currentProvider.id,
             });
 
-            message.success(`已将 ${currentProvider.name} 设为默认提供商`);
+            message.success(`已将 ${getProviderName(currentProvider)} 设为默认提供商`);
         }
     };
+
+    console.log(
+        'currentProvider',
+        currentProvider?.models.map((m) => m.id),
+    );
 
     // @ts-ignore
     const providerConfig = (PROVIDER_CONFIG as any)[currentProvider?.id] || {};
@@ -216,7 +223,7 @@ const ApiSettings: React.FC = observer(() => {
                                         PROVIDER_CONFIG[item.id]?.websites?.official
                                     }
                                 >
-                                    {item.name}
+                                    {getProviderName(item)}
                                 </a>
                             }
                         />
@@ -236,7 +243,7 @@ const ApiSettings: React.FC = observer(() => {
                     currentProvider && (
                         <Space>
                             <Avatar size="small" src={getProviderLogo(currentProvider.id)} />
-                            {`配置 ${currentProvider.name}`}
+                            {`配置 ${getProviderName(currentProvider)}`}
                         </Space>
                     )
                 }
