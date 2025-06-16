@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Avatar, Button, message as messageApi } from 'antd';
 import {
     UserOutlined,
@@ -45,19 +45,55 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
         const isUserMessage = firstMessage.role === 'user';
         const isAssistantMessage = firstMessage.role === 'assistant';
 
-        // 获取当前机器人信息
+        // 获取当前机器人信息（作为后备）
         const selectedRobot = robotStore.selectedRobot;
-        // 获取 llmStore 以监听默认模型变化
-        const llmStore = rootStore.llmStore;
 
         // 状态保存提供商图标和显示名称
         const [providerIcon, setProviderIcon] = useState<string | null>(null);
         const [displayName, setDisplayName] = useState<string>(selectedProvider);
 
-        // 当机器人信息、提供商或默认模型变化时更新图标和名称
+        // 从消息块中获取模型和提供商信息
+        const messageModel = useMemo(() => {
+            if (isUserMessage) return null;
+
+            // 从消息块中获取模型信息
+            if (firstMessage.blocks && firstMessage.blocks.length > 0) {
+                // 遍历所有块，查找包含模型信息的块
+                for (const blockId of firstMessage.blocks) {
+                    const block = rootStore.messageBlockStore.getBlockById(blockId);
+                    if (block?.model) {
+                        console.log(
+                            `[MessageGroup] 从块 ${blockId} 中获取到模型信息:`,
+                            block.model,
+                        );
+                        return block.model;
+                    }
+                }
+            }
+
+            // 如果消息本身有模型信息，使用它
+            if (firstMessage.model) {
+                console.log(
+                    `[MessageGroup] 从消息 ${firstMessage.id} 中获取到模型信息:`,
+                    firstMessage.model,
+                );
+                return firstMessage.model;
+            }
+
+            // 后备：使用当前选中的机器人的模型
+            const fallbackModel = selectedRobot?.model || selectedRobot?.defaultModel;
+            console.log(`[MessageGroup] 使用后备模型:`, fallbackModel);
+            return fallbackModel || null;
+        }, [firstMessage, selectedRobot]);
+
+        // 当消息模型或提供商变化时更新图标和名称
         useEffect(() => {
+            console.log(
+                `[MessageGroup] 更新提供商信息，消息 ${firstMessage.id}，模型:`,
+                messageModel,
+            );
             updateProviderInfo();
-        }, [selectedRobot, selectedProvider, llmStore.defaultModel]);
+        }, [messageModel, selectedProvider, firstMessage.id]);
 
         // 更新提供商信息
         const updateProviderInfo = () => {
@@ -75,48 +111,50 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
 
         // 获取显示的机器人名称
         const getRobotDisplayName = () => {
-            if (!selectedRobot) return selectedProvider;
+            if (isUserMessage) return t('you') || '你';
 
-            // 获取模型信息
-            const model = selectedRobot.model || selectedRobot.defaultModel;
-            if (!model) return selectedProvider;
+            // 如果有消息特定的模型信息，使用它
+            if (messageModel) {
+                const providerId = messageModel.provider;
 
-            // 从模型中获取提供商ID
-            const providerId = model.provider;
+                // 创建Provider对象以便使用getProviderName函数
+                const provider = {
+                    id: providerId,
+                    name: messageModel.group || providerId,
+                    type: 'openai' as any,
+                    apiKey: '',
+                    apiHost: '',
+                    models: [],
+                };
 
-            // 创建Provider对象以便使用getProviderName函数
-            const provider = {
-                id: providerId,
-                name: model.group || providerId,
-                type: 'openai' as any,
-                apiKey: '',
-                apiHost: '',
-                models: [],
-            };
+                // 获取本地化的提供商名称
+                const localizedProviderName = getProviderName(provider);
 
-            // 获取本地化的提供商名称
-            const localizedProviderName = getProviderName(provider);
+                // 获取模型名称
+                const modelName = messageModel.name || '';
 
-            // 获取模型名称
-            const modelName = model.name || '';
+                // 按照格式：提供商名称 | 模型名称
+                return modelName
+                    ? `${localizedProviderName} | ${modelName}`
+                    : localizedProviderName;
+            }
 
-            // 按照图片所示格式：提供商名称 | 模型名称
-            return modelName ? `${localizedProviderName} | ${modelName}` : localizedProviderName;
+            // 后备：使用选定的提供商
+            return selectedProvider;
         };
 
         // 获取提供商图标
         const getProviderIcon = () => {
-            if (!selectedRobot) return null;
+            if (isUserMessage) return null;
 
-            // 获取模型信息
-            const model = selectedRobot.model || selectedRobot.defaultModel;
-            if (!model) return null;
+            // 如果有消息特定的模型信息，使用它
+            if (messageModel) {
+                const providerId = messageModel.provider;
+                return getProviderLogo(providerId);
+            }
 
-            // 从模型中获取提供商ID
-            const providerId = model.provider;
-
-            // 获取提供商图标
-            return getProviderLogo(providerId);
+            // 后备：使用选定的提供商
+            return selectedProvider ? getProviderLogo(selectedProvider) : null;
         };
 
         // 处理复制代码块
