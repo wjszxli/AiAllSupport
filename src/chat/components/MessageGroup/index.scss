@@ -37,6 +37,7 @@
                 align-items: center;
 
                 .sender-name {
+                    font-size: 14px;
                     font-weight: 500;
                     color: #333;
                 }
@@ -57,6 +58,7 @@
                 }
 
                 .message-text {
+                    position: relative;
                     font-size: 14px;
                     line-height: 1.7;
                     color: #333;
@@ -170,31 +172,34 @@
                             }
                         }
                     }
-                }
 
-                .streaming-indicator {
-                    margin-top: 8px;
+                    // 流式加载指示器样式
+                    .streaming-indicator {
+                        display: flex;
+                        justify-content: center;
+                        margin-top: 8px;
 
-                    .typing-dots {
-                        display: inline-flex;
-                        gap: 4px;
-                        padding: 8px;
-                        background: #f5f7fa;
-                        border-radius: 12px;
+                        .typing-dots {
+                            display: inline-flex;
+                            gap: 4px;
+                            padding: 6px 10px;
+                            background: #f5f7fa;
+                            border-radius: 12px;
 
-                        span {
-                            width: 6px;
-                            height: 6px;
-                            background-color: #666;
-                            border-radius: 50%;
-                            animation: pulse 1s infinite;
+                            span {
+                                width: 6px;
+                                height: 6px;
+                                background-color: #666;
+                                border-radius: 50%;
+                                animation: pulse 1s infinite;
 
-                            &:nth-child(2) {
-                                animation-delay: 0.2s;
-                            }
+                                &:nth-child(2) {
+                                    animation-delay: 0.2s;
+                                }
 
-                            &:nth-child(3) {
-                                animation-delay: 0.4s;
+                                &:nth-child(3) {
+                                    animation-delay: 0.4s;
+                                }
                             }
                         }
                     }

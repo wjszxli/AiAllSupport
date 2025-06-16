@@ -13,6 +13,9 @@ import { observer } from 'mobx-react-lite';
 import MessageRenderer from './MessageRenderer';
 import './index.scss';
 import { useMessageOperations } from '@/chat/hooks/useMessageOperations';
+import robotStore from '@/store/robot';
+import { getProviderName } from '@/utils/i18n';
+import { getProviderLogo } from '@/config/providers';
 
 interface MessageGroupProps {
     groupKey: string;
@@ -41,12 +44,61 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
         const isUserMessage = firstMessage.role === 'user';
         const isAssistantMessage = firstMessage.role === 'assistant';
 
+        // 获取当前机器人信息
+        const selectedRobot = robotStore.selectedRobot;
+
         // 获取消息时间
         const getMessageTime = (message: Message) => {
             return new Date(message.createdAt).toLocaleTimeString([], {
                 hour: '2-digit',
                 minute: '2-digit',
             });
+        };
+
+        // 获取显示的机器人名称
+        const getRobotDisplayName = () => {
+            if (!selectedRobot) return selectedProvider;
+
+            // 获取模型信息
+            const model = selectedRobot.model || selectedRobot.defaultModel;
+            if (!model) return selectedProvider;
+
+            // 从模型中获取提供商ID
+            const providerId = model.provider;
+
+            // 创建Provider对象以便使用getProviderName函数
+            const provider = {
+                id: providerId,
+                name: model.group || providerId,
+                type: 'openai' as any,
+                apiKey: '',
+                apiHost: '',
+                models: [],
+            };
+
+            // 获取本地化的提供商名称
+            const localizedProviderName = getProviderName(provider);
+
+            // 获取模型名称
+            const modelName = model.name || '';
+
+            // 按照图片所示格式：提供商名称 | 模型名称
+            return modelName ? `${localizedProviderName} | ${modelName}` : localizedProviderName;
+        };
+
+        // 获取提供商图标
+        const getProviderIcon = () => {
+            if (!selectedRobot) return null;
+
+            // 获取模型信息
+            const model = selectedRobot.model || selectedRobot.defaultModel;
+            if (!model) return null;
+
+            // 从模型中获取提供商ID
+            const providerId = model.provider;
+
+            // 获取提供商图标
+            return getProviderLogo(providerId);
         };
 
         // 处理复制代码块
@@ -108,7 +160,8 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
                         />
                     ) : (
                         <Avatar
-                            icon={<RobotOutlined />}
+                            src={getProviderIcon()}
+                            icon={!getProviderIcon() && <RobotOutlined />}
                             style={{
                                 backgroundColor: '#fff',
                                 color: '#06b6d4',
@@ -122,7 +175,7 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
                     <div className="message-header">
                         <div className="message-sender">
                             <span className="sender-name">
-                                {isUserMessage ? t('you') || '你' : selectedProvider}
+                                {isUserMessage ? t('you') || '你' : getRobotDisplayName()}
                             </span>
                             <span className="message-time">{getMessageTime(firstMessage)}</span>
                         </div>
@@ -145,17 +198,16 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
                                             isStreaming={isStreaming}
                                             errorContent={errorContent}
                                         />
+                                        {isStreaming && (
+                                            <div className="streaming-indicator">
+                                                <span className="typing-dots">
+                                                    <span></span>
+                                                    <span></span>
+                                                    <span></span>
+                                                </span>
+                                            </div>
+                                        )}
                                     </div>
-                                    {/* 流式加载指示器 */}
-                                    {isStreaming && (
-                                        <div className="streaming-indicator">
-                                            <span className="typing-dots">
-                                                <span></span>
-                                                <span></span>
-                                                <span></span>
-                                            </span>
-                                        </div>
-                                    )}
                                 </div>
                             );
                         })}
