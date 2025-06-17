@@ -5,46 +5,59 @@ import llmStore from '@/store/llm';
 import rootStore from '@/store';
 import { InputMessage, getUserMessage } from '@/utils/message/input';
 import { getMessageService } from '@/services/MessageService';
+import { Robot } from '@/types';
 
 export const useMessageSender = () => {
-    const handleSendMessage = useCallback((userInput: string, onSuccess?: () => void) => {
-        if (!userInput.trim()) return;
+    const handleSendMessage = useCallback(
+        ({
+            userInput,
+            robot,
+            onSuccess,
+        }: {
+            userInput: string;
+            robot?: Robot;
+            onSuccess?: () => void;
+        }) => {
+            if (!userInput.trim()) return;
 
-        const { selectedRobot } = robotStore;
-        const { selectedTopicId } = selectedRobot;
+            const selectedRobot = robot || robotStore?.selectedRobot;
+            console.log('robot', selectedRobot);
+            const { selectedTopicId } = selectedRobot;
 
-        if (!selectedTopicId) {
-            AntdMessage.error('请先选择一个话题');
-            return;
-        }
+            if (!selectedTopicId) {
+                AntdMessage.error('请先选择一个话题');
+                return;
+            }
 
-        selectedRobot.model = llmStore.defaultModel;
+            selectedRobot.model = llmStore.defaultModel;
 
-        const topic = robotStore.selectedRobot.topics.find((topic) => topic.id === selectedTopicId);
+            const topic = selectedRobot.topics.find((topic) => topic.id === selectedTopicId);
 
-        if (!topic) {
-            AntdMessage.error('请先选择一个话题');
-            return;
-        }
+            if (!topic) {
+                AntdMessage.error('请先选择一个话题');
+                return;
+            }
 
-        const userMessage: InputMessage = {
-            robot: selectedRobot,
-            topic: topic,
-            content: userInput,
-        };
+            const userMessage: InputMessage = {
+                robot: selectedRobot,
+                topic: topic,
+                content: userInput,
+            };
 
-        const { message, blocks } = getUserMessage(userMessage);
-        console.log(message, blocks);
+            const { message, blocks } = getUserMessage(userMessage);
+            console.log(message, blocks);
 
-        // 使用独立的 MessageService
-        const messageService = getMessageService(rootStore);
-        messageService.sendMessage(message, blocks, selectedRobot, selectedTopicId);
+            // 使用独立的 MessageService
+            const messageService = getMessageService(rootStore);
+            messageService.sendMessage(message, blocks, selectedRobot, selectedTopicId);
 
-        // 调用成功回调
-        if (onSuccess) {
-            onSuccess();
-        }
-    }, []);
+            // 调用成功回调
+            if (onSuccess) {
+                onSuccess();
+            }
+        },
+        [],
+    );
 
     return {
         handleSendMessage,

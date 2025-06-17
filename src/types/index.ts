@@ -196,6 +196,8 @@ export type Robot = {
     topics: Topic[];
     selectedTopicId?: string;
     showPrompt?: boolean; // Whether to display the prompt in the chat interface
+    isSystem?: boolean; // 是否为系统机器人
+    cannotDelete?: boolean; // 是否不可删除
 };
 
 export interface CompletionsParams {

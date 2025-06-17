@@ -292,7 +292,7 @@ export async function extractWebsiteMetadata(): Promise<WebsiteMetadata> {
 
                         if (mainElements.length > 0) {
                             mainElements.forEach((element) => {
-                                contentText += `${(element as HTMLElement).textContent}\n\n`;
+                                contentText += `${(element as HTMLElement).textContent}`;
                             });
                         } else {
                             contentText = document.body.textContent || '';
@@ -301,7 +301,7 @@ export async function extractWebsiteMetadata(): Promise<WebsiteMetadata> {
                         return contentText;
                     };
 
-                    const content = extractContent();
+                    const content = extractContent().replace(/\n/g, '');
                     const language = navigator.language || 'en-US';
 
                     return {

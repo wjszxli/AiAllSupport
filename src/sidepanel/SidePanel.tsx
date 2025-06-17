@@ -1,11 +1,10 @@
 import React, { useState, useRef, FormEvent, useEffect, useCallback } from 'react';
-import { Button, Input, Spin, Typography, Tooltip } from 'antd';
+import { Button, Input, Typography, Tooltip } from 'antd';
 import {
     SendOutlined,
     ClearOutlined,
     ReloadOutlined,
     StopOutlined,
-    CopyOutlined,
     SettingOutlined,
 } from '@ant-design/icons';
 import { useChatMessages } from '../hooks/useChatMessages';
@@ -15,6 +14,16 @@ import mathjax3 from 'markdown-it-mathjax3';
 import './SidePanel.scss';
 import { extractWebsiteMetadata } from '@/utils';
 import { sendMessage } from '@/services/chatService';
+// import MessageListAdapter from './MessageListAdapter';
+// import storage from '@/utils/storage';
+import {
+    existWebSummarizerRobot,
+    getWebSummarizerRobot,
+    getWebSummarizerRobotFromDB,
+} from '@/services/RobotService';
+import robotDB from '@/db/robotDB';
+import { Robot } from '@/types';
+import { useMessageSender } from '@/chat/hooks/useMessageSender';
 
 const { TextArea } = Input;
 const { Text } = Typography;
@@ -32,36 +41,53 @@ const SidePanel: React.FC = () => {
     const [inputValue, setInputValue] = useState('');
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const [tabId, setTabId] = useState<string | undefined>(undefined);
+    const [robot, setRobot] = useState<Robot>();
+    const { handleSendMessage } = useMessageSender();
 
     useEffect(() => {
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
             setTabId(tabs[0].id?.toString() || undefined);
         });
+
+        initRobot();
+    }, []);
+
+    const initRobot = useCallback(async () => {
+        const isExistWebSummarizerRobot = await existWebSummarizerRobot();
+        console.log('isExistWebSummarizerRobot', isExistWebSummarizerRobot);
+        if (!isExistWebSummarizerRobot) {
+            const webSummarizerRobot = getWebSummarizerRobot();
+            if (webSummarizerRobot) {
+                robotDB.addRobot(webSummarizerRobot);
+                setRobot(webSummarizerRobot);
+            }
+        }
     }, []);
 
     // Function to handle summarize action
     const handleSummarize = useCallback(async () => {
         console.log('Handling summarize action');
+
+        const isExistWebSummarizerRobot = await existWebSummarizerRobot();
+        const webSummarizerRobot = (await robotDB.getRobotFromDB('782')) || getWebSummarizerRobot();
+        if (!isExistWebSummarizerRobot && webSummarizerRobot) {
+            robotDB.addRobot(webSummarizerRobot);
+            setRobot(webSummarizerRobot);
+        }
+
         const data = await extractWebsiteMetadata();
         const message = t('summarizePage').replace('{content}', JSON.stringify(data));
+        console.log('message', message);
         const [tab] = await chrome.tabs.query({
             active: true,
             currentWindow: true,
         });
         const tabId = tab?.id?.toString();
         setTabId(tabId);
-        await sendMessage(message, undefined, tabId);
+        handleSendMessage({ userInput: message, robot: webSummarizerRobot });
+        // await sendMessage(message, undefined, tabId);
     }, [t, setTabId, sendMessage, extractWebsiteMetadata]);
 
-    // Check for summarize parameter in URL
-    useEffect(() => {
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('action') === 'summarize') {
-            handleSummarize();
-        }
-    }, [t, handleSummarize]);
-
-    // Listen for messages from the parent window (for iframe mode)
     useEffect(() => {
         const handleMessage = async (event: MessageEvent) => {
             if (event.data && event.data.action === 'summarize') {
@@ -79,10 +105,9 @@ const SidePanel: React.FC = () => {
         const handleProviderSettingsUpdated = (message: any) => {
             if (message.action === 'providerSettingsUpdated') {
                 console.log('Provider settings updated in SidePanel');
-                // Force refresh of messages to update provider icons
-                if (messagesWrapperRef.current) {
-                    messagesWrapperRef.current.scrollTop = messagesWrapperRef.current.scrollHeight;
-                }
+                // storage.getSelectedProvider().then((provider) => {
+                //     setSelectedProvider(provider || '');
+                // });
             }
         };
 
@@ -95,22 +120,21 @@ const SidePanel: React.FC = () => {
         };
     }, []);
 
-    const {
-        messages,
-        isLoading,
-        streamingMessageId,
-        messagesWrapperRef,
-        copyToClipboard,
-        cancelStreamingResponse,
-        sendChatMessage,
-        regenerateResponse,
-        clearMessages,
-    } = useChatMessages({
-        t,
-        storeType: 'interface',
-        conversationId: 'sidepanel',
-        tabId,
-    });
+    // const {
+    //     messages,
+    //     isLoading,
+    //     streamingMessageId,
+
+    //     cancelStreamingResponse,
+    //     sendChatMessage,
+    //     regenerateResponse,
+    //     clearMessages,
+    // } = useChatMessages({
+    //     t,
+    //     storeType: 'interface',
+    //     conversationId: 'sidepanel',
+    //     tabId,
+    // });
 
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
@@ -120,12 +144,10 @@ const SidePanel: React.FC = () => {
         }
     };
 
-    const renderMarkdown = (content: string) => {
-        try {
-            return md.render(content || '');
-        } catch (error) {
-            console.error('Error rendering markdown:', error);
-            return content || '';
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSubmit(e as any);
         }
     };
 
@@ -133,11 +155,17 @@ const SidePanel: React.FC = () => {
         chrome.runtime.openOptionsPage();
     };
 
-    const handleClearMessages = () => {
-        clearMessages();
-    };
+    // const handleClearMessages = () => {
+    //     clearMessages();
+    // };
 
-    console.log('messages', messages);
+    // Handle edit message from MessageList
+    const handleEditMessage = useCallback((text: string) => {
+        setInputValue(text);
+        if (inputRef.current) {
+            inputRef.current.focus();
+        }
+    }, []);
 
     return (
         <div className="side-panel">
@@ -158,65 +186,20 @@ const SidePanel: React.FC = () => {
                             type="text"
                             size="small"
                             icon={<ClearOutlined />}
-                            onClick={handleClearMessages}
+                            // onClick={handleClearMessages}
                         />
                     </Tooltip>
                 </div>
             </div>
 
-            <div className="chat-messages" ref={messagesWrapperRef}>
-                {messages.length === 0 ? (
-                    <div className="empty-chat-message">
-                        <Text type="secondary">{t('startChat')}</Text>
-                    </div>
-                ) : (
-                    messages.map((message) => (
-                        <div
-                            key={message.id}
-                            className={`message ${
-                                message.sender === 'user' ? 'user-message' : 'ai-message'
-                            }`}
-                        >
-                            <div className="message-header">
-                                <Text strong>{message.sender === 'user' ? t('you') : t('ai')}</Text>
-                                {message.sender === 'ai' && (
-                                    <div className="message-actions">
-                                        <Tooltip title={t('copy')}>
-                                            <Button
-                                                type="text"
-                                                size="small"
-                                                icon={<CopyOutlined />}
-                                                onClick={() => copyToClipboard(message.text)}
-                                            />
-                                        </Tooltip>
-                                    </div>
-                                )}
-                            </div>
-                            <div className="message-content">
-                                {message.sender === 'user' ? (
-                                    <Text>{message.text}</Text>
-                                ) : (
-                                    <div
-                                        className="markdown-content"
-                                        dangerouslySetInnerHTML={{
-                                            __html: renderMarkdown(message.text),
-                                        }}
-                                    />
-                                )}
-                            </div>
-                        </div>
-                    ))
-                )}
-                {isLoading && streamingMessageId === null && (
-                    <div className="loading-indicator">
-                        <Spin size="small" />
-                        <Text type="secondary">{t('thinking')}</Text>
-                    </div>
-                )}
-            </div>
+            {/* <MessageListAdapter
+                messages={messages}
+                selectedProvider={selectedProvider}
+                onEditMessage={handleEditMessage}
+            /> */}
 
             <div className="chat-input-container">
-                {streamingMessageId !== null && (
+                {/* {streamingMessageId !== null && (
                     <Button
                         className="stop-button"
                         type="default"
@@ -236,9 +219,9 @@ const SidePanel: React.FC = () => {
                     >
                         {t('regenerate')}
                     </Button>
-                )}
+                )} */}
 
-                <form onSubmit={handleSubmit} className="chat-form">
+                {/* <form onSubmit={handleSubmit} className="chat-form">
                     <TextArea
                         ref={inputRef}
                         value={inputValue}
@@ -246,12 +229,7 @@ const SidePanel: React.FC = () => {
                         placeholder={t('typeMessage')}
                         autoSize={{ minRows: 1, maxRows: 4 }}
                         disabled={isLoading}
-                        onPressEnter={(e) => {
-                            if (!e.shiftKey) {
-                                e.preventDefault();
-                                handleSubmit(e);
-                            }
-                        }}
+                        onKeyDown={handleKeyDown}
                     />
                     <Button
                         type="primary"
@@ -260,25 +238,12 @@ const SidePanel: React.FC = () => {
                         disabled={!inputValue.trim() || isLoading}
                     />
                 </form>
-                <Button
-                    type="primary"
-                    onClick={async () => {
-                        const data = await extractWebsiteMetadata();
-                        const message = t('summarizePage').replace(
-                            '{content}',
-                            JSON.stringify(data),
-                        );
-                        const [tab] = await chrome.tabs.query({
-                            active: true,
-                            currentWindow: true,
-                        });
-                        const tabId = tab?.id?.toString();
-                        setTabId(tabId);
-                        await sendMessage(message, undefined, tabId);
-                    }}
-                >
-                    {t('summarize')}
-                </Button>
+
+                <div className="action-buttons">
+                    <Button type="primary" onClick={handleSummarize} className="summarize-button">
+                        {t('summarize')}
+                    </Button>
+                </div> */}
             </div>
         </div>
     );

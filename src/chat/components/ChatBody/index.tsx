@@ -170,8 +170,12 @@ const ChatBody: React.FC<ChatBodyProps> = observer(
         const handleSendMessage = () => {
             if (!userInput.trim() || isLoading) return;
 
-            sendMessage(userInput, () => {
-                setUserInput('');
+            sendMessage({
+                userInput,
+                robot: selectedRobot,
+                onSuccess: () => {
+                    setUserInput('');
+                },
             });
         };
 

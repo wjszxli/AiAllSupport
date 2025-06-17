@@ -2,6 +2,7 @@ import { Robot, Topic } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import { robotList } from '../config/robot';
 import { t } from '@/locales/i18n';
+import robotDB from '@/db/robotDB';
 
 export function getDefaultTopic(assistantId: string): Topic {
     const now = new Date().toISOString();
@@ -16,11 +17,39 @@ export function getDefaultTopic(assistantId: string): Topic {
     };
 }
 
+// 获取网页总结机器人
+export function getWebSummarizerRobot(): Robot | undefined {
+    const webSummarizerRobot = robotList.find((robot) => robot.id === '782');
+    if (webSummarizerRobot) {
+        const topics = getDefaultTopic(webSummarizerRobot.id);
+        return {
+            ...webSummarizerRobot,
+            type: 'assistant',
+            topics: [topics],
+            isSystem: true, // 标记为系统机器人
+            cannotDelete: true, // 标记为不可删除
+            selectedTopicId: topics.id,
+        };
+    }
+    return undefined;
+}
+
+export async function existWebSummarizerRobot(): Promise<boolean> {
+    const webSummarizerRobot = await robotDB.getRobotFromDB('782');
+    console.log('webSummarizerRobot', webSummarizerRobot);
+    return webSummarizerRobot !== undefined;
+}
+
+// 获取默认机器人
 export function getDefaultRobot(): Robot {
-    const robots = robotList;
-    return {
-        ...robots[0],
+    const robots = robotList[0];
+    const defaultRobots = {
+        ...robots,
         type: 'assistant',
-        topics: [getDefaultTopic(robots[0].id)],
+        topics: [getDefaultTopic(robots.id)],
+        isSystem: true, // 标记为系统机器人
+        cannotDelete: true, // 标记为不可删除
     };
+
+    return defaultRobots;
 }

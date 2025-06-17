@@ -1,19 +1,14 @@
 import { Robot, Model, Topic } from '@/types';
 import { db } from './index';
-import { makePersistable } from 'mobx-persist-store';
 import { makeAutoObservable } from 'mobx';
 import { isEmpty, uniqBy } from 'lodash';
 import { getDefaultRobot } from '@/services/RobotService';
-import chromeStorageAdapter from '@/store/chromeStorageAdapter';
 
-// Extend the Dexie database to include robots
 db.version(2).stores({
     robots: '&id, name',
     topics: '&id, messages',
     message_blocks: 'id, messageId',
 });
-
-// Create a class to manage robot data using DB
 export class RobotDB {
     robotList: Robot[] = [getDefaultRobot()];
     selectedRobot: Robot = getDefaultRobot();
@@ -21,31 +16,22 @@ export class RobotDB {
     constructor() {
         makeAutoObservable(this, {}, { autoBind: true });
 
-        // Initialize the robot list from DB
         this.initializeFromDB();
-
-        // Maintain compatibility with previous storage
-        makePersistable(this, {
-            name: 'robot-store',
-            properties: ['selectedRobot'],
-            storage: chromeStorageAdapter as any,
-        });
     }
 
     async initializeFromDB() {
         try {
-            // Get all robots from DB
             const robots = await db.table('robots').toArray();
 
-            // If there are no robots in DB, initialize with default and save to DB
+            const defaultRobot = getDefaultRobot();
+
             if (robots.length === 0) {
-                await this.saveRobotToDB(getDefaultRobot());
-            } else {
-                this.robotList = robots;
-                // If there's no selected robot, select the first one
-                if (!this.selectedRobot?.id) {
-                    this.selectedRobot = robots[0];
-                }
+                await this.saveRobotToDB(defaultRobot);
+                this.robotList = [defaultRobot];
+            }
+
+            if (!this.selectedRobot?.id) {
+                this.selectedRobot = defaultRobot;
             }
         } catch (error) {
             console.error('Failed to initialize robots from DB:', error);
@@ -139,10 +125,20 @@ export class RobotDB {
 
     async removeRobot(id: string) {
         try {
+            // 获取机器人信息
+            const robot = await this.getRobotFromDB(id);
+
+            // 检查是否为不可删除的机器人
+            if (robot && robot.cannotDelete) {
+                console.warn('Cannot delete robot marked as cannotDelete:', id);
+                return false; // 直接返回，不执行删除操作
+            }
+
             // Delete from DB
             await this.deleteRobotFromDB(id);
             // Update local list
             await this.updateRobotList();
+            return true;
         } catch (error) {
             console.error('Failed to remove robot:', error);
             throw error;

@@ -200,7 +200,11 @@ const Robot: React.FC<RobotProps> = ({ onSwitchToTopics }) => {
 
                 setLoading(true);
                 try {
-                    await robotDB.removeRobot(robot.id);
+                    const result = await robotDB.removeRobot(robot.id);
+                    if (!result) {
+                        message.error(`机器人 ${robot.name} 无法删除`);
+                        return;
+                    }
                     setRobotListState(robotDB.robotList);
                     message.success(`机器人 ${robot.name} 删除成功`);
                 } catch (error) {
