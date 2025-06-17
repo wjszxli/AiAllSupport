@@ -259,13 +259,12 @@ export const zhCN = {
     showMore: '展开',
 
     // Provider names
-    provider_silicon: 'Silicon',
+    provider_silicon: '硅基流动',
     provider_aihubmix: 'AiHubMix',
     provider_ocoolai: 'ocoolAI',
     provider_deepseek: '深度求索',
     provider_openrouter: 'OpenRouter',
-    provider_ppio: 'PPIO',
-    provider_alayanew: 'AlayaNew',
+    provider_ppio: '欧派云',
     provider_infini: 'Infini',
     provider_qiniu: '七牛云',
     provider_dmxapi: 'DMXAPI',

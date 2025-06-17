@@ -194,7 +194,6 @@ export const zhTW = {
     provider_deepseek: '深度求索',
     provider_openrouter: 'OpenRouter',
     provider_ppio: 'PPIO',
-    provider_alayanew: 'AlayaNew',
     provider_infini: 'Infini',
     provider_qiniu: '七牛雲',
     provider_dmxapi: 'DMXAPI',

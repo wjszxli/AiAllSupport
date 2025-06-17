@@ -1,6 +1,134 @@
 import { Model } from '@/types';
 
-export const SYSTEM_MODELS: Record<string, Model[]> = {
+function isChatModel(model: Model): boolean {
+    // If type is present, must include 'text' or 'reasoning' (for chat)
+    if (Array.isArray(model.type)) {
+        return model.type.includes('text') || model.type.includes('reasoning');
+    }
+    // Fallback: filter out known non-chat groups/names
+    const nonChatKeywords = [
+        'embedding',
+        'vision',
+        'rerank',
+        'code',
+        'tool',
+        'search',
+        'clip',
+        'VL',
+        'VL-',
+        'VL_',
+        'VL.',
+        'VL2',
+        'VL2.5',
+        'VL3',
+        'VL4',
+        'VL5',
+        'VL6',
+        'VL7',
+        'VL8',
+        'VL9',
+        'VL10',
+        'VL11',
+        'VL12',
+        'VL13',
+        'VL14',
+        'VL15',
+        'VL16',
+        'VL17',
+        'VL18',
+        'VL19',
+        'VL20',
+        'VL21',
+        'VL22',
+        'VL23',
+        'VL24',
+        'VL25',
+        'VL26',
+        'VL27',
+        'VL28',
+        'VL29',
+        'VL30',
+        'VL31',
+        'VL32',
+        'VL33',
+        'VL34',
+        'VL35',
+        'VL36',
+        'VL37',
+        'VL38',
+        'VL39',
+        'VL40',
+        'VL41',
+        'VL42',
+        'VL43',
+        'VL44',
+        'VL45',
+        'VL46',
+        'VL47',
+        'VL48',
+        'VL49',
+        'VL50',
+        'VL51',
+        'VL52',
+        'VL53',
+        'VL54',
+        'VL55',
+        'VL56',
+        'VL57',
+        'VL58',
+        'VL59',
+        'VL60',
+        'VL61',
+        'VL62',
+        'VL63',
+        'VL64',
+        'VL65',
+        'VL66',
+        'VL67',
+        'VL68',
+        'VL69',
+        'VL70',
+        'VL71',
+        'VL72',
+        'VL73',
+        'VL74',
+        'VL75',
+        'VL76',
+        'VL77',
+        'VL78',
+        'VL79',
+        'VL80',
+        'VL81',
+        'VL82',
+        'VL83',
+        'VL84',
+        'VL85',
+        'VL86',
+        'VL87',
+        'VL88',
+        'VL89',
+        'VL90',
+        'VL91',
+        'VL92',
+        'VL93',
+        'VL94',
+        'VL95',
+        'VL96',
+        'VL97',
+        'VL98',
+        'VL99',
+        'VL100',
+    ];
+    const lowerName = (model.name || '').toLowerCase();
+    const lowerGroup = (model.group || '').toLowerCase();
+    // Exclude if any non-chat keyword is present in name or group
+    if (nonChatKeywords.some((k) => lowerName.includes(k) || lowerGroup.includes(k))) {
+        return false;
+    }
+    return true;
+}
+
+const RAW_SYSTEM_MODELS: Record<string, Model[]> = {
     'aihubmix': [
         {
             id: 'gpt-4o',
@@ -183,16 +311,34 @@ export const SYSTEM_MODELS: Record<string, Model[]> = {
             group: 'Qwen',
         },
         {
-            id: 'meta-llama/Llama-3.3-70B-Instruct',
-            name: 'meta-llama/Llama-3.3-70B-Instruct',
+            id: 'MiniMaxAI/MiniMax-M1-80k',
+            name: 'MiniMax-M1-80k',
             provider: 'silicon',
-            group: 'meta-llama',
+            group: 'MiniMax',
         },
         {
-            id: 'BAAI/bge-m3',
-            name: 'BAAI/bge-m3',
+            id: 'THUDM/GLM-Z1-32B-0414',
+            name: 'GLM-Z1-32B-0414',
             provider: 'silicon',
-            group: 'BAAI',
+            group: 'THUDM',
+        },
+        {
+            id: 'THUDM/GLM-Z1-9B-0414',
+            name: 'GLM-Z1-9B-0414',
+            provider: 'silicon',
+            group: '免费模型',
+        },
+        {
+            id: 'deepseek-ai/DeepSeek-R1-0528-Qwen3-8B',
+            name: 'DeepSeek-R1-0528-Qwen3-8B',
+            provider: 'silicon',
+            group: '免费模型',
+        },
+        {
+            id: 'Qwen/Qwen3-8B',
+            name: 'Qwen3-8B',
+            provider: 'silicon',
+            group: '免费模型',
         },
     ],
     'ppio': [
@@ -257,7 +403,6 @@ export const SYSTEM_MODELS: Record<string, Model[]> = {
             group: '01-ai',
         },
     ],
-    'alayanew': [],
     'openai': [
         { id: 'gpt-4.5-preview', provider: 'openai', name: ' gpt-4.5-preview', group: 'gpt-4.5' },
         { id: 'gpt-4o', provider: 'openai', name: ' GPT-4o', group: 'GPT 4o' },
@@ -1732,3 +1877,10 @@ export const SYSTEM_MODELS: Record<string, Model[]> = {
         },
     ],
 };
+
+export const SYSTEM_MODELS: Record<string, Model[]> = Object.fromEntries(
+    Object.entries(RAW_SYSTEM_MODELS).map(([provider, models]: [string, Model[]]) => [
+        provider,
+        Array.isArray(models) ? models.filter(isChatModel) : [],
+    ]),
+);

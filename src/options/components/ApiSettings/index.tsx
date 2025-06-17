@@ -23,6 +23,7 @@ import { Provider } from '@/types';
 import { getProviderLogo, PROVIDER_CONFIG } from '@/config/providers';
 import { checkApiProvider, getModels } from '@/services/AiService';
 import { getProviderName } from '@/utils/i18n';
+import { SYSTEM_MODELS } from '@/config/models';
 
 const { Text } = Typography;
 
@@ -34,6 +35,66 @@ const ApiSettings: React.FC = observer(() => {
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [currentProvider, setCurrentProvider] = useState<Provider | null>(null);
     const [testing, setTesting] = useState<boolean>(false);
+    const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
+    const [providerSearch, setProviderSearch] = useState<string>('');
+
+    // Collect all unique groups from SYSTEM_MODELS
+    const allGroups = React.useMemo(() => {
+        const groupSet = new Set<string>();
+        Object.values(SYSTEM_MODELS).forEach((models) => {
+            models.forEach((model) => {
+                if (model.group) groupSet.add(model.group);
+            });
+        });
+        const groups = Array.from(groupSet);
+        // Sort: groups containing '免费' first, then the rest alphabetically
+        return groups.sort((a, b) => {
+            const aFree = a.includes('免费');
+            const bFree = b.includes('免费');
+            if (aFree && !bFree) return -1;
+            if (!aFree && bFree) return 1;
+            return a.localeCompare(b);
+        });
+    }, []);
+
+    // Filter providers by selected groups and search
+    const filteredProviders = React.useMemo(() => {
+        let providers = llmStore.providers;
+        if (selectedGroups.length > 0) {
+            providers = providers.filter((provider) =>
+                provider.models.some((model) => selectedGroups.includes(model.group)),
+            );
+        }
+        if (providerSearch.trim()) {
+            const searchLower = providerSearch.trim().toLowerCase();
+            providers = providers.filter((provider) =>
+                getProviderName(provider).toLowerCase().includes(searchLower),
+            );
+        }
+        return providers;
+    }, [llmStore.providers, selectedGroups, providerSearch]);
+
+    // Helper to group models for the Select dropdown
+    function getModelGroupOptions(models: any[] = []) {
+        const groupMap: Record<string, any[]> = {};
+        models.forEach((model) => {
+            const group = model.group || '其他';
+            if (!groupMap[group]) groupMap[group] = [];
+            groupMap[group].push({ label: model.name, value: model.id });
+        });
+        // Sort: free group first, then alphabetically
+        const sortedGroups = Object.keys(groupMap).sort((a, b) => {
+            const aFree = a.includes('免费');
+            const bFree = b.includes('免费');
+            if (aFree && !bFree) return -1;
+            if (!aFree && bFree) return 1;
+            return a.localeCompare(b);
+        });
+        return sortedGroups.map((group) => ({
+            label: group,
+            options: groupMap[group],
+        }));
+    }
 
     const validateApiHost = async () => {
         if (!currentProvider) return;
@@ -263,9 +324,30 @@ const ApiSettings: React.FC = observer(() => {
 
     return (
         <>
+            {/* Provider Search and Group Filter */}
+            <div style={{ marginBottom: 16, display: 'flex', gap: 8 }}>
+                <Input
+                    placeholder="搜索供应商"
+                    value={providerSearch}
+                    onChange={(e) => setProviderSearch(e.target.value)}
+                    style={{ width: 200 }}
+                    allowClear
+                />
+                <Select
+                    mode="multiple"
+                    allowClear
+                    placeholder="按模型分组筛选"
+                    value={selectedGroups}
+                    onChange={setSelectedGroups}
+                    style={{ minWidth: 220, flex: 1 }}
+                    options={allGroups.map((group) => ({ label: group, value: group }))}
+                    maxTagCount={2}
+                />
+            </div>
+            {/* Provider List */}
             <List
                 itemLayout="horizontal"
-                dataSource={llmStore.providers}
+                dataSource={filteredProviders}
                 renderItem={(item) => (
                     <List.Item key={item.id}>
                         <List.Item.Meta
@@ -389,10 +471,7 @@ const ApiSettings: React.FC = observer(() => {
                     >
                         <Select
                             placeholder="请选择默认模型"
-                            options={currentProvider?.models.map((model) => ({
-                                label: model.name,
-                                value: model.id,
-                            }))}
+                            options={getModelGroupOptions(currentProvider?.models)}
                         />
                     </Form.Item>
                 </Form>

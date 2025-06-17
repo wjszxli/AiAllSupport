@@ -273,7 +273,7 @@ Please answer in the same language as the user's question.`,
     provider_deepseek: 'deepseek',
     provider_openrouter: 'OpenRouter',
     provider_ppio: 'PPIO',
-    provider_alayanew: 'AlayaNew',
+
     provider_infini: 'Infini',
     provider_qiniu: 'Qiniu',
     provider_dmxapi: 'DMXAPI',

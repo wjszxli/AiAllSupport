@@ -5,7 +5,6 @@ import ZhinaoProviderLogo from '@/assets/providers/360.png';
 import HunyuanProviderLogo from '@/assets/providers/hunyuan.png';
 import AzureProviderLogo from '@/assets/providers/microsoft.png';
 import AiHubMixProviderLogo from '@/assets/providers/aihubmix.png';
-import AlayaNewProviderLogo from '@/assets/providers/alayanew.png';
 import AnthropicProviderLogo from '@/assets/providers/anthropic.png';
 import BaichuanProviderLogo from '@/assets/providers/baichuan.png';
 import BaiduCloudProviderLogo from '@/assets/providers/baidu-cloud.svg';
@@ -89,7 +88,6 @@ const PROVIDER_LOGO_MAP = {
     'o3': O3ProviderLogo,
     'tencent-cloud-ti': TencentCloudProviderLogo,
     'gpustack': GPUStackProviderLogo,
-    'alayanew': AlayaNewProviderLogo,
     'voyageai': VoyageAIProviderLogo,
     'qiniu': QiniuProviderLogo,
 } as const;
@@ -165,16 +163,6 @@ export const INITIAL_PROVIDERS: Provider[] = [
         apiKey: '',
         apiHost: 'https://api.ppinfra.com/v3/openai',
         models: SYSTEM_MODELS.ppio,
-        isSystem: true,
-        enabled: false,
-    },
-    {
-        id: 'alayanew',
-        name: 'AlayaNew',
-        type: 'openai',
-        apiKey: '',
-        apiHost: 'https://deepseek.alayanew.com',
-        models: SYSTEM_MODELS.alayanew,
         isSystem: true,
         enabled: false,
     },
@@ -591,9 +579,9 @@ export const PROVIDER_CONFIG = {
         },
         websites: {
             official:
-                'https://ppinfra.com/user/register?invited_by=JYT9GD&utm_source=github_cherry-studio',
-            apiKey: 'https://ppinfra.com/user/register?invited_by=JYT9GD&utm_source=github_cherry-studio',
-            docs: 'https://docs.cherry-ai.com/pre-basic/providers/ppio?invited_by=JYT9GD&utm_source=github_cherry-studio',
+                'https://ppinfra.com/user/register?invited_by=0DBBGQ&utm_source=github_cherry-studio',
+            apiKey: 'https://ppinfra.com/user/register?invited_by=0DBBGQ&utm_source=github_cherry-studio',
+            docs: 'https://docs.cherry-ai.com/pre-basic/providers/ppio?invited_by=0DBBGQ&utm_source=github_cherry-studio',
             models: 'https://ppinfra.com/model-api/product/llm-api?utm_source=github_cherry-studio&utm_medium=github_readme&utm_campaign=link',
         },
     },
@@ -614,7 +602,7 @@ export const PROVIDER_CONFIG = {
         },
         websites: {
             official: 'https://www.siliconflow.cn',
-            apiKey: 'https://cloud.siliconflow.cn/i/d1nTBKXU',
+            apiKey: 'https://cloud.siliconflow.cn/i/AhCOFWnM',
             docs: 'https://docs.siliconflow.cn/',
             models: 'https://docs.siliconflow.cn/docs/model-names',
         },
@@ -668,8 +656,8 @@ export const PROVIDER_CONFIG = {
             url: 'https://www.dmxapi.cn',
         },
         websites: {
-            official: 'https://www.dmxapi.cn/register?aff=bwwY',
-            apiKey: 'https://www.dmxapi.cn/register?aff=bwwY',
+            official: 'https://www.dmxapi.cn/register?aff=E12q',
+            apiKey: 'https://www.dmxapi.cn/register?aff=E12q',
             docs: 'https://dmxapi.cn/models.html#code-block',
             models: 'https://www.dmxapi.cn/pricing',
         },
@@ -822,17 +810,7 @@ export const PROVIDER_CONFIG = {
             models: 'https://platform.minimaxi.com/document/Models',
         },
     },
-    'alayanew': {
-        api: {
-            url: 'https://deepseek.alayanew.com',
-        },
-        websites: {
-            official: 'https://www.alayanew.com/backend/register?id=cherrystudio',
-            apiKey: ' https://www.alayanew.com/backend/register?id=cherrystudio',
-            docs: 'https://docs.alayanew.com/docs/modelService/interview?utm_source=cherrystudio',
-            models: 'https://www.alayanew.com/product/deepseek?id=cherrystudio',
-        },
-    },
+
     'openrouter': {
         api: {
             url: 'https://openrouter.ai/api/v1/',
