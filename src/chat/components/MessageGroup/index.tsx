@@ -62,10 +62,6 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
                 for (const blockId of firstMessage.blocks) {
                     const block = rootStore.messageBlockStore.getBlockById(blockId);
                     if (block?.model) {
-                        console.log(
-                            `[MessageGroup] 从块 ${blockId} 中获取到模型信息:`,
-                            block.model,
-                        );
                         return block.model;
                     }
                 }
@@ -73,25 +69,16 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
 
             // 如果消息本身有模型信息，使用它
             if (firstMessage.model) {
-                console.log(
-                    `[MessageGroup] 从消息 ${firstMessage.id} 中获取到模型信息:`,
-                    firstMessage.model,
-                );
                 return firstMessage.model;
             }
 
             // 后备：使用当前选中的机器人的模型
             const fallbackModel = selectedRobot?.model || selectedRobot?.defaultModel;
-            console.log(`[MessageGroup] 使用后备模型:`, fallbackModel);
             return fallbackModel || null;
         }, [firstMessage, selectedRobot]);
 
         // 当消息模型或提供商变化时更新图标和名称
         useEffect(() => {
-            console.log(
-                `[MessageGroup] 更新提供商信息，消息 ${firstMessage.id}，模型:`,
-                messageModel,
-            );
             updateProviderInfo();
         }, [messageModel, selectedProvider, firstMessage.id]);
 
@@ -133,10 +120,18 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
                 // 获取模型名称
                 const modelName = messageModel.name || '';
 
-                // 按照格式：提供商名称 | 模型名称
-                return modelName
-                    ? `${localizedProviderName} | ${modelName}`
-                    : localizedProviderName;
+                // 获取模型分类
+                const modelGroup = messageModel.group || '';
+
+                // 按照格式：提供商名称 | 模型名称 (分类)
+                if (modelName) {
+                    if (modelGroup) {
+                        return `${localizedProviderName} | ${modelName} (${modelGroup})`;
+                    } else {
+                        return `${localizedProviderName} | ${modelName}`;
+                    }
+                }
+                return localizedProviderName;
             }
 
             // 后备：使用选定的提供商
