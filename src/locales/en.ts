@@ -147,7 +147,7 @@ export const en = {
     // Navigation
     openSettings: 'Open Settings',
     openChat: 'Open Chat',
-    openSidebar: 'Open Sidebar',
+    openSidebar: 'Summarize Current Page',
     welcomeMessage: 'Welcome to AI Assistant! How can I help you?',
     tryAsking: 'Try asking me:',
     copyMessage: 'Copy Success',
@@ -251,6 +251,14 @@ Please answer in the same language as the user's question.`,
     startChat: 'Start Chat',
     defaultTopicName: 'New Conversation',
     ai: 'AI',
+    summarizePage: `
+Please provide a structured summary of the following webpage, including these three sections:
+1. Summary: Concisely summarize the core content of the webpage, highlighting the main information or themes.
+2. Details: Elaborate on the main content of the webpage, including background, key points, processes, technical details (if applicable), or relevant information.
+3. Insights: Outline the core value points of the webpage, such as main conclusions, important impacts, innovations, implications, or recommendations.
+Please ensure your response is clear and specific, providing effective guidance for readers while considering personal interests and goals. Additionally, provide practical examples and resources to help readers better understand and apply learning strategies.
+    Webpage content: {content}
+    `,
 
     // HTTP Error messages
     errorDefault: 'An unknown error occurred. Please try again later.',

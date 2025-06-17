@@ -243,6 +243,12 @@ chrome.runtime.onInstalled.addListener((details) => {
         contexts: ['page', 'selection', 'image', 'link'],
     });
 
+    chrome.contextMenus.create({
+        id: 'summarizeCurrentPage',
+        title: '总结当前页面',
+        contexts: ['page', 'selection', 'image', 'link'],
+    });
+
     chrome.sidePanel.setOptions({
         enabled: false,
     });
@@ -260,6 +266,12 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
         chrome.tabs.sendMessage(tab.id, {
             action: 'openChatWindow',
             selectedText: info.selectionText || '',
+        });
+    }
+
+    if (info.menuItemId === 'summarizeCurrentPage' && tab?.id !== undefined) {
+        chrome.tabs.sendMessage(tab.id, {
+            action: 'summarizeCurrentPage',
         });
     }
 });

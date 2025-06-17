@@ -1,4 +1,4 @@
-import React, { useState, useRef, FormEvent, useEffect } from 'react';
+import React, { useState, useRef, FormEvent, useEffect, useCallback } from 'react';
 import { Button, Input, Spin, Typography, Tooltip } from 'antd';
 import {
     SendOutlined,
@@ -38,6 +38,41 @@ const SidePanel: React.FC = () => {
             setTabId(tabs[0].id?.toString() || undefined);
         });
     }, []);
+
+    // Function to handle summarize action
+    const handleSummarize = useCallback(async () => {
+        console.log('Handling summarize action');
+        const data = await extractWebsiteMetadata();
+        const message = t('summarizePage').replace('{content}', JSON.stringify(data));
+        const [tab] = await chrome.tabs.query({
+            active: true,
+            currentWindow: true,
+        });
+        const tabId = tab?.id?.toString();
+        setTabId(tabId);
+        await sendMessage(message, undefined, tabId);
+    }, [t, setTabId, sendMessage, extractWebsiteMetadata]);
+
+    // Check for summarize parameter in URL
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('action') === 'summarize') {
+            handleSummarize();
+        }
+    }, [t, handleSummarize]);
+
+    // Listen for messages from the parent window (for iframe mode)
+    useEffect(() => {
+        const handleMessage = async (event: MessageEvent) => {
+            if (event.data && event.data.action === 'summarize') {
+                console.log('Received summarize action from parent window');
+                handleSummarize();
+            }
+        };
+
+        window.addEventListener('message', handleMessage);
+        return () => window.removeEventListener('message', handleMessage);
+    }, [handleSummarize]);
 
     // Listen for provider settings updates
     useEffect(() => {
@@ -101,6 +136,7 @@ const SidePanel: React.FC = () => {
     const handleClearMessages = () => {
         clearMessages();
     };
+
     console.log('messages', messages);
 
     return (

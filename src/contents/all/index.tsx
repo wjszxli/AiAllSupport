@@ -8,7 +8,7 @@ import { setLocale } from '@/locales/i18n';
 import type { LocaleType } from '@/locales';
 
 import ChatWindow from './components/ChatWindow';
-import { IframeSidePanelManager } from './components/IframeSidePanel';
+import { IframeSidePanelManager } from './components/IframeSidePanel/index';
 import './styles/animations.css';
 import './styles/highlight.css';
 
@@ -100,6 +100,23 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
             sendResponse({ success: true });
         } catch (error: unknown) {
             console.error('Failed to create iframe side panel:', error);
+            sendResponse({
+                success: false,
+                error: error instanceof Error ? error.message : 'Unknown error',
+            });
+        }
+
+        return true;
+    }
+
+    // 处理总结当前页面请求
+    if (message.action === 'summarizeCurrentPage') {
+        try {
+            // 显示 iframe 侧边栏并触发总结功能
+            IframeSidePanelManager.showWithSummarize();
+            sendResponse({ success: true });
+        } catch (error: unknown) {
+            console.error('Failed to summarize current page:', error);
             sendResponse({
                 success: false,
                 error: error instanceof Error ? error.message : 'Unknown error',

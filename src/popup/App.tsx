@@ -88,7 +88,30 @@ const App: React.FC = () => {
     };
 
     const openSidePanel = () => {
-        // 如果支持，使用原生 sidePanel API
+        // 向当前活动标签页发送消息，要求总结当前页面
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            if (tabs[0]?.id) {
+                console.log('Sending summarizeCurrentPage message to tab', tabs[0].id);
+                chrome.tabs
+                    .sendMessage(tabs[0].id, { action: 'summarizeCurrentPage' })
+                    .then(() => {
+                        // Add smooth fade-out animation before closing
+                        setIsFadingOut(true);
+                        setTimeout(() => {
+                            window.close();
+                        }, 300); // Wait for animation to complete
+                    })
+                    .catch((error) => {
+                        console.error('Failed to send summarizeCurrentPage message:', error);
+                        // 如果消息发送失败，可能内容脚本未加载，尝试使用原生侧边栏
+                        tryNativeSidePanel();
+                    });
+            }
+        });
+    };
+
+    // 尝试使用原生侧边栏
+    const tryNativeSidePanel = () => {
         chrome.windows.getCurrent({ populate: true }, (chromeWindow) => {
             if (chromeWindow.id) {
                 chrome.sidePanel.setOptions({
@@ -129,11 +152,16 @@ const App: React.FC = () => {
                     .catch((error) => {
                         console.error('Failed to send iframe side panel creation message:', error);
                         // 如果消息发送失败，可能内容脚本未加载，直接创建一个新标签页作为替代
-                        // chrome.tabs.create({
-                        //     url: chrome.runtime.getURL('sidepanel.html'),
-                        // });
+                        openSidePanelInNewTab();
                     });
             }
+        });
+    };
+
+    // 在新标签页中打开侧边栏
+    const openSidePanelInNewTab = () => {
+        chrome.tabs.create({
+            url: chrome.runtime.getURL('sidepanel.html?action=summarize'),
         });
     };
 
@@ -196,7 +224,7 @@ const App: React.FC = () => {
                         size="large"
                         block
                     >
-                        {t('openSidebar') || 'Open Sidebar'}
+                        {t('openSidebar') || 'Summarize Current Page'}
                     </Button>
                 </div>
 
