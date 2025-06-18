@@ -46,7 +46,6 @@ export const useMessageSender = () => {
 
             const { message, blocks } = getUserMessage(userMessage);
 
-            // 使用独立的 MessageService
             const messageService = getMessageService(rootStore);
             messageService.sendMessage(message, blocks, selectedRobot, selectedTopicId);
 

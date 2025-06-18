@@ -18,3 +18,10 @@ db.version(1).stores({
 db.version(2).stores({
     robots: '&id, name',
 });
+
+db.version(3).stores({
+    robots: '&id, name',
+    topics: '&id, messages',
+    message_blocks: 'id, messageId',
+    settings: '&key, value',
+});

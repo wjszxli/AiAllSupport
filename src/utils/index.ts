@@ -39,7 +39,7 @@ export const fetchData = async ({
 
     const apiKey = await storage.getApiKey(selectedProvider);
     if (!apiKey && !isLocalhost(selectedProvider)) {
-        logger.error('No API key provided for non-localhost provider', {
+        logger.error('No API key provided for provider that requires it', {
             provider: selectedProvider,
         });
         throw new Error(t('pleaseEnterApiKey'));
@@ -226,7 +226,12 @@ export const removeChatBox = async () => {
 };
 
 export const isLocalhost = (selectedProvider: string | null) => {
-    return selectedProvider === 'Ollama' || selectedProvider === 'ollama';
+    // Check for specific providers that are known to be localhost or don't require API key
+    return (
+        selectedProvider === 'Ollama' ||
+        selectedProvider === 'ollama' ||
+        selectedProvider === 'lmstudio'
+    );
 };
 
 export const handleMessage = (message: string, sender: { tab: { id: number } }) => {

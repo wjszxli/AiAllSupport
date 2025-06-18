@@ -43,6 +43,7 @@ export const PROVIDERS_DATA: Record<string, ProviderConfig> = {
         models: [],
         selectedModel: null,
         selected: false,
+        requiresApiKey: false,
     },
     SiliconFlow: {
         name: '硅基流动',

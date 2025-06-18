@@ -1,6 +1,6 @@
 import { createContext, useContext } from 'react';
 import llmStore from './llm';
-import robotDB from '@/db/robotDB'; // Import the new robotDB
+import robotDB from '@/store/robot'; // Import the new robotDB
 import { MessageStore } from './MessageStore';
 import { MessageBlockStore } from './MessageBlockStore';
 

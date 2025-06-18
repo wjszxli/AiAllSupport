@@ -2,7 +2,7 @@ import { Robot, Topic } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import { robotList } from '../config/robot';
 import { t } from '@/locales/i18n';
-import robotDB from '@/db/robotDB';
+import robotDB from '@/store/robot';
 
 export function getDefaultTopic(assistantId: string): Topic {
     const now = new Date().toISOString();

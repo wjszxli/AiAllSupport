@@ -29,6 +29,7 @@ export interface ProviderConfig {
     apiKeyUrl?: string; // 获取 API Key 的 URL
     selectedModel: string | null; // 当前选中的模型
     selected: boolean; // 是否选中
+    requiresApiKey?: boolean; // 是否需要 API Key
 }
 
 export interface StorageData {
@@ -153,6 +154,7 @@ export type Provider = {
     rateLimit?: number;
     isNotSupportArrayContent?: boolean;
     notes?: string;
+    requiresApiKey?: boolean; // Whether this provider requires an API key, defaults to true
 };
 
 export enum UserMessageStatus {

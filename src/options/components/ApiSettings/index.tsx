@@ -38,6 +38,9 @@ const ApiSettings: React.FC = observer(() => {
     const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
     const [providerSearch, setProviderSearch] = useState<string>('');
 
+    // Determine if the current provider requires an API key
+    const requiresApiKey = currentProvider?.requiresApiKey !== false;
+
     // Collect all unique groups from SYSTEM_MODELS
     const allGroups = React.useMemo(() => {
         const groupSet = new Set<string>();
@@ -105,7 +108,8 @@ const ApiSettings: React.FC = observer(() => {
             const apiKey = form.getFieldValue('apiKey');
             const apiHost = form.getFieldValue('apiHost');
 
-            if (!isLocalhost(currentProvider.id) && !apiKey) {
+            // Only check for API key if the provider requires it and is not localhost
+            if (requiresApiKey && !isLocalhost(currentProvider.id) && !apiKey) {
                 message.error(t('pleaseEnterApiKey'));
                 setTesting(false);
                 return;
@@ -260,7 +264,8 @@ const ApiSettings: React.FC = observer(() => {
 
         const values = form.getFieldsValue();
 
-        if (!values.apiKey) {
+        // Only check for API key if the provider requires it
+        if (requiresApiKey && !values.apiKey) {
             message.error('请输入 API 密钥');
             return;
         }
@@ -414,7 +419,7 @@ const ApiSettings: React.FC = observer(() => {
                 ]}
             >
                 <Form form={form} layout="vertical" requiredMark={false}>
-                    {!currentProvider || !isLocalhost(currentProvider.id) ? (
+                    {!currentProvider || (!isLocalhost(currentProvider.id) && requiresApiKey) ? (
                         <Form.Item
                             label={
                                 <Space>
@@ -426,7 +431,12 @@ const ApiSettings: React.FC = observer(() => {
                         >
                             <Form.Item
                                 name="apiKey"
-                                rules={[{ required: true, message: '请输入 API 密钥' }]}
+                                rules={[
+                                    {
+                                        required: requiresApiKey,
+                                        message: '请输入 API 密钥',
+                                    },
+                                ]}
                                 noStyle
                             >
                                 <Input.Password placeholder="您的密钥存储在您本地，请放心填写" />

@@ -21,6 +21,7 @@ import { useMessageSender } from '@/chat/hooks/useMessageSender';
 import { getMessageService } from '@/services/MessageService';
 import { md } from '@/utils/markdownRenderer';
 import DOMPurify from 'dompurify';
+import EditRobotModal from '../Robot/components/EditRobotModal';
 
 const { TextArea } = Input;
 
@@ -35,13 +36,11 @@ const ChatBody: React.FC<ChatBodyProps> = observer(
         const [displayMessages, setDisplayMessages] = useState<Message[]>([]);
         const [isLoading, setIsLoading] = useState(false);
         const [showFullPrompt, setShowFullPrompt] = useState(false);
+        const [isEditModalVisible, setIsEditModalVisible] = useState(false);
         const inputRef = useRef<any>(null);
 
         // 获取当前机器人
         const selectedRobot = useMemo(() => robotStore.selectedRobot, [robotStore.selectedRobot]);
-
-        // 获取 llmStore 以监听默认模型变化
-        const llmStore = useMemo(() => rootStore.llmStore, []);
 
         // 使用 robotStore 的 selectedRobot 的 selectedTopicId（现在是从 robotDB 中获取的）
         const selectedTopicId = useMemo(
@@ -148,24 +147,24 @@ const ChatBody: React.FC<ChatBodyProps> = observer(
         }, [selectedTopicId, streamingMessageId, messageService]);
 
         // 当提供商设置更新时，确保使用最新的模型
-        useEffect(() => {
-            if (selectedRobot && llmStore.defaultModel) {
-                // 检查机器人的模型是否需要更新
-                const currentModel = selectedRobot.model || selectedRobot.defaultModel;
-                const defaultModel = llmStore.defaultModel;
+        // useEffect(() => {
+        //     if (selectedRobot && llmStore.defaultModel) {
+        //         // 检查机器人的模型是否需要更新
+        //         const currentModel = selectedRobot.model || selectedRobot.defaultModel;
+        //         const defaultModel = llmStore.defaultModel;
 
-                // 如果模型不同，更新机器人的模型
-                if (
-                    currentModel?.id !== defaultModel.id ||
-                    currentModel?.provider !== defaultModel.provider
-                ) {
-                    robotStore.updateSelectedRobot({
-                        ...selectedRobot,
-                        model: defaultModel,
-                    });
-                }
-            }
-        }, [selectedRobot, llmStore.defaultModel]);
+        //         // 如果模型不同，更新机器人的模型
+        //         if (
+        //             currentModel?.id !== defaultModel.id ||
+        //             currentModel?.provider !== defaultModel.provider
+        //         ) {
+        //             robotStore.updateSelectedRobot({
+        //                 ...selectedRobot,
+        //                 model: defaultModel,
+        //             });
+        //         }
+        //     }
+        // }, [selectedRobot, llmStore.defaultModel]);
 
         const handleSendMessage = () => {
             if (!userInput.trim() || isLoading) return;
@@ -207,9 +206,14 @@ const ChatBody: React.FC<ChatBodyProps> = observer(
         const openEditRobot = useCallback(() => {
             if (!selectedRobot) return;
 
-            // 使用robotDB已有的编辑功能
-            robotStore.openEditRobot?.(selectedRobot);
+            // 打开编辑机器人对话框
+            setIsEditModalVisible(true);
         }, [selectedRobot]);
+
+        // 关闭编辑机器人对话框
+        const handleEditCancel = useCallback(() => {
+            setIsEditModalVisible(false);
+        }, []);
 
         return (
             <div className="chat-body">
@@ -298,6 +302,12 @@ const ChatBody: React.FC<ChatBodyProps> = observer(
                         </div>
                     </div>
                 </div>
+
+                <EditRobotModal
+                    isVisible={isEditModalVisible}
+                    onCancel={handleEditCancel}
+                    editingRobot={selectedRobot}
+                />
             </div>
         );
     },

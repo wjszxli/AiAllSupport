@@ -53,33 +53,42 @@ export async function* openAIChunkToTextDelta(
     stream: any,
     abortController?: AbortController,
 ): AsyncGenerator<OpenAIStreamChunk> {
-    for await (const chunk of stream) {
-        // 检查是否已被中止
-        if (abortController?.signal.aborted) {
-            console.log('[openAIChunkToTextDelta] Stream aborted');
-            throw new DOMException('Request was aborted.', 'AbortError');
-        }
+    try {
+        for await (const chunk of stream) {
+            // 检查是否已被中止
+            if (abortController?.signal.aborted) {
+                console.log('[openAIChunkToTextDelta] Stream aborted');
+                throw new DOMException('Request was aborted.', 'AbortError');
+            }
 
-        // if (window.keyv.get(EVENT_NAMES.CHAT_COMPLETION_PAUSED)) {
-        //     break;
-        // }
+            // if (window.keyv.get(EVENT_NAMES.CHAT_COMPLETION_PAUSED)) {
+            //     break;
+            // }
 
-        const delta = chunk.choices[0]?.delta;
-        if (delta?.reasoning_content || delta?.reasoning) {
-            yield { type: 'reasoning', textDelta: delta.reasoning_content || delta.reasoning };
-        }
-        if (delta?.content) {
-            yield { type: 'text-delta', textDelta: delta.content };
-        }
-        if (delta?.tool_calls) {
-            yield { type: 'tool-calls', delta: delta };
-        }
+            const delta = chunk.choices[0]?.delta;
+            if (delta?.reasoning_content || delta?.reasoning) {
+                yield { type: 'reasoning', textDelta: delta.reasoning_content || delta.reasoning };
+            }
+            if (delta?.content) {
+                yield { type: 'text-delta', textDelta: delta.content };
+            }
+            if (delta?.tool_calls) {
+                yield { type: 'tool-calls', delta: delta };
+            }
 
-        const finishReason = chunk.choices[0]?.finish_reason;
-        if (!isEmpty(finishReason)) {
-            yield { type: 'finish', finishReason, usage: chunk.usage, delta, chunk };
-            break;
+            const finishReason = chunk.choices[0]?.finish_reason;
+            if (!isEmpty(finishReason)) {
+                yield { type: 'finish', finishReason, usage: chunk.usage, delta, chunk };
+                break;
+            }
         }
+    } catch (error) {
+        console.error('[openAIChunkToTextDelta] Error processing stream:', error);
+        console.error(
+            'Stack trace:',
+            error instanceof Error ? error.stack : 'No stack trace available',
+        );
+        throw error;
     }
 }
 
@@ -100,71 +109,98 @@ export function extractReasoningMiddleware<
         }: {
             doStream: () => Promise<{ stream: ReadableStream<T> } & Record<string, any>>;
         }) => {
-            const { stream, rest } = await doStream();
-            if (!enableReasoning) {
+            try {
+                const { stream, rest } = await doStream();
+                if (!enableReasoning) {
+                    return {
+                        stream,
+                        ...rest,
+                    };
+                }
+                let firstReasoning = true;
+                let firstText = true;
+                let afterSwitch = false;
+                let isReasoning = false;
+                let buffer = '';
                 return {
-                    stream,
+                    stream: stream.pipeThrough(
+                        new TransformStream<T, T>({
+                            transform: (chunk, controller) => {
+                                try {
+                                    if (chunk.type !== 'text-delta') {
+                                        controller.enqueue(chunk);
+                                        return;
+                                    }
+                                    // @ts-ignore
+                                    buffer += chunk.textDelta;
+                                    function publish(text: string) {
+                                        if (text.length > 0) {
+                                            const prefix =
+                                                afterSwitch &&
+                                                (isReasoning ? !firstReasoning : !firstText)
+                                                    ? separator
+                                                    : '';
+                                            controller.enqueue({
+                                                ...chunk,
+                                                type: isReasoning ? 'reasoning' : 'text-delta',
+                                                textDelta: prefix + text,
+                                            });
+                                            afterSwitch = false;
+                                            if (isReasoning) {
+                                                firstReasoning = false;
+                                            } else {
+                                                firstText = false;
+                                            }
+                                        }
+                                    }
+                                    while (true) {
+                                        const nextTag = isReasoning
+                                            ? closingTagEscaped
+                                            : openingTagEscaped;
+                                        const startIndex = getPotentialStartIndex(buffer, nextTag);
+                                        if (startIndex == null) {
+                                            publish(buffer);
+                                            buffer = '';
+                                            break;
+                                        }
+                                        publish(buffer.slice(0, startIndex));
+                                        const foundFullMatch =
+                                            startIndex + nextTag.length <= buffer.length;
+                                        if (foundFullMatch) {
+                                            buffer = buffer.slice(startIndex + nextTag.length);
+                                            isReasoning = !isReasoning;
+                                            afterSwitch = true;
+                                        } else {
+                                            buffer = buffer.slice(startIndex);
+                                            break;
+                                        }
+                                    }
+                                } catch (error) {
+                                    console.error(
+                                        '[extractReasoningMiddleware] Transform error:',
+                                        error,
+                                    );
+                                    console.error(
+                                        'Stack trace:',
+                                        error instanceof Error
+                                            ? error.stack
+                                            : 'No stack trace available',
+                                    );
+                                    throw error;
+                                }
+                            },
+                        }),
+                    ),
                     ...rest,
                 };
+            } catch (error) {
+                console.error('[extractReasoningMiddleware] Error in onMessage:', error);
+                console.error(
+                    'Stack trace:',
+                    error instanceof Error ? error.stack : 'No stack trace available',
+                );
+                throw error;
             }
-            let firstReasoning = true;
-            let firstText = true;
-            let afterSwitch = false;
-            let isReasoning = false;
-            let buffer = '';
-            return {
-                stream: stream.pipeThrough(
-                    new TransformStream<T, T>({
-                        transform: (chunk, controller) => {
-                            if (chunk.type !== 'text-delta') {
-                                controller.enqueue(chunk);
-                                return;
-                            }
-                            // @ts-ignore
-                            buffer += chunk.textDelta;
-                            function publish(text: string) {
-                                if (text.length > 0) {
-                                    const prefix =
-                                        afterSwitch && (isReasoning ? !firstReasoning : !firstText)
-                                            ? separator
-                                            : '';
-                                    controller.enqueue({
-                                        ...chunk,
-                                        type: isReasoning ? 'reasoning' : 'text-delta',
-                                        textDelta: prefix + text,
-                                    });
-                                    afterSwitch = false;
-                                    if (isReasoning) {
-                                        firstReasoning = false;
-                                    } else {
-                                        firstText = false;
-                                    }
-                                }
-                            }
-                            while (true) {
-                                const nextTag = isReasoning ? closingTagEscaped : openingTagEscaped;
-                                const startIndex = getPotentialStartIndex(buffer, nextTag);
-                                if (startIndex == null) {
-                                    publish(buffer);
-                                    buffer = '';
-                                    break;
-                                }
-                                publish(buffer.slice(0, startIndex));
-                                const foundFullMatch = startIndex + nextTag.length <= buffer.length;
-                                if (foundFullMatch) {
-                                    buffer = buffer.slice(startIndex + nextTag.length);
-                                    isReasoning = !isReasoning;
-                                    afterSwitch = true;
-                                } else {
-                                    buffer = buffer.slice(startIndex);
-                                    break;
-                                }
-                            }
-                        },
-                    }),
-                ),
-                ...rest,
-            };
         },
     };
 }

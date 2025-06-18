@@ -8,7 +8,7 @@ import './SidePanel.scss';
 import { extractWebsiteMetadata } from '@/utils';
 import { sendMessage } from '@/services/chatService';
 import { existWebSummarizerRobot, getWebSummarizerRobot } from '@/services/RobotService';
-import robotDB from '@/db/robotDB';
+import robotDB from '@/store/robot';
 import { Robot } from '@/types';
 import { useMessageSender } from '@/chat/hooks/useMessageSender';
 import rootStore from '@/store';

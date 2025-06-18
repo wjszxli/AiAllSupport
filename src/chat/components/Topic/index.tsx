@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { observer } from 'mobx-react-lite';
 import {
     List,
@@ -70,7 +71,7 @@ const Topic: React.FC<TopicProps> = observer(() => {
         }
 
         const newTopic = {
-            id: `topic-${Date.now()}`,
+            id: uuidv4(), // 使用 UUID 生成唯一 ID，避免时间戳冲突
             assistantId: robotStore.selectedRobot.id,
             name: newTopicName.trim(),
             messages: [],
@@ -140,6 +141,12 @@ const Topic: React.FC<TopicProps> = observer(() => {
             onOk: async () => {
                 if (!robotStore.selectedRobot) {
                     messageApi.error('请先选择一个机器人');
+                    return;
+                }
+
+                // 检查是否为当前选中的话题
+                if (robotStore.selectedRobot.selectedTopicId === topic.id) {
+                    messageApi.error('无法删除当前选中的话题，请先选择其他话题');
                     return;
                 }
 

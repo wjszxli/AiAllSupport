@@ -36,3 +36,55 @@ export const isAbortError = (error: any): boolean => {
 
     return false;
 };
+
+/**
+ * Logs an error with its stack trace
+ * @param context The context where the error occurred
+ * @param message A message describing the error
+ * @param error The error object
+ */
+export const logErrorWithStack = (context: string, message: string, error: any): void => {
+    console.error(`[${context}] ${message}:`, error);
+    console.error(
+        'Stack trace:',
+        error instanceof Error ? error.stack : 'No stack trace available',
+    );
+};
+
+/**
+ * Creates a standardized error object with additional context
+ * @param message The error message
+ * @param code Optional error code
+ * @param originalError The original error that caused this error
+ */
+export class AppError extends Error {
+    code?: string;
+    originalError?: Error;
+
+    constructor(message: string, code?: string, originalError?: Error) {
+        super(message);
+        this.name = 'AppError';
+        this.code = code;
+        this.originalError = originalError;
+
+        // Ensure the stack trace is captured properly
+        if (Error.captureStackTrace) {
+            Error.captureStackTrace(this, AppError);
+        }
+    }
+
+    /**
+     * Logs this error with its stack trace
+     * @param context The context where the error occurred
+     */
+    log(context: string): void {
+        logErrorWithStack(context, this.message, this);
+        if (this.originalError) {
+            console.error('Original error:', this.originalError);
+            console.error(
+                'Original stack trace:',
+                this.originalError.stack || 'No stack trace available',
+            );
+        }
+    }
+}

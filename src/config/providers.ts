@@ -217,6 +217,7 @@ export const INITIAL_PROVIDERS: Provider[] = [
         models: SYSTEM_MODELS.ollama,
         isSystem: true,
         enabled: false,
+        requiresApiKey: false,
     },
     {
         id: 'lmstudio',
@@ -227,6 +228,7 @@ export const INITIAL_PROVIDERS: Provider[] = [
         models: SYSTEM_MODELS.lmstudio,
         isSystem: true,
         enabled: false,
+        requiresApiKey: false,
     },
     {
         id: 'anthropic',

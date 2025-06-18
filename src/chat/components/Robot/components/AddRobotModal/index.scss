@@ -1,0 +1,83 @@
+.robot-selection-modal {
+    .robot-selection-content {
+        .search-filters {
+            margin-bottom: 16px;
+        }
+
+        .robot-grid {
+            margin-bottom: 16px;
+            min-height: 200px;
+
+            .empty-state {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 40px 0;
+                text-align: center;
+
+                .empty-icon {
+                    font-size: 48px;
+                    margin-bottom: 16px;
+                }
+
+                .empty-title {
+                    font-size: 18px;
+                    font-weight: bold;
+                    margin-bottom: 8px;
+                }
+
+                .empty-description {
+                    color: #666;
+                }
+            }
+
+            .robot-card {
+                height: 100%;
+                transition: all 0.3s;
+
+                &:hover {
+                    transform: translateY(-3px);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                }
+
+                .robot-card-content {
+                    .robot-card-header {
+                        display: flex;
+                        align-items: center;
+                        margin-bottom: 8px;
+
+                        .robot-icon {
+                            font-size: 24px;
+                            margin-right: 8px;
+                        }
+
+                        .robot-title {
+                            flex: 1;
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                            white-space: nowrap;
+                        }
+                    }
+
+                    .robot-groups {
+                        margin-bottom: 8px;
+                    }
+
+                    .robot-desc {
+                        display: -webkit-box;
+                        -webkit-line-clamp: 2;
+                        -webkit-box-orient: vertical;
+                        overflow: hidden;
+                        color: #666;
+                        font-size: 12px;
+                    }
+                }
+            }
+        }
+
+        .robot-pagination {
+            text-align: right;
+        }
+    }
+}
