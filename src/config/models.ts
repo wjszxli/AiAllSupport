@@ -1876,6 +1876,7 @@ const RAW_SYSTEM_MODELS: Record<string, Model[]> = {
             group: 'Qwen',
         },
     ],
+    'gongjiyun': [],
 };
 
 export const SYSTEM_MODELS: Record<string, Model[]> = Object.fromEntries(

@@ -45,7 +45,6 @@ export const useMessageSender = () => {
             };
 
             const { message, blocks } = getUserMessage(userMessage);
-            console.log(message, blocks);
 
             // 使用独立的 MessageService
             const messageService = getMessageService(rootStore);

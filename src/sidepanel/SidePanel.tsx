@@ -1,31 +1,18 @@
-import React, { useState, useRef, FormEvent, useEffect, useCallback } from 'react';
-import { Button, Input, Typography, Tooltip } from 'antd';
-import {
-    SendOutlined,
-    ClearOutlined,
-    ReloadOutlined,
-    StopOutlined,
-    SettingOutlined,
-} from '@ant-design/icons';
-import { useChatMessages } from '../hooks/useChatMessages';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Button, Typography, Tooltip } from 'antd';
+import { ClearOutlined, SettingOutlined } from '@ant-design/icons';
 import { useLanguage } from '../contexts/LanguageContext';
 import MarkdownIt from 'markdown-it';
 import mathjax3 from 'markdown-it-mathjax3';
 import './SidePanel.scss';
 import { extractWebsiteMetadata } from '@/utils';
 import { sendMessage } from '@/services/chatService';
-// import MessageListAdapter from './MessageListAdapter';
-// import storage from '@/utils/storage';
-import {
-    existWebSummarizerRobot,
-    getWebSummarizerRobot,
-    getWebSummarizerRobotFromDB,
-} from '@/services/RobotService';
+import { existWebSummarizerRobot, getWebSummarizerRobot } from '@/services/RobotService';
 import robotDB from '@/db/robotDB';
 import { Robot } from '@/types';
 import { useMessageSender } from '@/chat/hooks/useMessageSender';
+import rootStore from '@/store';
 
-const { TextArea } = Input;
 const { Text } = Typography;
 
 const md = new MarkdownIt({
@@ -38,33 +25,11 @@ md.use(mathjax3);
 
 const SidePanel: React.FC = () => {
     const { t } = useLanguage();
-    const [inputValue, setInputValue] = useState('');
-    const inputRef = useRef<HTMLTextAreaElement>(null);
     const [tabId, setTabId] = useState<string | undefined>(undefined);
     const [robot, setRobot] = useState<Robot>();
     const { handleSendMessage } = useMessageSender();
+    console.log('tabId', tabId);
 
-    useEffect(() => {
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-            setTabId(tabs[0].id?.toString() || undefined);
-        });
-
-        initRobot();
-    }, []);
-
-    const initRobot = useCallback(async () => {
-        const isExistWebSummarizerRobot = await existWebSummarizerRobot();
-        console.log('isExistWebSummarizerRobot', isExistWebSummarizerRobot);
-        if (!isExistWebSummarizerRobot) {
-            const webSummarizerRobot = getWebSummarizerRobot();
-            if (webSummarizerRobot) {
-                robotDB.addRobot(webSummarizerRobot);
-                setRobot(webSummarizerRobot);
-            }
-        }
-    }, []);
-
-    // Function to handle summarize action
     const handleSummarize = useCallback(async () => {
         console.log('Handling summarize action');
 
@@ -77,7 +42,6 @@ const SidePanel: React.FC = () => {
 
         const data = await extractWebsiteMetadata();
         const message = t('summarizePage').replace('{content}', JSON.stringify(data));
-        console.log('message', message);
         const [tab] = await chrome.tabs.query({
             active: true,
             currentWindow: true,
@@ -85,7 +49,6 @@ const SidePanel: React.FC = () => {
         const tabId = tab?.id?.toString();
         setTabId(tabId);
         handleSendMessage({ userInput: message, robot: webSummarizerRobot });
-        // await sendMessage(message, undefined, tabId);
     }, [t, setTabId, sendMessage, extractWebsiteMetadata]);
 
     useEffect(() => {
@@ -100,8 +63,11 @@ const SidePanel: React.FC = () => {
         return () => window.removeEventListener('message', handleMessage);
     }, [handleSummarize]);
 
-    // Listen for provider settings updates
     useEffect(() => {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            setTabId(tabs[0].id?.toString() || undefined);
+        });
+
         const handleProviderSettingsUpdated = (message: any) => {
             if (message.action === 'providerSettingsUpdated') {
                 console.log('Provider settings updated in SidePanel');
@@ -111,61 +77,25 @@ const SidePanel: React.FC = () => {
             }
         };
 
-        // Add listener for messages from background script
         chrome.runtime.onMessage.addListener(handleProviderSettingsUpdated);
 
-        // Clean up listener when component unmounts
         return () => {
             chrome.runtime.onMessage.removeListener(handleProviderSettingsUpdated);
         };
     }, []);
 
-    // const {
-    //     messages,
-    //     isLoading,
-    //     streamingMessageId,
+    const { messageStore, messageBlockStore } = rootStore;
 
-    //     cancelStreamingResponse,
-    //     sendChatMessage,
-    //     regenerateResponse,
-    //     clearMessages,
-    // } = useChatMessages({
-    //     t,
-    //     storeType: 'interface',
-    //     conversationId: 'sidepanel',
-    //     tabId,
-    // });
+    const messages = useMemo(() => {
+        const data = messageStore.getMessagesForTopic(robot?.selectedTopicId || '');
+        return data;
+    }, [robot?.selectedTopicId, messageStore.messages.size, messageBlockStore.blocks.size]);
 
-    const handleSubmit = (e: FormEvent) => {
-        e.preventDefault();
-        if (inputValue.trim() && !isLoading) {
-            sendChatMessage(inputValue);
-            setInputValue('');
-        }
-    };
-
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            handleSubmit(e as any);
-        }
-    };
+    console.log('messages', messages);
 
     const openSettingsPage = () => {
         chrome.runtime.openOptionsPage();
     };
-
-    // const handleClearMessages = () => {
-    //     clearMessages();
-    // };
-
-    // Handle edit message from MessageList
-    const handleEditMessage = useCallback((text: string) => {
-        setInputValue(text);
-        if (inputRef.current) {
-            inputRef.current.focus();
-        }
-    }, []);
 
     return (
         <div className="side-panel">

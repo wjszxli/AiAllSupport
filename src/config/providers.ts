@@ -44,6 +44,7 @@ import VoyageAIProviderLogo from '@/assets/providers/voyageai.png';
 import XirangProviderLogo from '@/assets/providers/xirang.png';
 import ZeroOneProviderLogo from '@/assets/providers/zero-one.png';
 import ZhipuProviderLogo from '@/assets/providers/zhipu.png';
+import GongjiyunProviderLogo from '@/assets/providers/gongji.png';
 
 const PROVIDER_LOGO_MAP = {
     'openai': OpenAiProviderLogo,
@@ -90,6 +91,7 @@ const PROVIDER_LOGO_MAP = {
     'gpustack': GPUStackProviderLogo,
     'voyageai': VoyageAIProviderLogo,
     'qiniu': QiniuProviderLogo,
+    'gongjiyun': GongjiyunProviderLogo,
 } as const;
 
 export function getProviderLogo(providerId: string) {
@@ -545,6 +547,16 @@ export const INITIAL_PROVIDERS: Provider[] = [
         apiKey: '',
         apiHost: 'https://api.voyageai.com',
         models: SYSTEM_MODELS.voyageai,
+        isSystem: true,
+        enabled: false,
+    },
+    {
+        id: 'gongjiyun',
+        name: 'Gongjiyun',
+        type: 'openai',
+        apiKey: '',
+        apiHost: 'https://api.gongjiyun.cn',
+        models: SYSTEM_MODELS.gongjiyun,
         isSystem: true,
         enabled: false,
     },
@@ -1025,6 +1037,17 @@ export const PROVIDER_CONFIG = {
             apiKey: 'https://portal.qiniu.com/ai-inference/api-key?cps_key=1h4vzfbkxobiq',
             docs: 'https://developer.qiniu.com/aitokenapi',
             models: 'https://developer.qiniu.com/aitokenapi/12883/model-list',
+        },
+    },
+    'gongjiyun': {
+        api: {
+            url: 'https://api.gongjiyun.cn',
+        },
+        websites: {
+            official: 'https://www.gongjiyun.com/',
+            apiKey: 'https://console.suanli.cn/auth/login?invite_code=BShI2j8aFu',
+            docs: 'https://console.suanli.cn/auth/login?invite_code=BShI2j8aFu',
+            models: 'https://console.suanli.cn/auth/login?invite_code=BShI2j8aFu',
         },
     },
 };

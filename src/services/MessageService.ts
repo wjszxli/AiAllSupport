@@ -31,7 +31,6 @@ import { abortCompletion } from '@/utils/abortController';
 export class MessageService {
     private rootStore: RootStore;
     private currentAbortController: AbortController | null = null;
-    private currentTopicId: string | null = null;
 
     constructor(rootStore: RootStore) {
         this.rootStore = rootStore;
@@ -185,7 +184,7 @@ export class MessageService {
         let callbacks: StreamProcessorCallbacks = {};
 
         // 设置当前话题ID，用于取消时清空队列
-        this.currentTopicId = topicId;
+        // this.currentTopicId = topicId;
 
         // 创建新的 AbortController
         this.currentAbortController = new AbortController();
