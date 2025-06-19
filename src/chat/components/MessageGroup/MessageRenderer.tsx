@@ -240,8 +240,6 @@ const MessageRenderer: React.FC<MessageRendererProps> = observer(
                     (block: MessageBlock) => block.type === MessageBlockType.THINKING,
                 );
 
-                console.log('thinkingBlocks', thinkingBlocks);
-
                 thinkingBlocks.forEach((block: MessageBlock) => {
                     if (block.type === MessageBlockType.THINKING && 'content' in block) {
                         const thinkingBlock = block as ThinkingMessageBlock;

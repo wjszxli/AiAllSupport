@@ -2,8 +2,10 @@ import { RobotMessageStatus } from '@/types';
 import type { Message } from '@/types/message';
 import { MessageBlockStatus } from '@/types/messageBlock';
 import { computed, makeAutoObservable, runInAction } from 'mobx';
+import { Logger } from '@/utils/logger';
 
 export class MessageStore {
+    private logger = new Logger('MessageStore');
     // 可观察状态
     messages = new Map<string, Message>();
     messageIdsByTopic = new Map<string, string[]>();
@@ -99,7 +101,7 @@ export class MessageStore {
     ) {
         const message = this.messages.get(messageId);
         if (!message) {
-            console.warn(`[updateMessage] Message ${messageId} not found in entities.`);
+            this.logger.warn(`Message ${messageId} not found in entities.`);
             return;
         }
 
@@ -195,37 +197,39 @@ export class MessageStore {
     upsertBlockReference(messageId: string, blockId: string, status?: MessageBlockStatus) {
         const message = this.messages.get(messageId);
         if (!message) {
-            console.error(`[upsertBlockReference] Message ${messageId} not found.`);
+            this.logger.error(`Message ${messageId} not found.`);
             return;
         }
 
-        const changes: Partial<Message> = {};
+        this.logger.info(`添加块引用 ${blockId} 到消息 ${messageId}`);
 
-        // 更新块ID
-        const currentBlocks = message.blocks || [];
-        if (!currentBlocks.includes(blockId)) {
-            changes.blocks = [...currentBlocks, blockId];
+        const blocks = message.blocks || [];
+        if (!blocks.includes(blockId)) {
+            message.blocks = [...blocks, blockId];
+            this.logger.info(`块引用已添加，当前块列表:`, message.blocks);
+        } else {
+            this.logger.info(`块引用已存在，当前块列表:`, message.blocks);
         }
 
-        // 根据块状态更新消息状态
-        if (status) {
-            if (
-                (status === MessageBlockStatus.PROCESSING ||
-                    status === MessageBlockStatus.STREAMING) &&
-                message.status !== RobotMessageStatus.PROCESSING &&
-                message.status !== RobotMessageStatus.SUCCESS &&
-                message.status !== RobotMessageStatus.ERROR
-            ) {
-                changes.status = RobotMessageStatus.PROCESSING;
-            } else if (status === MessageBlockStatus.ERROR) {
-                changes.status = RobotMessageStatus.ERROR;
-            }
+        if (status === MessageBlockStatus.ERROR) {
+            message.status = RobotMessageStatus.ERROR;
+        }
+    }
+
+    // 调试方法：打印消息的块引用
+    debugMessageBlockReferences(messageId: string): void {
+        const message = this.getMessageById(messageId);
+        if (!message) {
+            this.logger.debug(`消息 ${messageId} 不存在`);
+            return;
         }
 
-        // 应用更新
-        if (Object.keys(changes).length > 0) {
-            Object.assign(message, changes);
-        }
+        this.logger.debug(`消息 ${messageId} 的块引用:`, {
+            消息ID: messageId,
+            块引用: message.blocks || [],
+            状态: message.status,
+            askId: message.askId,
+        });
     }
 
     // Computed - 计算属性

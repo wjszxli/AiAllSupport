@@ -1,5 +1,9 @@
 import { RobotMessageStatus } from '@/types';
 import { Chunk, ChunkType } from '@/types/chunk';
+import { Logger } from '@/utils/logger';
+
+// Create a logger for this module
+const logger = new Logger('StreamProcessingService');
 
 export interface StreamProcessorCallbacks {
     // LLM response created
@@ -46,7 +50,7 @@ export function createStreamProcessor(callbacks: StreamProcessorCallbacks = {}) 
                 callbacks.onThinkingComplete(data.text, data.thinking_millsec);
             }
         } catch (error) {
-            console.error('Error processing stream chunk:', error);
+            logger.error('Error processing stream chunk:', error);
             callbacks.onError?.(error);
         }
     };

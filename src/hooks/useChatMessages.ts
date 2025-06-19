@@ -8,6 +8,10 @@ import storage from '@/utils/storage';
 import { localFetchWebContentWithContext } from '@/services/localChatService';
 import type { ChatMessage } from '@/types';
 import { updateMessage } from '@/utils/messageUtils';
+import { Logger } from '@/utils/logger';
+
+// Create a logger for this module
+const logger = new Logger('useChatMessages');
 import {
     saveChatAppMessages,
     getChatAppMessages,
@@ -58,7 +62,7 @@ export const useChatMessages = ({
                 }
                 setIsInitialized(true);
             } catch (error) {
-                console.error('Failed to load messages from IndexedDB:', error);
+                logger.error('Failed to load messages from IndexedDB:', error);
                 setIsInitialized(true);
             }
         };
@@ -78,7 +82,7 @@ export const useChatMessages = ({
                     await saveChatInterfaceMessages(conversationId, messages);
                 }
             } catch (error) {
-                console.error('Failed to save messages to IndexedDB:', error);
+                logger.error('Failed to save messages to IndexedDB:', error);
             }
         };
 
@@ -262,7 +266,7 @@ export const useChatMessages = ({
 
             return true;
         } catch (error) {
-            console.error('Failed to clear messages:', error);
+            logger.error('Failed to clear messages:', error);
             return false;
         }
     }, [storeType, conversationId]);

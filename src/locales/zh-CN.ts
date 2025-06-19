@@ -158,7 +158,7 @@ export const zhCN = {
     tryAsking: '试试问我：',
 
     // 新增的翻译键值
-    apiSettings: 'API 设置',
+    apiSettings: '模型服务商',
     interface: '界面',
     search: '搜索',
     about: '关于',
@@ -303,4 +303,13 @@ export const zhCN = {
     provider_baidu_cloud: '百度智能云',
     provider_gpustack: 'GPUStack',
     provider_voyageai: 'VoyageAI',
+
+    // Model settings
+    modelSettings: '模型设置',
+    chatModel: '聊天模型',
+    popupModel: '弹窗模型',
+    sidebarModel: '侧边栏模型',
+    chatModelDescription: '选择用于主界面的模型',
+    popupModelDescription: '选择用于弹窗的模型',
+    sidebarModelDescription: '选择用于侧边栏的模型',
 };

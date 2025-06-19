@@ -51,13 +51,6 @@
         .settings-tabs {
             min-height: 500px;
 
-            .ant-tabs-nav {
-                width: 200px;
-                padding: 16px 0;
-                background-color: #f9f9f9;
-                border-radius: 8px 0 0 8px;
-            }
-
             .ant-tabs-tab {
                 margin: 0;
                 padding: 12px 24px;
@@ -142,23 +135,23 @@
             align-items: center;
             gap: 8px;
             z-index: 100;
-            
+
             &.saving {
                 color: #1677ff;
             }
-            
+
             &.saved {
                 color: #52c41a;
             }
-            
+
             &.error {
                 color: #f5222d;
             }
-            
+
             .status-icon {
                 font-size: 16px;
             }
-            
+
             .status-text {
                 font-size: 14px;
             }

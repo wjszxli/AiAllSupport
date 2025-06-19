@@ -6,6 +6,10 @@ import rootStore from '@/store';
 import { InputMessage, getUserMessage } from '@/utils/message/input';
 import { getMessageService } from '@/services/MessageService';
 import { Robot } from '@/types';
+import { Logger } from '@/utils/logger';
+
+// Create a logger for this module
+const logger = new Logger('useMessageSender');
 
 export const useMessageSender = () => {
     const handleSendMessage = useCallback(
@@ -21,7 +25,7 @@ export const useMessageSender = () => {
             if (!userInput.trim()) return;
 
             const selectedRobot = robot || robotStore?.selectedRobot;
-            console.log('robot', selectedRobot);
+            logger.debug('robot', selectedRobot);
             const { selectedTopicId } = selectedRobot;
 
             if (!selectedTopicId) {

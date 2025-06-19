@@ -1,6 +1,10 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import mermaid from 'mermaid';
+import { Logger } from '@/utils/logger';
 import './index.scss';
+
+// Create a logger for this module
+const logger = new Logger('MermaidView');
 
 interface MermaidViewProps {
     children: string;
@@ -69,7 +73,7 @@ const MermaidView: React.FC<MermaidViewProps> = ({ children }) => {
                 (mermaid as any).clearCache();
             }
         } catch (error) {
-            console.warn('Failed to clear mermaid cache:', error);
+            logger.warn('Failed to clear mermaid cache:', error);
         }
     }, [diagramId]);
 
@@ -135,7 +139,7 @@ const MermaidView: React.FC<MermaidViewProps> = ({ children }) => {
 
             setIsLoading(false);
         } catch (err) {
-            console.error('Mermaid rendering error:', err);
+            logger.error('Mermaid rendering error:', err);
             setError(err instanceof Error ? err.message : 'Failed to render diagram');
             setIsLoading(false);
 
@@ -166,7 +170,7 @@ const MermaidView: React.FC<MermaidViewProps> = ({ children }) => {
                 window.messageNotification.success('已复制 Mermaid 代码');
             }
         } catch (err) {
-            console.error('Failed to copy:', err);
+            logger.error('Failed to copy:', err);
             if (window.messageNotification?.error) {
                 window.messageNotification.error('复制失败');
             }

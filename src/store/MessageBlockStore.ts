@@ -1,7 +1,9 @@
 import type { MessageBlock } from '@/types/messageBlock';
 import { computed, makeAutoObservable } from 'mobx';
+import { Logger } from '@/utils/logger';
 
 export class MessageBlockStore {
+    private logger = new Logger('MessageBlockStore');
     // 可观察状态
     blocks = new Map<string, MessageBlock>();
 
@@ -80,5 +82,40 @@ export class MessageBlockStore {
             entities[id] = block;
         });
         return entities;
+    }
+
+    // 调试方法：打印指定消息的所有块
+    debugMessageBlocks(messageId: string): void {
+        const blocks = this.getBlocksForMessage(messageId);
+        this.logger.debug(`消息 ${messageId} 的块:`, {
+            数量: blocks.length,
+            块列表: blocks.map((block) => ({
+                id: block.id,
+                type: block.type,
+                status: block.status,
+                content:
+                    'content' in block
+                        ? block.content?.substring(0, 50) +
+                          (block.content && block.content.length > 50 ? '...' : '')
+                        : '(无内容)',
+            })),
+        });
+    }
+
+    // 调试方法：打印所有块的统计信息
+    debugAllBlocks(): void {
+        const allBlocks = this.allBlocks;
+        const blocksByType = new Map<string, number>();
+
+        allBlocks.forEach((block) => {
+            const type = block.type;
+            blocksByType.set(type, (blocksByType.get(type) || 0) + 1);
+        });
+
+        this.logger.debug('所有块的统计信息:', {
+            总数: allBlocks.length,
+            类型统计: Object.fromEntries(blocksByType.entries()),
+            消息数: this.blocksByMessage.size,
+        });
     }
 }

@@ -1,47 +1,37 @@
+import { BaseLanguageModel } from '@langchain/core/language_models/base';
 import { CompletionsParams, Model, Provider } from '@/types';
-import { formatApiHost } from '@/utils';
 import { addAbortController, removeAbortController } from '@/utils/abortController';
-import { Logger } from '@/utils/logger';
+import { Logger } from '@/utils';
+import { Message } from '@/types/message';
+import { getMainTextContent } from '@/utils/message/find';
+import { AIMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
 
-// Create a logger for this module
-const logger = new Logger('BaseLlmProvider');
+const logger = new Logger('BaseLangChainProvider');
 
-export default abstract class BaseLlmProvider {
+export default abstract class BaseLangChainProvider {
     protected provider: Provider;
-    protected host: string;
-    protected apiKey: string;
+    protected model: BaseLanguageModel | null = null;
 
     constructor(provider: Provider) {
         this.provider = provider;
-        this.host = this.getBaseURL();
-        this.apiKey = this.getApiKey();
     }
 
-    public getBaseURL(): string {
-        const host = this.provider.apiHost;
-        return formatApiHost(host);
-    }
+    async convertToLangChainMessages(messages: Message[]) {
+        const langchainMessages = [];
 
-    public getApiKey(): string {
-        // If the provider doesn't require an API key, return an empty string
-        if (this.provider.requiresApiKey === false) {
-            return '';
-        }
-        return this.provider.apiKey;
-    }
+        for (const message of messages) {
+            const content = getMainTextContent(message);
 
-    public defaultHeaders() {
-        const headers: Record<string, string> = {
-            'X-Title': 'AiAllSupport',
-            'HTTP-Referer': '*',
-        };
-
-        // Only add API key to headers if it exists
-        if (this.apiKey) {
-            headers['X-Api-Key'] = this.apiKey;
+            if (message.role === 'user') {
+                langchainMessages.push(new HumanMessage(content));
+            } else if (message.role === 'assistant') {
+                langchainMessages.push(new AIMessage(content));
+            } else if (message.role === 'system') {
+                langchainMessages.push(new SystemMessage(content));
+            }
         }
 
-        return headers;
+        return langchainMessages;
     }
 
     protected createAbortController(messageId?: string, isAddEventListener?: boolean) {
@@ -121,12 +111,47 @@ export default abstract class BaseLlmProvider {
         }
     }
 
-    abstract check(model: Model, stream: boolean): Promise<{ valid: boolean; error: Error | null }>;
-    abstract models(provider: Provider): Promise<Model[]>;
+    /**
+     * 通用的模型检查方法，验证API密钥和主机
+     * 子类可以覆盖此方法以提供特定的实现
+     */
+    async check(model: Model): Promise<{ valid: boolean; error: Error | null }> {
+        try {
+            // 验证API密钥（如果需要）
+            if (this.provider.requiresApiKey !== false && !this.provider.apiKey) {
+                return { valid: false, error: new Error('API key is required') };
+            }
+
+            // 验证API主机
+            if (!this.provider.apiHost) {
+                return { valid: false, error: new Error('API host is required') };
+            }
+
+            // 子类需要实现具体的模型检查逻辑
+            return await this.checkModelAvailability(model);
+        } catch (error) {
+            return {
+                valid: false,
+                error: error instanceof Error ? error : new Error('Unknown error'),
+            };
+        }
+    }
+
+    /**
+     * 子类需要实现此方法来检查特定模型的可用性
+     */
+    protected abstract checkModelAvailability(
+        model: Model,
+    ): Promise<{ valid: boolean; error: Error | null }>;
+
+    abstract initialize(): void;
+
     abstract completions({
         messages,
         robot,
         onChunk,
         onFilterMessages,
     }: CompletionsParams): Promise<void>;
+
+    abstract models(provider: Provider): Promise<Model[]>;
 }

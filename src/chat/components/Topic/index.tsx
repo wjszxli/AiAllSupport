@@ -28,7 +28,11 @@ import { Topic as TopicType } from '@/types';
 import { t } from '@/locales/i18n';
 import { useStore } from '@/store';
 import { getShortRobotName } from '@/utils/robotUtils';
+import { Logger } from '@/utils/logger';
 import './index.scss';
+
+// Create a logger for this module
+const logger = new Logger('Topic');
 
 // const { Search } = Input; // 不再使用Search组件，改用普通Input保持一致性
 const { Text } = Typography;
@@ -171,7 +175,7 @@ const Topic: React.FC<TopicProps> = observer(() => {
     const handleTopicSelect = async (topic: TopicType) => {
         try {
             await robotStore.updateSelectedTopic(topic.id);
-            console.log('Selected topic:', topic.name);
+            logger.debug('Selected topic:', topic.name);
             // TODO: 实现话题选择后的具体逻辑，比如加载话题消息等
         } catch (error) {
             messageApi.error(

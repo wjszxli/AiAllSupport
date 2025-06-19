@@ -6,6 +6,7 @@ import {
     InfoCircleOutlined,
     RocketOutlined,
     SearchOutlined,
+    AppstoreOutlined,
 } from '@ant-design/icons';
 import { Card, Divider, Form, Layout, message, Select, Tabs, Typography } from 'antd';
 import React, { useEffect, useState } from 'react';
@@ -22,6 +23,7 @@ import Footer from './components/Footer';
 import Interface from './components/Interface';
 import Logger from './components/Logger';
 import Search from './components/Search';
+import ModelSettings from './components/ModelSettings';
 
 import './App.scss';
 
@@ -162,6 +164,16 @@ const App: React.FC = () => {
                                 key="api"
                             >
                                 <ApiSettings />
+                            </TabPane>
+                            <TabPane
+                                tab={
+                                    <span>
+                                        <AppstoreOutlined /> {t('modelSettings')}
+                                    </span>
+                                }
+                                key="models"
+                            >
+                                <ModelSettings />
                             </TabPane>
                             <TabPane
                                 tab={

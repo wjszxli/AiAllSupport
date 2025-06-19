@@ -6,8 +6,10 @@ import robotStore from '@/store/robot';
 import { getMessageService } from '@/services/MessageService';
 import { message as AntdMessage } from 'antd';
 import { t } from '@/locales/i18n';
+import { Logger } from '@/utils/logger';
 
 export const useMessageOperations = (streamingMessageId: string | null) => {
+    const logger = new Logger('useMessageOperations');
     // 获取消息的正文内容（不包含思考内容）
     const getMessageContent = useCallback((message: Message): string => {
         if (!message.blocks || message.blocks.length === 0) {
@@ -19,14 +21,14 @@ export const useMessageOperations = (streamingMessageId: string | null) => {
             .map((blockId) => {
                 const block = rootStore.messageBlockStore.getBlockById(blockId);
                 if (!block) {
-                    console.warn(`[getMessageContent] Block ${blockId} not found in store`);
+                    logger.warn(`Block ${blockId} not found in store`);
                 }
                 return block;
             })
             .filter(Boolean);
 
         if (blocks.length === 0) {
-            console.warn(`[getMessageContent] No valid blocks found for message ${message.id}`);
+            logger.warn(`No valid blocks found for message ${message.id}`);
             return '';
         }
 
@@ -121,7 +123,7 @@ export const useMessageOperations = (streamingMessageId: string | null) => {
                 const hasStreamingBlock = message.blocks.some((blockId) => {
                     const block = rootStore.messageBlockStore.getBlockById(blockId);
                     if (!block) {
-                        console.warn(`[isMessageStreaming] Block ${blockId} not found in store`);
+                        logger.warn(`Block ${blockId} not found in store`);
                         return false;
                     }
                     // 检查块是否处于流式状态
@@ -158,7 +160,7 @@ export const useMessageOperations = (streamingMessageId: string | null) => {
             // 获取当前选中的话题ID
             const selectedTopicId = robotStore.selectedRobot.selectedTopicId;
             if (!selectedTopicId) {
-                console.error('[handleRegenerateResponse] No selected topic');
+                logger.error('No selected topic');
                 AntdMessage.error(t('errorRegenerating') || '重新生成失败：未选择话题');
                 return;
             }
@@ -166,14 +168,14 @@ export const useMessageOperations = (streamingMessageId: string | null) => {
             // 获取当前机器人配置
             const robot = robotStore.selectedRobot;
             if (!robot) {
-                console.error('[handleRegenerateResponse] No selected robot');
+                logger.error('No selected robot');
                 AntdMessage.error(t('errorRegenerating') || '重新生成失败：未选择机器人');
                 return;
             }
 
             // 检查是否是助手消息
             if (assistantMessage.role !== 'assistant') {
-                console.error('[handleRegenerateResponse] Message is not from assistant');
+                logger.error('Message is not from assistant');
                 AntdMessage.error(t('errorRegenerating') || '重新生成失败：只能重新生成助手消息');
                 return;
             }
@@ -184,7 +186,7 @@ export const useMessageOperations = (streamingMessageId: string | null) => {
 
             AntdMessage.info(t('regenerating') || '正在重新生成...', 2);
         } catch (error) {
-            console.error('[handleRegenerateResponse] Error:', error);
+            logger.error('Error during regeneration:', error);
             AntdMessage.error(t('errorRegenerating') || '重新生成失败');
         }
     }, []);

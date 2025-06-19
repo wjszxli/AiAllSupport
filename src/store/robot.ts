@@ -3,12 +3,14 @@ import { db } from '../db/index';
 import { makeAutoObservable } from 'mobx';
 import { isEmpty, uniqBy } from 'lodash';
 import { getDefaultRobot } from '@/services/RobotService';
+import { Logger } from '@/utils/logger';
 
 // Keys for storing selected robot and topic IDs
 const SELECTED_ROBOT_KEY = 'selectedRobotId';
 const SELECTED_TOPIC_KEY = 'selectedTopicId';
 
 export class RobotDB {
+    private logger = new Logger('RobotDB');
     robotList: Robot[] = [];
     selectedRobot: Robot = {} as Robot;
 
@@ -77,11 +79,7 @@ export class RobotDB {
                 }
             }
         } catch (error) {
-            console.error('Failed to initialize robots from DB:', error);
-            console.error(
-                'Stack trace:',
-                error instanceof Error ? error.stack : 'No stack trace available',
-            );
+            this.logger.error('Failed to initialize robots from DB:', error);
         }
     }
 
@@ -89,11 +87,7 @@ export class RobotDB {
         try {
             await db.table('settings').put({ key, value });
         } catch (error) {
-            console.error(`Failed to save setting ${key}:`, error);
-            console.error(
-                'Stack trace:',
-                error instanceof Error ? error.stack : 'No stack trace available',
-            );
+            this.logger.error(`Failed to save setting ${key}:`, error);
         }
     }
 
@@ -102,26 +96,18 @@ export class RobotDB {
             const record = await db.table('settings').get(key);
             return record?.value;
         } catch (error) {
-            console.error(`Failed to get setting ${key}:`, error);
-            console.error(
-                'Stack trace:',
-                error instanceof Error ? error.stack : 'No stack trace available',
-            );
+            this.logger.error(`Failed to get setting ${key}:`, error);
             return null;
         }
     }
 
     async saveRobotToDB(robot: Robot) {
         try {
-            console.log('saveRobotToDB', robot);
+            this.logger.info('saveRobotToDB', robot);
             await db.table('robots').put(JSON.parse(JSON.stringify(robot)));
             return robot;
         } catch (error) {
-            console.error('Failed to save robot to DB:', error);
-            console.error(
-                'Stack trace:',
-                error instanceof Error ? error.stack : 'No stack trace available',
-            );
+            this.logger.error('Failed to save robot to DB:', error);
             throw error;
         }
     }
@@ -130,11 +116,7 @@ export class RobotDB {
         try {
             return await db.table('robots').get(robotId);
         } catch (error) {
-            console.error('Failed to get robot from DB:', error);
-            console.error(
-                'Stack trace:',
-                error instanceof Error ? error.stack : 'No stack trace available',
-            );
+            this.logger.error('Failed to get robot from DB:', error);
             throw error;
         }
     }
@@ -143,11 +125,7 @@ export class RobotDB {
         try {
             await db.table('robots').delete(robotId);
         } catch (error) {
-            console.error('Failed to delete robot from DB:', error);
-            console.error(
-                'Stack trace:',
-                error instanceof Error ? error.stack : 'No stack trace available',
-            );
+            this.logger.error('Failed to delete robot from DB:', error);
             throw error;
         }
     }
@@ -156,11 +134,7 @@ export class RobotDB {
         try {
             return await db.table('robots').toArray();
         } catch (error) {
-            console.error('Failed to get all robots from DB:', error);
-            console.error(
-                'Stack trace:',
-                error instanceof Error ? error.stack : 'No stack trace available',
-            );
+            this.logger.error('Failed to get all robots from DB:', error);
             throw error;
         }
     }
@@ -181,11 +155,7 @@ export class RobotDB {
 
             await this.updateRobot(robot);
         } catch (error) {
-            console.error('Failed to update selected robot:', error);
-            console.error(
-                'Stack trace:',
-                error instanceof Error ? error.stack : 'No stack trace available',
-            );
+            this.logger.error('Failed to update selected robot:', error);
             throw error;
         }
     }
@@ -194,7 +164,7 @@ export class RobotDB {
         try {
             return await db.table('robots').get(this.selectedRobot.id);
         } catch (error) {
-            console.error('Failed to get selected robot from DB:', error);
+            this.logger.error('Failed to get selected robot from DB:', error);
             throw error;
         }
     }
@@ -214,11 +184,7 @@ export class RobotDB {
 
             await this.updateRobot(this.selectedRobot);
         } catch (error) {
-            console.error('Failed to update selected topic:', error);
-            console.error(
-                'Stack trace:',
-                error instanceof Error ? error.stack : 'No stack trace available',
-            );
+            this.logger.error('Failed to update selected topic:', error);
             throw error;
         }
     }
@@ -238,11 +204,7 @@ export class RobotDB {
                 }
             }
         } catch (error) {
-            console.error('Failed to update robot list:', error);
-            console.error(
-                'Stack trace:',
-                error instanceof Error ? error.stack : 'No stack trace available',
-            );
+            this.logger.error('Failed to update robot list:', error);
         }
     }
 
@@ -251,11 +213,7 @@ export class RobotDB {
             await this.saveRobotToDB(robot);
             await this.updateRobotList();
         } catch (error) {
-            console.error('Failed to add robot:', error);
-            console.error(
-                'Stack trace:',
-                error instanceof Error ? error.stack : 'No stack trace available',
-            );
+            this.logger.error('Failed to add robot:', error);
             throw error;
         }
     }
@@ -267,7 +225,7 @@ export class RobotDB {
 
             const isSelected = this.selectedRobot?.id === id;
             if (isSelected) {
-                console.warn('Cannot delete currently selected robot:', id);
+                this.logger.warn('Cannot delete currently selected robot:', id);
                 return {
                     success: false,
                     message: '无法删除当前选中的机器人，请先选择其他机器人'
@@ -276,7 +234,7 @@ export class RobotDB {
 
             // 检查是否为不可删除的机器人
             if (robot && robot.cannotDelete) {
-                console.warn('Cannot delete robot marked as cannotDelete:', id);
+                this.logger.warn('Cannot delete robot marked as cannotDelete:', id);
                 return {
                     success: false,
                     message: '该机器人不允许删除'
@@ -292,11 +250,7 @@ export class RobotDB {
                 message: '机器人删除成功'
             };
         } catch (error) {
-            console.error('Failed to remove robot:', error);
-            console.error(
-                'Stack trace:',
-                error instanceof Error ? error.stack : 'No stack trace available',
-            );
+            this.logger.error('Failed to remove robot:', error);
             return {
                 success: false,
                 message: `删除机器人失败: ${error instanceof Error ? error.message : '未知错误'}`
@@ -317,11 +271,7 @@ export class RobotDB {
                 this.selectedRobot = updatedRobot;
             }
         } catch (error) {
-            console.error('Failed to update robot:', error);
-            console.error(
-                'Stack trace:',
-                error instanceof Error ? error.stack : 'No stack trace available',
-            );
+            this.logger.error('Failed to update robot:', error);
             throw error;
         }
     }
@@ -358,7 +308,7 @@ export class RobotDB {
                 });
             }
         } catch (error) {
-            console.error('Failed to add topic:', error);
+            this.logger.error('Failed to add topic:', error);
             throw error;
         }
     }
@@ -393,7 +343,7 @@ export class RobotDB {
 
             await db.topics.delete(topic.id);
         } catch (error) {
-            console.error('Failed to remove topic:', error);
+            this.logger.error('Failed to remove topic:', error);
             throw error;
         }
     }
@@ -428,7 +378,7 @@ export class RobotDB {
             await this.saveRobotToDB(robot);
             await this.updateRobotList();
         } catch (error) {
-            console.error('Failed to update topic:', error);
+            this.logger.error('Failed to update topic:', error);
             throw error;
         }
     }
@@ -457,7 +407,7 @@ export class RobotDB {
             await this.saveRobotToDB(robot);
             await this.updateRobotList();
         } catch (error) {
-            console.error('Failed to update topics:', error);
+            this.logger.error('Failed to update topics:', error);
             throw error;
         }
     }

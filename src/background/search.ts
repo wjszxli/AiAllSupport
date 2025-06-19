@@ -42,7 +42,7 @@ export async function searchWeb(query: string): Promise<SearchResult[]> {
             .map((engine) => searchFunctions[engine]);
 
         if (enabledSearchFunctions.length === 0) {
-            console.log('没有启用的搜索引擎');
+            logger.warn('没有启用的搜索引擎');
             return [];
         }
 
@@ -69,7 +69,7 @@ export async function searchWeb(query: string): Promise<SearchResult[]> {
 
             const filteredCount = beforeFilterCount - combinedResults.length;
             if (filteredCount > 0) {
-                console.log(
+                logger.info(
                     `已过滤掉 ${filteredCount} 个来自以下域名的结果: ${filteredDomains.join(', ')}`,
                 );
             }
@@ -77,7 +77,7 @@ export async function searchWeb(query: string): Promise<SearchResult[]> {
 
         // 如果所有搜索引擎都没有返回结果
         if (combinedResults.length === 0) {
-            console.log('所有搜索引擎均未返回结果或结果已被过滤');
+            logger.warn('所有搜索引擎均未返回结果或结果已被过滤');
         }
 
         return combinedResults;
@@ -90,7 +90,7 @@ export async function searchWeb(query: string): Promise<SearchResult[]> {
 // 百度搜索函数
 export async function searchBaidu(query: string): Promise<SearchResult[]> {
     try {
-        console.log('执行百度搜索:', query);
+        logger.info('执行百度搜索:', query);
 
         // 使用百度搜索
         const searchUrl = `https://www.baidu.com/s?wd=${encodeURIComponent(query)}&ie=utf-8&rn=20`;
@@ -144,12 +144,12 @@ export async function searchBaidu(query: string): Promise<SearchResult[]> {
         });
 
         if (results.length === 0) {
-            console.log('未能从百度搜索结果中提取数据，可能选择器需要更新');
+            logger.warn('未能从百度搜索结果中提取数据，可能选择器需要更新');
         }
 
         return results;
     } catch (error: any) {
-        console.error('百度搜索失败:', error);
+        logger.error('百度搜索失败:', error);
         // 搜索失败时返回空数组
         return [];
     }
@@ -158,7 +158,7 @@ export async function searchBaidu(query: string): Promise<SearchResult[]> {
 // Google搜索函数
 export async function searchGoogle(query: string): Promise<SearchResult[]> {
     try {
-        console.log('执行Google搜索:', query);
+        logger.info('执行Google搜索:', query);
 
         const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
 
@@ -213,12 +213,12 @@ export async function searchGoogle(query: string): Promise<SearchResult[]> {
         });
 
         if (results.length === 0) {
-            console.log('未能从Google搜索结果中提取数据，可能选择器需要更新');
+            logger.warn('未能从Google搜索结果中提取数据，可能选择器需要更新');
         }
 
         return results;
     } catch (error: any) {
-        console.error('Google搜索失败:', error);
+        logger.error('Google搜索失败:', error);
         return [];
     }
 }
@@ -226,7 +226,7 @@ export async function searchGoogle(query: string): Promise<SearchResult[]> {
 // DuckDuckGo搜索函数
 export async function searchDuckDuckGo(query: string): Promise<SearchResult[]> {
     try {
-        console.log('执行DuckDuckGo搜索:', query);
+        logger.info('执行DuckDuckGo搜索:', query);
 
         const searchUrl = `https://duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
 
@@ -281,12 +281,12 @@ export async function searchDuckDuckGo(query: string): Promise<SearchResult[]> {
         });
 
         if (results.length === 0) {
-            console.log('未能从DuckDuckGo搜索结果中提取数据，可能选择器需要更新');
+            logger.warn('未能从DuckDuckGo搜索结果中提取数据，可能选择器需要更新');
         }
 
         return results;
     } catch (error: any) {
-        console.error('DuckDuckGo搜索失败:', error);
+        logger.error('DuckDuckGo搜索失败:', error);
         return [];
     }
 }
@@ -294,7 +294,7 @@ export async function searchDuckDuckGo(query: string): Promise<SearchResult[]> {
 // 搜狗搜索函数
 export async function searchSogou(query: string): Promise<SearchResult[]> {
     try {
-        console.log('执行搜狗搜索:', query);
+        logger.info('执行搜狗搜索:', query);
 
         const searchUrl = `https://www.sogou.com/web?query=${encodeURIComponent(query)}`;
 
@@ -347,12 +347,12 @@ export async function searchSogou(query: string): Promise<SearchResult[]> {
         });
 
         if (results.length === 0) {
-            console.log('未能从搜狗搜索结果中提取数据，可能选择器需要更新');
+            logger.warn('未能从搜狗搜索结果中提取数据，可能选择器需要更新');
         }
 
         return results;
     } catch (error: any) {
-        console.error('搜狗搜索失败:', error);
+        logger.error('搜狗搜索失败:', error);
         return [];
     }
 }
@@ -360,7 +360,7 @@ export async function searchSogou(query: string): Promise<SearchResult[]> {
 // Brave搜索函数
 export async function searchBrave(query: string): Promise<SearchResult[]> {
     try {
-        console.log('执行Brave搜索:', query);
+        logger.info('执行Brave搜索:', query);
 
         const searchUrl = `https://search.brave.com/search?q=${encodeURIComponent(query)}`;
 
@@ -413,12 +413,12 @@ export async function searchBrave(query: string): Promise<SearchResult[]> {
         });
 
         if (results.length === 0) {
-            console.log('未能从Brave搜索结果中提取数据，可能选择器需要更新');
+            logger.warn('未能从Brave搜索结果中提取数据，可能选择器需要更新');
         }
 
         return results;
     } catch (error: any) {
-        console.error('Brave搜索失败:', error);
+        logger.error('Brave搜索失败:', error);
         return [];
     }
 }
@@ -426,7 +426,7 @@ export async function searchBrave(query: string): Promise<SearchResult[]> {
 // SearXNG搜索函数
 export async function searchSearxng(query: string): Promise<SearchResult[]> {
     try {
-        console.log('执行SearXNG搜索:', query);
+        logger.info('执行SearXNG搜索:', query);
 
         // 使用公共的SearXNG实例，可以根据需要更改
         const searchUrl = `https://searx.be/search?q=${encodeURIComponent(query)}`;
@@ -482,12 +482,12 @@ export async function searchSearxng(query: string): Promise<SearchResult[]> {
         });
 
         if (results.length === 0) {
-            console.log('未能从SearXNG搜索结果中提取数据，可能选择器需要更新');
+            logger.warn('未能从SearXNG搜索结果中提取数据，可能选择器需要更新');
         }
 
         return results;
     } catch (error: any) {
-        console.error('SearXNG搜索失败:', error);
+        logger.error('SearXNG搜索失败:', error);
         return [];
     }
 }
@@ -495,12 +495,12 @@ export async function searchSearxng(query: string): Promise<SearchResult[]> {
 // Tavily搜索函数 - 使用 @tavily/core 库
 export async function searchTavily(query: string): Promise<SearchResult[]> {
     try {
-        console.log('执行Tavily搜索:', query);
+        logger.info('执行Tavily搜索:', query);
 
         // 获取Tavily API密钥
         const apiKey = await storage.getTavilyApiKey();
         if (!apiKey) {
-            console.error('未配置Tavily API密钥');
+            logger.error('未配置Tavily API密钥');
             return [];
         }
 
@@ -512,7 +512,7 @@ export async function searchTavily(query: string): Promise<SearchResult[]> {
             searchDepth: 'basic',
             maxResults: 5,
         });
-        console.log('Tavily搜索结果:', response);
+        logger.debug('Tavily搜索结果:', response);
 
         // 将 Tavily 返回的结果转换为应用所需的 SearchResult 格式
         const results: SearchResult[] = [];
@@ -531,12 +531,12 @@ export async function searchTavily(query: string): Promise<SearchResult[]> {
         }
 
         if (results.length === 0) {
-            console.log('未从Tavily API获取到搜索结果');
+            logger.warn('未从Tavily API获取到搜索结果');
         }
 
         return results;
     } catch (error: any) {
-        console.error('Tavily搜索失败:', error);
+        logger.error('Tavily搜索失败:', error);
         return [];
     }
 }
@@ -544,7 +544,7 @@ export async function searchTavily(query: string): Promise<SearchResult[]> {
 // 专门用于获取网页内容的函数
 export async function fetchWebPage(url: string): Promise<string> {
     try {
-        console.log('获取网页内容:', url);
+        logger.info('获取网页内容:', url);
 
         // 处理各搜索引擎的重定向链接
         let targetUrl = url;
@@ -564,7 +564,7 @@ export async function fetchWebPage(url: string): Promise<string> {
             url.includes('search.brave.com/outgoing?') ||
             url.includes('searx.be/r?')
         ) {
-            console.log('检测到搜索引擎重定向链接，获取真实URL');
+            logger.info('检测到搜索引擎重定向链接，获取真实URL');
 
             try {
                 const redirectResponse = await fetch(url, {
@@ -581,7 +581,7 @@ export async function fetchWebPage(url: string): Promise<string> {
                     const location = redirectResponse.headers.get('Location');
                     if (location) {
                         targetUrl = location;
-                        console.log('获取到真实URL:', targetUrl);
+                        logger.info('获取到真实URL:', targetUrl);
                     }
                 } else if (redirectResponse.ok) {
                     // 有些搜索引擎可能不使用HTTP重定向，而是在URL参数中包含目标URL
@@ -592,42 +592,42 @@ export async function fetchWebPage(url: string): Promise<string> {
                         const googleUrl = urlObj.searchParams.get('url');
                         if (googleUrl) {
                             targetUrl = googleUrl;
-                            console.log('从Google URL参数中提取目标URL:', targetUrl);
+                            logger.info('从Google URL参数中提取目标URL:', targetUrl);
                         }
                     } else if (url.includes('duckduckgo.com/l/?')) {
                         const duckUrl = urlObj.searchParams.get('uddg');
                         if (duckUrl) {
                             targetUrl = duckUrl;
-                            console.log('从DuckDuckGo URL参数中提取目标URL:', targetUrl);
+                            logger.info('从DuckDuckGo URL参数中提取目标URL:', targetUrl);
                         }
                     } else if (url.includes('search.brave.com/outgoing?')) {
                         const braveUrl = urlObj.searchParams.get('url');
                         if (braveUrl) {
                             targetUrl = braveUrl;
-                            console.log('从Brave URL参数中提取目标URL:', targetUrl);
+                            logger.info('从Brave URL参数中提取目标URL:', targetUrl);
                         }
                     } else if (url.includes('searx.be/r?')) {
                         const searxUrl = urlObj.searchParams.get('url');
                         if (searxUrl) {
                             targetUrl = searxUrl;
-                            console.log('从SearXNG URL参数中提取目标URL:', targetUrl);
+                            logger.info('从SearXNG URL参数中提取目标URL:', targetUrl);
                         }
                     } else if (url.includes('sogou.com/link?')) {
                         const sogouUrl = urlObj.searchParams.get('url');
                         if (sogouUrl) {
                             targetUrl = sogouUrl;
-                            console.log('从搜狗URL参数中提取目标URL:', targetUrl);
+                            logger.info('从搜狗URL参数中提取目标URL:', targetUrl);
                         }
                     }
                 }
             } catch (redirectError) {
-                console.error('获取真实URL失败:', redirectError);
+                logger.error('获取真实URL失败:', redirectError);
                 // 如果获取真实URL失败，继续使用原始URL
             }
         }
 
         // 获取网页内容
-        console.log('正在获取页面内容，URL:', targetUrl);
+        logger.info('正在获取页面内容，URL:', targetUrl);
 
         // 创建一个请求，使用合适的User-Agent以模拟浏览器
         const contentResponse = await fetch(targetUrl, {
@@ -670,7 +670,7 @@ export async function fetchWebPage(url: string): Promise<string> {
 
         return `${title}\n\n${content}`;
     } catch (error: any) {
-        console.error('Failed to fetch web content:', error);
+        logger.error('Failed to fetch web content:', error);
         return `Error fetching content from ${url}: ${error.message || 'Unknown error'}`;
     }
 }

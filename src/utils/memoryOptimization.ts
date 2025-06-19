@@ -2,6 +2,11 @@
  * Memory optimization utilities
  */
 
+import { Logger } from '@/utils/logger';
+
+// Create a logger for this module
+const logger = new Logger('memoryOptimization');
+
 /**
  * LRU (Least Recently Used) Cache implementation
  * Automatically removes least recently used items when capacity is reached
@@ -234,7 +239,7 @@ export class MemoryMonitor {
 
             // Check if memory usage is above threshold
             if (memoryInfo.usedJSHeapSize > this.memoryWarningThreshold) {
-                console.warn('Memory usage warning: Used JS heap size exceeds threshold', {
+                logger.warn('Memory usage warning: Used JS heap size exceeds threshold', {
                     usedJSHeapSize: `${Math.round(memoryInfo.usedJSHeapSize / (1024 * 1024))} MB`,
                     jsHeapSizeLimit: `${Math.round(memoryInfo.jsHeapSizeLimit / (1024 * 1024))} MB`,
                     threshold: `${Math.round(this.memoryWarningThreshold / (1024 * 1024))} MB`,
@@ -256,7 +261,7 @@ export class MemoryMonitor {
             try {
                 window.gc();
             } catch (error) {
-                console.error('Failed to suggest garbage collection', error);
+                logger.error('Failed to suggest garbage collection', error);
             }
         }
     }
@@ -285,7 +290,7 @@ export function trackForMemoryLeaks(objectToTrack: any, label: string): void {
         setTimeout(() => {
             const obj = ref.deref();
             if (obj) {
-                console.warn(
+                logger.warn(
                     `Potential memory leak detected: ${label} is still in memory after 30 seconds`,
                 );
             }

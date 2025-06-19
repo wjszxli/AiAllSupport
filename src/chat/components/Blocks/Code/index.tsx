@@ -3,6 +3,10 @@ import { message } from 'antd';
 import { CopyOutlined, EyeOutlined, CodeOutlined, DownloadOutlined } from '@ant-design/icons';
 import hljs from 'highlight.js';
 import { t } from '@/locales/i18n';
+import { Logger } from '@/utils/logger';
+
+// Create a logger for this module
+const logger = new Logger('CodeBlockView');
 import './index.scss';
 
 interface Props {
@@ -77,7 +81,7 @@ const CodeBlockView: React.FC<Props> = ({ children, language, onSave }) => {
                 message.success(t('copy_success') || '复制成功');
             },
             (err) => {
-                console.error('Copy failed:', err);
+                logger.error('Copy failed:', err);
                 message.error(t('copy_failed') || '复制失败');
             },
         );

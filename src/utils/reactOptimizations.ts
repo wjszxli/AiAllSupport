@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { debounce, throttle } from './performance';
+import { Logger } from '@/utils/logger';
+
+// Create a logger for this module
+const logger = new Logger('reactOptimizations');
 
 /**
  * Custom hook for using a stable callback that never changes identity
@@ -143,7 +147,7 @@ export function useLazyComponent<T>(
                 }
             })
             .catch((error) => {
-                console.error('Error loading component:', error);
+                logger.error('Error loading component:', error);
                 if (isMounted) {
                     setIsLoading(false);
                 }
@@ -198,7 +202,7 @@ export function useRenderPerformance(componentName: string, enabled = true): voi
         const timeSinceLastRender = now - lastRenderTime.current;
         renderCount.current += 1;
 
-        console.log(
+        logger.debug(
             `[Performance] ${componentName} rendered #${renderCount.current} ` +
                 `(+${timeSinceLastRender.toFixed(2)}ms)`,
         );

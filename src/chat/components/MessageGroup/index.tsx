@@ -10,6 +10,10 @@ import {
 import { Message } from '@/types/message';
 import { t } from '@/locales/i18n';
 import { observer } from 'mobx-react-lite';
+import { Logger } from '@/utils/logger';
+
+// Create a logger for this module
+const logger = new Logger('MessageGroup');
 import MessageRenderer from './MessageRenderer';
 import './index.scss';
 import { useMessageOperations } from '@/chat/hooks/useMessageOperations';
@@ -182,7 +186,7 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
                                 }
                             });
                         } catch (error) {
-                            console.error('Copy failed:', error);
+                            logger.error('Copy failed:', error);
                             messageApi.error(t('copy_failed') || '复制失败');
                         }
                     }

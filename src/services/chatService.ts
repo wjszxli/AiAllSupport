@@ -5,6 +5,10 @@ import storage from '@/utils/storage';
 import { t } from '../locales/i18n';
 import React from 'react';
 import { updateMessage } from '@/utils/messageUtils';
+import { Logger } from '@/utils/logger';
+
+// Create a logger for this module
+const logger = new Logger('chatService');
 
 /**
  * 向AI服务发送消息
@@ -32,18 +36,18 @@ export async function sendMessage(
         const signal = window.currentAbortController.signal;
 
         return new Promise((resolve, reject) => {
-            console.log('发送数据：', sendMessage);
+            logger.debug('Sending data:', { messages: sendMessage });
 
             const onData = async (chunk: { data: string; done: boolean }) => {
                 if (signal.aborted) {
                     return;
                 }
 
-                console.log('收到数据块:', chunk);
+                logger.debug('Received data chunk:', { chunk });
                 const { data, done } = chunk;
 
                 if (!done && !data.startsWith('data: ')) {
-                    console.log('添加直接文本到响应:', data);
+                    logger.debug('Adding direct text to response:', { data });
                     // 思考结束后，开始收集响应
                     if (data.includes('<think>')) {
                         isInThinkStartTag = true;
@@ -59,29 +63,29 @@ export async function sendMessage(
                     if (onStreamUpdate) onStreamUpdate(messageText, thinkingText);
                 } else if (!done) {
                     try {
-                        console.log('解析流数据:', data);
+                        logger.debug('Parsing stream data:', { data });
                         const chunkStringData = data.slice(6);
                         const chunkData = JSON.parse(chunkStringData);
                         if (chunkData.choices?.[0]?.delta?.content) {
                             const content = chunkData.choices[0].delta.content;
-                            console.log('添加内容到响应:', content);
+                            logger.debug('Adding content to response:', { content });
                             messageText += content;
                             if (onStreamUpdate) onStreamUpdate(messageText, thinkingText);
                         } else if (chunkData.choices?.[0]?.delta?.reasoning_content) {
                             const reasoning_content = chunkData.choices[0].delta.reasoning_content;
-                            console.log('添加思考到响应:', reasoning_content);
+                            logger.debug('Adding thinking to response:', { reasoning_content });
                             thinkingText += reasoning_content;
                             if (onStreamUpdate) onStreamUpdate(messageText, thinkingText);
                         } else {
-                            console.log('数据块中没有内容:', chunkData);
+                            logger.debug('No content in data chunk:', { chunkData });
                         }
                     } catch (error) {
-                        console.error('解析数据块时出错:', error);
+                        logger.error('Error parsing data chunk:', { error });
                     }
                 }
 
                 if (done) {
-                    console.log('流传输完成。最终响应:', messageText);
+                    logger.debug('Stream transmission complete. Final response:', { messageText });
 
                     const updatedMessages = [
                         ...sendMessage,
@@ -97,14 +101,14 @@ export async function sendMessage(
             };
 
             chatAIStream(sendMessage, onData, tabId).catch((error) => {
-                console.error('chatAIStream中出错:', error);
+                logger.error('Error in chatAIStream:', { error });
                 if (!signal.aborted) {
                     reject(error);
                 }
             });
         });
     } catch (error) {
-        console.error('发送消息时出错:', error);
+        logger.error('Error sending message:', { error });
         throw error;
     }
 }
@@ -122,10 +126,10 @@ export async function sendMessageWithWebpageContext(
     setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>,
 ): Promise<string> {
     try {
-        console.log('使用以下内容调用sendMessageWithWebpageContext:', userMessage);
+        logger.debug('Calling sendMessageWithWebpageContext with content:', { userMessage });
         let contextMessage = userMessage;
 
-        console.log('正在提取网页内容...');
+        logger.debug('Extracting webpage content...');
 
         const fetchCurrentWebpage: ChatMessage = {
             id: messageId,
@@ -145,7 +149,7 @@ export async function sendMessageWithWebpageContext(
 
         updateMessage(setMessages, messageId, fetchCurrentWebpageSuccess);
 
-        console.log('提取的网页内容长度:', webpageContent.length);
+        logger.debug('Extracted webpage content length:', { length: webpageContent.length });
 
         // 格式化消息与网页上下文
         contextMessage = `${t('webpageContent')}:${webpageContent}${t(
@@ -153,7 +157,7 @@ export async function sendMessageWithWebpageContext(
         )}: ${userMessage}`;
 
         // 调用sendMessage发送消息
-        console.log('正在发送带有上下文的消息，长度:', contextMessage.length);
+        logger.debug('Sending message with context, length:', { length: contextMessage.length });
 
         return contextMessage;
     } catch (error) {
@@ -170,7 +174,7 @@ export async function sendMessageWithWebpageContext(
             }
             return [...prev, fetchWebpageContentFailed];
         });
-        console.error('发送带有网页上下文的消息时出错:', error);
+        logger.error('Error sending message with webpage context:', { error });
         throw error;
     }
 }

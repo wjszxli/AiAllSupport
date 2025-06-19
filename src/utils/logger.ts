@@ -1,3 +1,4 @@
+import * as log from 'loglevel';
 import storageUtils from './storage';
 
 // Log levels in order of increasing severity
@@ -48,6 +49,27 @@ let logStore: LogEntry[] = [];
 // Current configuration
 let currentConfig: LoggerConfig = { ...DEFAULT_CONFIG };
 
+// Initialize the root logger
+const rootLogger = log.getLogger('root');
+
+// Map our log levels to loglevel's levels
+function mapLogLevel(level: LogLevel): log.LogLevelDesc {
+    switch (level) {
+        case LogLevel.DEBUG:
+            return log.levels.DEBUG;
+        case LogLevel.INFO:
+            return log.levels.INFO;
+        case LogLevel.WARN:
+            return log.levels.WARN;
+        case LogLevel.ERROR:
+            return log.levels.ERROR;
+        case LogLevel.NONE:
+            return log.levels.SILENT;
+        default:
+            return log.levels.INFO;
+    }
+}
+
 // Initialize logger
 export async function initLogger(): Promise<LoggerConfig> {
     try {
@@ -56,6 +78,9 @@ export async function initLogger(): Promise<LoggerConfig> {
             currentConfig = { ...DEFAULT_CONFIG, ...storedConfig };
         }
 
+        // Set the log level based on configuration
+        rootLogger.setLevel(mapLogLevel(currentConfig.level));
+
         if (currentConfig.persistLogs) {
             const storedLogs = await storageUtils.get<LogEntry[]>(LOGS_STORAGE_KEY);
             if (storedLogs) {
@@ -63,7 +88,7 @@ export async function initLogger(): Promise<LoggerConfig> {
             }
         }
     } catch (error: unknown) {
-        console.error('Failed to initialize logger:', error);
+        rootLogger.error('Failed to initialize logger:', error);
     }
 
     return currentConfig;
@@ -73,10 +98,22 @@ export async function initLogger(): Promise<LoggerConfig> {
 export async function updateLoggerConfig(config: Partial<LoggerConfig>): Promise<LoggerConfig> {
     currentConfig = { ...currentConfig, ...config };
 
+    // Update loglevel's log level
+    if (config.level !== undefined) {
+        rootLogger.setLevel(mapLogLevel(config.level));
+    }
+
+    // Enable/disable logging
+    if (config.enabled !== undefined && !config.enabled) {
+        rootLogger.setLevel(log.levels.SILENT);
+    } else if (config.enabled !== undefined && config.enabled) {
+        rootLogger.setLevel(mapLogLevel(currentConfig.level));
+    }
+
     try {
         await storageUtils.set(CONFIG_STORAGE_KEY, currentConfig);
     } catch (error: unknown) {
-        console.error('Failed to save logger configuration:', error);
+        rootLogger.error('Failed to save logger configuration:', error);
     }
 
     return currentConfig;
@@ -95,7 +132,7 @@ export async function clearLogs(): Promise<void> {
         try {
             await storageUtils.set(LOGS_STORAGE_KEY, logStore);
         } catch (error: unknown) {
-            console.error('Failed to clear persisted logs:', error);
+            rootLogger.error('Failed to clear persisted logs:', error);
         }
     }
 }
@@ -105,7 +142,23 @@ export function getLogs(): LogEntry[] {
     return [...logStore];
 }
 
-// Core logging function
+// Helper to get level label
+export function getLevelLabel(level: LogLevel): string {
+    switch (level) {
+        case LogLevel.DEBUG:
+            return '[DEBUG]';
+        case LogLevel.INFO:
+            return '[INFO]';
+        case LogLevel.WARN:
+            return '[WARN]';
+        case LogLevel.ERROR:
+            return '[ERROR]';
+        default:
+            return '';
+    }
+}
+
+// Core logging function that wraps loglevel and adds our custom functionality
 function logInternal(level: LogLevel, message: string, data?: any, context?: string): void {
     if (!currentConfig.enabled || level < currentConfig.level) {
         return;
@@ -131,50 +184,35 @@ function logInternal(level: LogLevel, message: string, data?: any, context?: str
             logStore = logStore.slice(-currentConfig.maxPersistedLogs);
         }
 
-        // Save to storage (debounced in a real implementation)
+        // Save to storage
         storageUtils.set(LOGS_STORAGE_KEY, logStore).catch((error: unknown) => {
-            console.error('Failed to persist logs:', error);
+            rootLogger.error('Failed to persist logs:', error);
         });
     }
 
-    // Log to console if enabled
-    if (currentConfig.logToConsole) {
-        const timestamp = currentConfig.includeTimestamp
-            ? `[${new Date(entry.timestamp).toISOString()}] `
-            : '';
-        const contextStr = context ? `[${context}] ` : '';
-        const prefix = `${timestamp}${getLevelLabel(level)} ${contextStr}`;
-
-        switch (level) {
-            case LogLevel.DEBUG:
-                console.debug(`${prefix}${message}`, data !== undefined ? data : '');
-                break;
-            case LogLevel.INFO:
-                console.info(`${prefix}${message}`, data !== undefined ? data : '');
-                break;
-            case LogLevel.WARN:
-                console.warn(`${prefix}${message}`, data !== undefined ? data : '');
-                break;
-            case LogLevel.ERROR:
-                console.error(`${prefix}${message}`, data !== undefined ? data : '');
-                break;
-        }
+    // Format the message with timestamp and context if needed
+    let formattedMessage = message;
+    if (currentConfig.includeTimestamp) {
+        formattedMessage = `[${new Date(entry.timestamp).toISOString()}] ${formattedMessage}`;
     }
-}
+    if (context) {
+        formattedMessage = `[${context}] ${formattedMessage}`;
+    }
 
-// Helper to get level label
-function getLevelLabel(level: LogLevel): string {
+    // Use loglevel for actual logging
     switch (level) {
         case LogLevel.DEBUG:
-            return '[DEBUG]';
+            rootLogger.debug(formattedMessage, data);
+            break;
         case LogLevel.INFO:
-            return '[INFO]';
+            rootLogger.info(formattedMessage, data);
+            break;
         case LogLevel.WARN:
-            return '[WARN]';
+            rootLogger.warn(formattedMessage, data);
+            break;
         case LogLevel.ERROR:
-            return '[ERROR]';
-        default:
-            return '';
+            rootLogger.error(formattedMessage, data);
+            break;
     }
 }
 
@@ -198,9 +236,14 @@ export function error(message: string, data?: any, context?: string): void {
 // Logger class for context-specific logging
 export class Logger {
     private context: string;
+    private loggerInstance: log.Logger;
 
     constructor(context: string) {
         this.context = context;
+        this.loggerInstance = log.getLogger(context);
+
+        // Inherit level from root logger
+        this.loggerInstance.setLevel(rootLogger.getLevel());
     }
 
     debug(message: string, data?: any): void {

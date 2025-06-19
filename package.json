@@ -52,10 +52,13 @@
         "@babel/plugin-transform-private-methods": "7.25.9",
         "@babel/plugin-transform-private-property-in-object": "7.25.9",
         "@babel/runtime": "7.26.9",
+        "@langchain/core": "0.3.59",
+        "@langchain/deepseek": "0.0.2",
+        "@langchain/openai": "0.5.13",
         "@tavily/core": "0.3.1",
         "@types/dompurify": "3.2.0",
         "@types/uuid": "10.0.0",
-        "antd": "5.23.4",
+        "antd": "5.26.1",
         "axios": "1.8.1",
         "cheerio": "1.0.0",
         "dayjs": "1.11.6",
@@ -64,6 +67,7 @@
         "highlight.js": "11.11.1",
         "jquery": "3.6.1",
         "lodash": "4.17.21",
+        "loglevel": "1.9.2",
         "markdown-it": "14.1.0",
         "markdown-it-mathjax3": "4.3.2",
         "mermaid": "11.6.0",
@@ -79,7 +83,8 @@
         "react-draggable": "4.4.6",
         "react-router-dom": "6.4.3",
         "uuid": "11.1.0",
-        "webextension-polyfill": "0.10.0"
+        "webextension-polyfill": "0.10.0",
+        "zod": "3.25.67"
     },
     "devDependencies": {
         "@babel/core": "7.20.2",

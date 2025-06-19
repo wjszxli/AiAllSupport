@@ -86,7 +86,7 @@ export const en = {
     failedCopy: 'Failed to copy',
     codeCopied: 'Code copied',
     failedCodeCopy: 'Failed to copy code',
-    selectProviderFirst: 'Please click the plugin icon to select a service provider first',
+    selectProviderFirst: 'Please select a provider first',
     processing: 'Processing...',
 
     // Language settings
@@ -320,4 +320,22 @@ Please ensure your response is clear and specific, providing effective guidance 
     provider_baidu_cloud: 'Baidu Cloud',
     provider_gpustack: 'GPUStack',
     provider_voyageai: 'VoyageAI',
+
+    // Model settings
+    modelSettings: 'Model Settings',
+    chatModel: 'Chat Model',
+    popupModel: 'Popup Model',
+    sidebarModel: 'Sidebar Model',
+    chatModelDescription: 'Select the model used for the main chat interface',
+    popupModelDescription: 'Select the model used for the popup window',
+    sidebarModelDescription: 'Select the model used for the sidebar panel',
+    modelProvider: 'Provider',
+    modelName: 'Model',
+    selectModelFirst: 'Please select a model first',
+    modelSettingsSaved: 'Model settings saved successfully',
+    failedToLoadModelSettings: 'Failed to load model settings',
+    failedToSaveModelSettings: 'Failed to save model settings',
+    noProvidersConfigured: 'No providers configured. Please set up providers in API Settings first',
+    modelSettingsInfo:
+        'Configure different AI models for each interface. Your selections will be saved automatically.',
 };

@@ -41,9 +41,9 @@ chrome.declarativeNetRequest.updateDynamicRules(
     },
     () => {
         if (chrome.runtime.lastError) {
-            console.error('更新规则失败:', chrome.runtime.lastError);
+            logger.error('更新规则失败:', chrome.runtime.lastError);
         } else {
-            console.log('规则更新成功！');
+            logger.info('规则更新成功！');
         }
     },
 );
@@ -139,8 +139,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                                 });
                             }
                         } catch (error) {
-                            console.error('streamResponse error', error);
-                            console.log('tabId', tabId);
+                            logger.error('streamResponse error', error);
+                            logger.debug('tabId', tabId);
                             sendResponse({ ok: false, error });
                             if (tabId) {
                                 chrome.tabs.sendMessage(tabId, {
@@ -177,20 +177,20 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 
     if (request.action === 'performSearch') {
-        console.log('📡 处理搜索请求:', request.query);
+        logger.info('📡 处理搜索请求:', request.query);
         searchWeb(request.query)
             .then((results) => {
                 sendResponse({ success: true, results });
             })
             .catch((error) => {
-                console.error('搜索处理失败:', error);
+                logger.error('搜索处理失败:', error);
                 sendResponse({ success: false, error: error.message });
             });
         return true; // 确保异步 sendResponse 可以工作
     }
 
     if (request.action === 'fetchWebContent') {
-        console.log('📡 处理网页内容获取请求:', request.url);
+        logger.info('📡 处理网页内容获取请求:', request.url);
         fetchWebPage(request.url)
             .then((content) => {
                 // Return the content without parsing for thinking parts
@@ -200,7 +200,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 });
             })
             .catch((error: any) => {
-                console.error('网页内容获取失败:', error);
+                logger.error('网页内容获取失败:', error);
                 sendResponse({ success: false, error: error.message || 'Unknown error' });
             });
         return true; // 确保异步 sendResponse 可以工作
@@ -209,7 +209,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'abortRequest') {
         const tabId = sender?.tab?.id;
         logger.info('Aborting request', { tabId });
-        console.log('🚫 中止请求', tabId);
+        logger.info('🚫 中止请求', tabId);
         if (tabId) {
             const controller = requestControllers.get(tabId);
             if (controller) {

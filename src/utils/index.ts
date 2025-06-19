@@ -132,7 +132,7 @@ export const requestAIStream = async (
                     onData(msg.response);
                 } else {
                     // Properly handle and log errors
-                    console.error('Stream response error:', msg.response.error);
+                    logger.error('Stream response error:', { error: msg.response.error });
                     onData({
                         data: `Error: ${msg.response.error || 'Unknown error'}`,
                         done: false,
@@ -161,13 +161,13 @@ export const requestAIStream = async (
                 tabId,
             },
             (response) => {
-                console.log('API 响应:', response);
+                logger.info('API response:', { response });
                 if (response && response.status === 200) {
                     resolve(response.data);
                 } else {
                     const errorMsg =
                         response && response.error ? response.error : 'API request failed';
-                    console.error('API 请求失败:', errorMsg);
+                    logger.error('API request failed:', { error: errorMsg });
                     // Send error as a data message to be displayed to the user
                     onData({ data: `Error: ${errorMsg}`, done: false });
                     reject(errorMsg);
@@ -176,7 +176,7 @@ export const requestAIStream = async (
         );
 
         window.currentAbortController.signal.addEventListener('abort', () => {
-            console.log('🚫 中止请求.......');
+            logger.info('🚫 Aborting request...');
             onData({ data: '', done: true });
             chrome.runtime.onMessage.removeListener(listener);
             resolve();
@@ -194,11 +194,11 @@ export const requestApi = (url: string, method: RequestMethod = 'GET', requestBo
                 body: JSON.stringify({ ...requestBody, stream: false }),
             },
             (response) => {
-                console.log('API 响应:', response);
+                logger.info('API response:', { response });
                 if (response.status === 200) {
                     resolve(response.data);
                 } else {
-                    console.error('API 请求失败:', response.error);
+                    logger.error('API request failed:', { error: response.error });
                     reject(response.error);
                 }
             },
@@ -258,7 +258,7 @@ export const handleMessage = (message: string, sender: { tab: { id: number } }) 
             }
         }
     } catch (error) {
-        console.error('Error handling message:', error);
+        logger.error('Error handling message:', { error });
         if (sender?.tab?.id) {
             chrome.tabs.sendMessage(sender.tab.id, {
                 type: 'streamResponse',
@@ -319,6 +319,7 @@ export async function extractWebsiteMetadata(): Promise<WebsiteMetadata> {
                         language: language,
                     };
                 } catch (error) {
+                    // We can't use our logger here because this code runs in the browser context
                     console.error('Error extracting webpage content:', error);
                     return {
                         url: document.location.href,
@@ -348,7 +349,7 @@ export async function extractWebsiteMetadata(): Promise<WebsiteMetadata> {
             id: tab.id.toString(),
         };
     } catch (error) {
-        console.error('Error extracting website metadata:', error);
+        logger.error('Error extracting website metadata:', { error });
         return {
             system: {
                 language: 'en',

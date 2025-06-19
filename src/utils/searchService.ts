@@ -1,5 +1,9 @@
 import axios from 'axios';
 import { load } from 'cheerio';
+import { Logger } from '@/utils/logger';
+
+// Create a logger for this module
+const logger = new Logger('searchService');
 
 // 搜索结果接口
 interface SearchResult {
@@ -25,7 +29,7 @@ export async function performSearch(query: string): Promise<SearchResult[]> {
             snippet: result.snippet,
         }));
     } catch (error) {
-        console.error('Search failed:', error);
+        logger.error('Search failed:', error);
         return [];
     }
 }
@@ -51,7 +55,7 @@ export async function fetchWebContent(url: string): Promise<string> {
 
         return `${title}\n\n${cleanedContent}`;
     } catch (error) {
-        console.error('Failed to fetch content:', error);
+        logger.error('Failed to fetch content:', error);
         return '';
     }
 }

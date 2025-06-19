@@ -2,6 +2,10 @@
  * 从当前网页提取内容
  * @returns {Promise<string>} 从网页提取的内容
  */
+import { Logger } from '@/utils/logger';
+
+// Create a logger for this module
+const logger = new Logger('webContentExtractor');
 export async function extractWebpageContent(): Promise<string> {
     try {
         // 获取页面标题
@@ -37,7 +41,7 @@ Content:${contentText.slice(0, 15000)}${
 
         return extractedContent;
     } catch (error) {
-        console.error('提取网页内容时出错:', error);
+        logger.error('提取网页内容时出错:', error);
         return '由于错误，无法提取网页内容。';
     }
 }

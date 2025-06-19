@@ -7,6 +7,7 @@ const DB_VERSION = 1;
 // Store names for different components
 const CHAT_APP_STORE = 'chatAppMessages';
 const CHAT_INTERFACE_STORE = 'chatInterfaceMessages';
+const GENERAL_STORE = 'generalStorage'; // 通用存储空间
 
 // Initialize the database
 export const initDatabase = (): Promise<IDBDatabase> => {
@@ -34,6 +35,11 @@ export const initDatabase = (): Promise<IDBDatabase> => {
             // Create store for chat interface messages if it doesn't exist
             if (!db.objectStoreNames.contains(CHAT_INTERFACE_STORE)) {
                 db.createObjectStore(CHAT_INTERFACE_STORE, { keyPath: 'conversationId' });
+            }
+
+            // Create general store for other data if it doesn't exist
+            if (!db.objectStoreNames.contains(GENERAL_STORE)) {
+                db.createObjectStore(GENERAL_STORE, { keyPath: 'key' });
             }
         };
     });
@@ -161,4 +167,91 @@ export const deleteChatInterfaceConversation = (conversationId: string): Promise
 
 export const listChatInterfaceConversations = (): Promise<string[]> => {
     return listConversations(CHAT_INTERFACE_STORE);
+};
+
+// 通用存储对象，可用于存储任何类型的数据
+export const indexedDBStorage = {
+    async setItem(key: string, value: any): Promise<void> {
+        const db = await initDatabase();
+
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(GENERAL_STORE, 'readwrite');
+            const store = transaction.objectStore(GENERAL_STORE);
+
+            const request = store.put({
+                key,
+                value,
+                updatedAt: new Date().toISOString(),
+            });
+
+            request.onsuccess = () => resolve();
+            request.onerror = (event) => {
+                console.error('Error saving data to IndexedDB:', event);
+                reject('Failed to save data');
+            };
+
+            transaction.oncomplete = () => db.close();
+        });
+    },
+
+    async getItem(key: string): Promise<any> {
+        const db = await initDatabase();
+
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(GENERAL_STORE, 'readonly');
+            const store = transaction.objectStore(GENERAL_STORE);
+
+            const request = store.get(key);
+
+            request.onsuccess = (event) => {
+                const result = (event.target as IDBRequest).result;
+                resolve(result ? result.value : null);
+            };
+
+            request.onerror = (event) => {
+                console.error('Error retrieving data from IndexedDB:', event);
+                reject('Failed to retrieve data');
+            };
+
+            transaction.oncomplete = () => db.close();
+        });
+    },
+
+    async removeItem(key: string): Promise<void> {
+        const db = await initDatabase();
+
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(GENERAL_STORE, 'readwrite');
+            const store = transaction.objectStore(GENERAL_STORE);
+
+            const request = store.delete(key);
+
+            request.onsuccess = () => resolve();
+            request.onerror = (event) => {
+                console.error('Error removing data from IndexedDB:', event);
+                reject('Failed to remove data');
+            };
+
+            transaction.oncomplete = () => db.close();
+        });
+    },
+
+    async clear(): Promise<void> {
+        const db = await initDatabase();
+
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(GENERAL_STORE, 'readwrite');
+            const store = transaction.objectStore(GENERAL_STORE);
+
+            const request = store.clear();
+
+            request.onsuccess = () => resolve();
+            request.onerror = (event) => {
+                console.error('Error clearing data from IndexedDB:', event);
+                reject('Failed to clear data');
+            };
+
+            transaction.oncomplete = () => db.close();
+        });
+    },
 };

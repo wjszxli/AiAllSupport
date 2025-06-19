@@ -3,6 +3,10 @@ import { t } from '@/locales/i18n';
 import React from 'react';
 import { updateMessage } from '@/utils/messageUtils';
 import { SEARCH_COUNT } from '@/utils/constant';
+import { Logger } from '@/utils/logger';
+
+// Create a logger for this module
+const logger = new Logger('localChatService');
 
 // 检查扩展API是否可用
 const isExtensionApiAvailable = (): boolean => {
@@ -26,7 +30,7 @@ export const performSearch = async (query: string): Promise<SearchResult[]> => {
                     return response.results;
                 }
             } catch (error) {
-                console.error('Background script search failed:', error);
+                logger.error('Background script search failed:', { error });
             }
 
             // 方式2: 直接使用扩展API (如果可用)
@@ -36,15 +40,15 @@ export const performSearch = async (query: string): Promise<SearchResult[]> => {
                     return results;
                 }
             } catch (error) {
-                console.error('Extension API search failed:', error);
+                logger.error('Extension API search failed:', { error });
             }
         }
 
         // 所有方法都失败了
-        console.error('All search methods failed');
+        logger.error('All search methods failed');
         return [];
     } catch (error) {
-        console.error('Search failed:', error);
+        logger.error('Search failed:', { error });
         return [];
     }
 };
@@ -72,7 +76,7 @@ export const fetchWebContent = async (url: string): Promise<string> => {
                     return response.content;
                 }
             } catch (error) {
-                console.error('Background script web content fetch failed:', error);
+                logger.error('Background script web content fetch failed:', { error });
             }
 
             // 方式2: 直接使用扩展API (如果可用)
@@ -82,15 +86,15 @@ export const fetchWebContent = async (url: string): Promise<string> => {
                     return result.content || '';
                 }
             } catch (error) {
-                console.error('Extension API content fetch failed:', error);
+                logger.error('Extension API content fetch failed:', { error });
             }
         }
 
         // 所有方法都失败了
-        console.error('All web content fetch methods failed');
+        logger.error('All web content fetch methods failed');
         return '';
     } catch (error) {
-        console.error('Failed to fetch content:', error);
+        logger.error('Failed to fetch content:', { error });
         return '';
     }
 };
@@ -120,7 +124,7 @@ export async function localFetchWebContentWithContext(
     updateMessage(setMessages, messageId, searchingMessage);
 
     const searchResults = await performSearch(inputMessage);
-    console.log('searchResults', searchResults);
+    logger.debug('Search results:', { searchResults });
 
     if (searchResults.length > 0) {
         // 查询结果存在，获取网页内容
@@ -128,14 +132,14 @@ export async function localFetchWebContentWithContext(
             searchResults.slice(0, SEARCH_COUNT).map((result) => fetchWebContent(result.link)),
         );
 
-        console.log('contents', contents);
+        logger.debug('Contents:', { contents });
 
         // 转换为请求的格式
         const formattedContents = contents.map((content, index) =>
             formatWebContent(content, searchResults[index].link, index + 1),
         );
 
-        console.log('formattedContents', formattedContents);
+        logger.debug('Formatted contents:', { formattedContents });
 
         // 创建一个Web内容引用的JSON格式
         const webReferences = JSON.stringify(formattedContents, null, 2);

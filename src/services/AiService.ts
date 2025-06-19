@@ -1,25 +1,38 @@
-import AiProvider from '@/llmProviders/AiProvider';
+import LangChainService from '@/langchain/services/LangChainService';
 import { Model, Provider, Robot } from '@/types';
 import { Message } from '@/types/message';
 import { Chunk } from '@/types/chunk';
-import { filterContextMessages, filterUsefulMessages } from '@/utils/message/filters';
+import { filterContextMessages } from '@/utils/message/filters';
 import { findLast } from 'lodash';
 
 import llmStore from '@/store/llm';
 
 export const checkApiProvider = async (provider: Provider, model: Model) => {
-    const ai = new AiProvider(provider);
-    const result = await ai.check(model, true);
+    // if (USE_LANGCHAIN) {
+    const langChainService = new LangChainService(provider);
+    const result = await langChainService.check(model);
     if (result.valid && !result.error) {
         return result;
     }
-
-    return ai.check(model, false);
+    return langChainService.check(model);
+    // } else {
+    //     const ai = new AiProvider(provider);
+    //     const result = await ai.check(model, true);
+    //     if (result.valid && !result.error) {
+    //         return result;
+    //     }
+    //     return ai.check(model, false);
+    // }
 };
 
 export const getModels = async (provider: Provider) => {
-    const ai = new AiProvider(provider);
-    return ai.models(provider);
+    // if (USE_LANGCHAIN) {
+    const langChainService = new LangChainService(provider);
+    return langChainService.getModels(provider);
+    // } else {
+    //     const ai = new AiProvider(provider);
+    //     return ai.models(provider);
+    // }
 };
 
 export async function fetchChatCompletion({
@@ -39,9 +52,6 @@ export async function fetchChatCompletion({
         throw new Error('Provider not found');
     }
 
-    const AI = new AiProvider(provider);
-
-    // Make sure that 'Clear Context' works for all scenarios including external tool and normal chat.
     messages = filterContextMessages(messages);
 
     const lastUserMessage = findLast(messages, (m) => m.role === 'user');
@@ -50,12 +60,21 @@ export async function fetchChatCompletion({
         return;
     }
 
-    const filteredMessages = filterUsefulMessages(messages);
-
-    await AI.completions({
-        messages: filteredMessages,
+    // if (USE_LANGCHAIN) {
+    const langChainService = new LangChainService(provider);
+    await langChainService.completions({
+        messages,
         robot,
-        onFilterMessages: () => {},
         onChunk: onChunkReceived,
     });
+    // } else {
+    //     const AI = new AiProvider(provider);
+    //     const filteredMessages = filterUsefulMessages(messages);
+    //     await AI.completions({
+    //         messages: filteredMessages,
+    //         robot,
+    //         onFilterMessages: () => {},
+    //         onChunk: onChunkReceived,
+    //     });
+    // }
 }
