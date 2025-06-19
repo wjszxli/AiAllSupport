@@ -349,10 +349,14 @@ export class RobotDB {
             await this.saveRobotToDB(robot);
             await this.updateRobotList();
 
-            await db.topics.add({
-                id: topic.id,
-                messages: [],
-            });
+            // 检查话题是否已存在，避免主键冲突
+            const existingTopic = await db.topics.get(topic.id);
+            if (!existingTopic) {
+                await db.topics.add({
+                    id: topic.id,
+                    messages: [],
+                });
+            }
         } catch (error) {
             console.error('Failed to add topic:', error);
             throw error;
