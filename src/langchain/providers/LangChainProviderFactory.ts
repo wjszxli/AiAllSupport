@@ -1,16 +1,26 @@
 import { Provider } from '@/types';
-// import OpenAiLangChainProvider from './OpenAiLangChainProvider';
 import BaseLangChainProvider from './BaseLangChainProvider';
 import DeepSeekLangChainProvider from './DeepSeekLangChainProvider';
+import OpenAiLangChainProvider from './OpenAiLangChainProvider';
+import OllamaLangChainProvider from './OllamaLangChainProvider';
+import { getLogger } from 'loglevel';
 
+const logger = getLogger('LangChainProviderFactory');
 export default class LangChainProviderFactory {
     static create(provider: Provider): BaseLangChainProvider {
-        console.log('provider', provider);
-        switch (provider.id) {
-            case 'openai':
-                return new DeepSeekLangChainProvider(provider);
-            default:
-                return new DeepSeekLangChainProvider(provider);
+        const { selectedModel } = provider;
+
+        if (provider.id === 'ollama') {
+            logger.info('Creating OllamaLangChainProvider');
+            return new OllamaLangChainProvider(provider);
         }
+
+        if (selectedModel?.id.includes('deepseek')) {
+            logger.info('Creating DeepSeekLangChainProvider');
+            return new DeepSeekLangChainProvider(provider);
+        }
+
+        logger.info('Creating OpenAiLangChainProvider');
+        return new OpenAiLangChainProvider(provider);
     }
 }

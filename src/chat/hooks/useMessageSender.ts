@@ -5,7 +5,7 @@ import llmStore from '@/store/llm';
 import rootStore from '@/store';
 import { InputMessage, getUserMessage } from '@/utils/message/input';
 import { getMessageService } from '@/services/MessageService';
-import { Robot } from '@/types';
+import { ConfigModelType, Robot } from '@/types';
 import { Logger } from '@/utils/logger';
 
 // Create a logger for this module
@@ -17,10 +17,12 @@ export const useMessageSender = () => {
             userInput,
             robot,
             onSuccess,
+            interfaceType = ConfigModelType.CHAT,
         }: {
             userInput: string;
             robot?: Robot;
             onSuccess?: () => void;
+            interfaceType?: ConfigModelType;
         }) => {
             if (!userInput.trim()) return;
 
@@ -33,7 +35,9 @@ export const useMessageSender = () => {
                 return;
             }
 
-            selectedRobot.model = llmStore.defaultModel;
+            // 使用指定界面类型的模型
+            selectedRobot.model = llmStore.getModelForType(interfaceType);
+            logger.debug(`Using ${interfaceType} model:`, selectedRobot.model);
 
             const topic = selectedRobot.topics.find((topic) => topic.id === selectedTopicId);
 

@@ -10,12 +10,33 @@ export type TranslationKey =
     | 'regenerate'
     | 'settings'
     | 'stop'
+    | 'validated'
     | 'edit'
+    | 'clear'
+    | 'create'
     | 'suggestedPrompt1'
     | 'suggestedPrompt2'
     | 'suggestedPrompt3'
     | 'suggestedPrompt4'
     | 'appTitle'
+    | 'assistants'
+    | 'topics'
+    | 'expand'
+    | 'collapse'
+    | 'newTopic'
+    | 'searchTopics'
+    | 'noTopicsFound'
+    | 'noTopics'
+    | 'createTopic'
+    | 'editTopic'
+    | 'enterTopicName'
+    | 'topicNameRequired'
+    | 'topicCreated'
+    | 'topicUpdated'
+    | 'topicDeleted'
+    | 'deleteTopicConfirm'
+    | 'deleteTopicContent'
+    | 'question'
     | 'saveConfig'
     | 'savingConfig'
     | 'serviceProvider'
@@ -23,6 +44,9 @@ export type TranslationKey =
     | 'apiKey'
     | 'enterApiKey'
     | 'getApiKey'
+    | 'validate'
+    | 'apiHost'
+    | 'enterApiHost'
     | 'modelSelection'
     | 'selectModel'
     | 'showIcon'
@@ -31,6 +55,7 @@ export type TranslationKey =
     | 'configSaved'
     | 'validatingApi'
     | 'apiValidSuccess'
+    | 'apiValidFailed'
     | 'savingConfigError'
     | 'aiAssistant'
     | 'askAnything'
@@ -41,6 +66,8 @@ export type TranslationKey =
     | 'send'
     | 'thinking'
     | 'think'
+    | 'processing'
+    | 'interrupted'
     | 'you'
     | 'assistant'
     | 'askWebpage'
@@ -48,6 +75,7 @@ export type TranslationKey =
     | 'interfaceSettings'
     | 'errorProcessing'
     | 'errorRegenerating'
+    | 'regenerating'
     | 'copied'
     | 'failedCopy'
     | 'codeCopied'
@@ -149,4 +177,25 @@ export type TranslationKey =
     | 'error500'
     | 'error502'
     | 'error503'
-    | 'error504';
+    | 'error504'
+    | 'modelSettingsSaved'
+    | 'failedToLoadModelSettings'
+    | 'failedToSaveModelSettings'
+    | 'providersWithApiKey'
+    | 'providersWithoutApiKey';
+
+// 模型设置相关
+export const CHAT_MODEL = 'chatModel';
+export const POPUP_MODEL = 'popupModel';
+export const SIDEBAR_MODEL = 'sidebarModel';
+export const CHAT_MODEL_DESCRIPTION = 'chatModelDescription';
+export const POPUP_MODEL_DESCRIPTION = 'popupModelDescription';
+export const SIDEBAR_MODEL_DESCRIPTION = 'sidebarModelDescription';
+export const MODEL_PROVIDER = 'modelProvider';
+export const MODEL_NAME = 'modelName';
+export const SELECT_MODEL_FIRST = 'selectModelFirst';
+export const MODEL_SETTINGS_SAVED = 'modelSettingsSaved';
+export const FAILED_TO_LOAD_MODEL_SETTINGS = 'failedToLoadModelSettings';
+export const FAILED_TO_SAVE_MODEL_SETTINGS = 'failedToSaveModelSettings';
+export const NO_PROVIDERS_CONFIGURED = 'noProvidersConfigured';
+export const MODEL_SETTINGS_INFO = 'modelSettingsInfo';

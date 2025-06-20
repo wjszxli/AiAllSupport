@@ -1,7 +1,7 @@
 import { ChatOpenAI } from '@langchain/openai';
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import BaseLangChainProvider from './BaseLangChainProvider';
-import { CompletionsParams, Model, Provider } from '@/types';
+import { CompletionsParams, Provider } from '@/types';
 import { filterContextMessages, filterEmptyMessages } from '@/utils/message/filters';
 import { takeRight } from 'lodash';
 import { Message } from '@/types/message';
@@ -15,14 +15,14 @@ export default class OpenAiLangChainProvider extends BaseLangChainProvider {
 
     constructor(provider: Provider) {
         super(provider);
-        this.initialize();
+        this.chatModel = this.initialize();
     }
 
-    initialize(): void {
-        this.chatModel = new ChatOpenAI({
-            modelName: this.provider.models?.[0]?.id,
+    initialize(stream = true): ChatOpenAI {
+        return new ChatOpenAI({
+            modelName: this.provider.selectedModel?.id,
             temperature: 0.7,
-            streaming: true,
+            streaming: stream,
             apiKey: this.provider.apiKey,
             configuration: {
                 baseURL: this.provider.apiHost,
@@ -41,7 +41,7 @@ export default class OpenAiLangChainProvider extends BaseLangChainProvider {
             filterContextMessages(takeRight(messages, contextCount + 1)),
         );
 
-        onFilterMessages(filteredMessages);
+        onFilterMessages?.(filteredMessages);
 
         const langchainMessages = await this.convertToLangChainMessages(filteredMessages);
 
@@ -130,17 +130,12 @@ export default class OpenAiLangChainProvider extends BaseLangChainProvider {
     /**
      * 实现特定于 OpenAI 的模型可用性检查
      */
-    protected async checkModelAvailability(
-        model: Model,
-    ): Promise<{ valid: boolean; error: Error | null }> {
+    protected async checkModelAvailability(): Promise<{ valid: boolean; error: Error | null }> {
         try {
-            // 如果需要检查的模型与当前模型不同，或者当前模型未初始化，则更新模型配置
-            if (!this.chatModel || this.chatModel.modelName !== model.id) {
-                this.initialize();
-            }
+            const checkModel = this.initialize(false);
 
             // 使用现有的 chatModel 实例进行测试
-            await this.chatModel.invoke([new HumanMessage('test')]);
+            await checkModel.invoke([new HumanMessage('test')]);
 
             return { valid: true, error: null };
         } catch (error) {
@@ -148,16 +143,6 @@ export default class OpenAiLangChainProvider extends BaseLangChainProvider {
                 valid: false,
                 error: error instanceof Error ? error : new Error('Unknown error'),
             };
-        }
-    }
-
-    async models(provider: Provider): Promise<Model[]> {
-        try {
-            // 返回提供商配置中的模型列表
-            return provider.models || [];
-        } catch (error) {
-            logger.error('Error fetching models:', error);
-            return [];
         }
     }
 }

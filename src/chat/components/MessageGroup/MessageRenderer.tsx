@@ -445,14 +445,15 @@ const MessageRenderer: React.FC<MessageRendererProps> = observer(
             processMainTextContent,
             isStreaming,
             messageBlocks,
-            // 添加思考块内容变化的监听，确保流式更新时能重新计算
-            ...messageBlocks
-                .filter((block) => block.type === MessageBlockType.THINKING)
-                .map((block) => ('content' in block ? block.content : '')),
-            // 添加思考块状态变化的监听
-            ...messageBlocks
-                .filter((block) => block.type === MessageBlockType.THINKING)
-                .map((block) => block.status),
+            // Use a stable representation of the thinking blocks instead of spreading them
+            JSON.stringify(
+                messageBlocks
+                    .filter((block) => block.type === MessageBlockType.THINKING)
+                    .map((block) => ({
+                        content: 'content' in block ? block.content : '',
+                        status: block.status,
+                    })),
+            ),
             thinkingContent,
             errorContent,
         ]);

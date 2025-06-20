@@ -245,9 +245,6 @@ export class MessageService {
 
                 // MobX 状态更新
                 runInAction(() => {
-                    this.rootStore.messageStore.updateMessage(assistantMsgId, {
-                        blockInstruction: { id: newBlock.id },
-                    });
                     this.rootStore.messageBlockStore.upsertBlock(newBlock);
                     this.rootStore.messageStore.upsertBlockReference(
                         assistantMsgId,
@@ -587,67 +584,73 @@ export class MessageService {
                 messages: messagesForContext,
                 robot: robot,
                 onChunkReceived: streamProcessorCallbacks,
-                abortController,
             });
         } catch (error: any) {
             console.error('Error fetching chat completion:', error);
             if (callbacks.onError) {
                 await callbacks.onError(error);
             }
-            // // 只有在非用户主动取消的情况下才抛出错误
-            // const isAbort = isAbortError(error);
-            // if (!isAbort) {
-            // throw error;
-            // }
         } finally {
             // Clean up any remaining blocks in PROCESSING/STREAMING state
-            // 但要小心不要覆盖已经正确完成的思考块
-            // const message = this.rootStore.messageStore.getMessageById(assistantMsgId);
-            // if (message && message.blocks) {
-            //     const blocksToCleanup: string[] = [];
-            //     message.blocks.forEach((blockId: string) => {
-            //         const block = this.rootStore.messageBlockStore.getBlockById(blockId);
-            //         if (
-            //             block &&
-            //             (block.status === MessageBlockStatus.PROCESSING ||
-            //                 block.status === MessageBlockStatus.STREAMING)
-            //         ) {
-            //             // 只清理确实还在处理中的块
-            //             console.log('[finally cleanup] Found block to cleanup:', {
-            //                 blockId,
-            //                 type: block.type,
-            //                 status: block.status,
-            //             });
-            //             blocksToCleanup.push(blockId);
-            //         }
-            //     });
-            //     if (blocksToCleanup.length > 0) {
-            //         console.log('[finally cleanup] Cleaning up blocks:', blocksToCleanup);
-            //         runInAction(() => {
-            //             blocksToCleanup.forEach((blockId) => {
-            //                 this.rootStore.messageBlockStore.updateBlock(blockId, {
-            //                     status: MessageBlockStatus.SUCCESS,
-            //                 });
-            //             });
-            //         });
-            //         // Save the cleaned up blocks to database
-            //         for (const blockId of blocksToCleanup) {
-            //             await this.saveBlockToDB(blockId);
-            //         }
-            //     }
-            // }
-            // runInAction(() => {
-            //     this.rootStore.messageStore.setTopicLoading(topicId, false);
-            //     this.rootStore.messageStore.setStreamingMessageId(null);
-            // });
-            // // 清理 AbortController
-            // if (this.currentAbortController === abortController) {
-            //     this.currentAbortController = null;
-            // }
-            // // 清理当前话题ID
-            // if (this.currentTopicId === topicId) {
-            //     this.currentTopicId = null;
-            // }
+            const message = this.rootStore.messageStore.getMessageById(assistantMsgId);
+            if (message && message.blocks) {
+                const blocksToCleanup: string[] = [];
+                message.blocks.forEach((blockId: string) => {
+                    const block = this.rootStore.messageBlockStore.getBlockById(blockId);
+                    if (
+                        block &&
+                        (block.status === MessageBlockStatus.PROCESSING ||
+                            block.status === MessageBlockStatus.STREAMING)
+                    ) {
+                        // 只清理确实还在处理中的块
+                        console.log('[finally cleanup] Found block to cleanup:', {
+                            blockId,
+                            type: block.type,
+                            status: block.status,
+                        });
+                        blocksToCleanup.push(blockId);
+                    }
+                });
+                if (blocksToCleanup.length > 0) {
+                    console.log('[finally cleanup] Cleaning up blocks:', blocksToCleanup);
+                    runInAction(() => {
+                        blocksToCleanup.forEach((blockId) => {
+                            this.rootStore.messageBlockStore.updateBlock(blockId, {
+                                status: MessageBlockStatus.SUCCESS,
+                            });
+                        });
+                    });
+                    // Save the cleaned up blocks to database
+                    for (const blockId of blocksToCleanup) {
+                        await this.saveBlockToDB(blockId);
+                    }
+                }
+            }
+
+            // 确保更新消息状态为成功
+            if (
+                message &&
+                (message.status === RobotMessageStatus.PROCESSING ||
+                    message.status === RobotMessageStatus.PENDING)
+            ) {
+                const messageUpdate = {
+                    status: RobotMessageStatus.SUCCESS,
+                };
+                runInAction(() => {
+                    this.rootStore.messageStore.updateMessage(assistantMsgId, messageUpdate);
+                });
+                await this.saveUpdatesToDB(assistantMsgId, topicId, messageUpdate, []);
+            }
+
+            runInAction(() => {
+                this.rootStore.messageStore.setTopicLoading(topicId, false);
+                this.rootStore.messageStore.setStreamingMessageId(null);
+            });
+
+            // 清理 AbortController
+            if (this.currentAbortController === abortController) {
+                this.currentAbortController = null;
+            }
         }
     }
 

@@ -1,6 +1,5 @@
 import {
     ApiOutlined,
-    BugOutlined,
     ControlOutlined,
     GlobalOutlined,
     InfoCircleOutlined,
@@ -21,7 +20,6 @@ import About from './components/About';
 import ApiSettings from './components/ApiSettings';
 import Footer from './components/Footer';
 import Interface from './components/Interface';
-import Logger from './components/Logger';
 import Search from './components/Search';
 import ModelSettings from './components/ModelSettings';
 
@@ -205,18 +203,6 @@ const App: React.FC = () => {
                                     }}
                                 />
                             </TabPane>
-
-                            <TabPane
-                                tab={
-                                    <span>
-                                        <BugOutlined /> {t('options_logging_settings')}
-                                    </span>
-                                }
-                                key="logging"
-                            >
-                                <Logger />
-                            </TabPane>
-
                             <TabPane
                                 tab={
                                     <span>

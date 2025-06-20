@@ -1,47 +1,135 @@
-import {
-    Avatar,
-    Button,
-    Form,
-    Input,
-    List,
-    message,
-    Modal,
-    Select,
-    Tag,
-    Typography,
-    Space,
-    Card,
-} from 'antd';
+import { Avatar, Button, List, Input, Select, Tag, Tooltip } from 'antd';
 import React, { useState } from 'react';
-import { GlobalOutlined, KeyOutlined, CodeOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent,
+} from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    useSortable,
+    verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
-import { t } from '@/locales/i18n';
-import { isLocalhost } from '@/utils';
 import { observer } from 'mobx-react';
 import { useStore } from '@/store';
-import { Provider } from '@/types';
+import { ConfigModelType, Provider } from '@/types';
 import { getProviderLogo, PROVIDER_CONFIG } from '@/config/providers';
-import { checkApiProvider, getModels } from '@/services/AiService';
 import { getProviderName } from '@/utils/i18n';
 import { SYSTEM_MODELS } from '@/config/models';
+import ConfigModal from './components/ConfigModal';
 
-const { Text } = Typography;
+interface SortableItemProps {
+    provider: Provider;
+    llmStore: any;
+    openModal: (provider: Provider) => Promise<void>;
+}
+
+// 创建可排序的列表项组件
+const SortableItem: React.FC<SortableItemProps> = ({ provider, llmStore, openModal }) => {
+    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
+        id: provider.id,
+    });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+    };
+
+    // 检查该提供商是否被选为聊天、弹窗或侧边栏模型
+    const chatModel = llmStore.getModelForType(ConfigModelType.CHAT);
+    const popupModel = llmStore.getModelForType(ConfigModelType.POPUP);
+    const sidebarModel = llmStore.getModelForType(ConfigModelType.SIDEBAR);
+
+    // 检查该提供商的模型是否被选中
+    const isChatProvider = chatModel && chatModel.provider === provider.id;
+    const isPopupProvider = popupModel && popupModel.provider === provider.id;
+    const isSidebarProvider = sidebarModel && sidebarModel.provider === provider.id;
+
+    return (
+        <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+            <List.Item
+                key={provider.id}
+                style={{
+                    cursor: 'move',
+                    padding: '12px 16px',
+                    borderBottom: '1px solid #f0f0f0',
+                }}
+            >
+                <List.Item.Meta
+                    avatar={<Avatar src={getProviderLogo(provider.id)} />}
+                    title={
+                        <a
+                            href={
+                                // @ts-ignore
+                                PROVIDER_CONFIG[provider.id]?.websites?.official
+                            }
+                        >
+                            {getProviderName(provider)}
+                        </a>
+                    }
+                />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {isChatProvider && (
+                        <Tooltip title={`聊天界面使用模型: ${chatModel.name}`}>
+                            <Tag color="blue">聊天</Tag>
+                        </Tooltip>
+                    )}
+                    {isPopupProvider && (
+                        <Tooltip title={`弹窗界面使用模型: ${popupModel.name}`}>
+                            <Tag color="green">弹窗</Tag>
+                        </Tooltip>
+                    )}
+                    {isSidebarProvider && (
+                        <Tooltip title={`侧边栏使用模型: ${sidebarModel.name}`}>
+                            <Tag color="purple">侧边栏</Tag>
+                        </Tooltip>
+                    )}
+                    <Button
+                        color="cyan"
+                        variant="solid"
+                        onClick={(e) => {
+                            // 阻止点击按钮时触发拖拽
+                            e.stopPropagation();
+                            openModal(provider);
+                        }}
+                    >
+                        设置
+                    </Button>
+                </div>
+            </List.Item>
+        </div>
+    );
+};
 
 const ApiSettings: React.FC = observer(() => {
     const { llmStore } = useStore();
 
-    const [form] = Form.useForm();
-    const [apiKeyValidated, setApiKeyValidated] = useState<boolean>(false);
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-    const [currentProvider, setCurrentProvider] = useState<Provider | null>(null);
-    const [testing, setTesting] = useState<boolean>(false);
     const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
     const [providerSearch, setProviderSearch] = useState<string>('');
+    const [providers, setProviders] = useState<Provider[]>(llmStore.providers);
+    const [selectProviderId, setSelectProviderId] = useState<string>('');
 
-    // Determine if the current provider requires an API key
-    const requiresApiKey = currentProvider?.requiresApiKey !== false;
+    // 设置拖拽传感器
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8, // 需要移动8px才激活拖拽，防止误触
+            },
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        }),
+    );
 
-    // Collect all unique groups from SYSTEM_MODELS
     const allGroups = React.useMemo(() => {
         const groupSet = new Set<string>();
         Object.values(SYSTEM_MODELS).forEach((models) => {
@@ -50,7 +138,6 @@ const ApiSettings: React.FC = observer(() => {
             });
         });
         const groups = Array.from(groupSet);
-        // Sort: groups containing '免费' first, then the rest alphabetically
         return groups.sort((a, b) => {
             const aFree = a.includes('免费');
             const bFree = b.includes('免费');
@@ -60,276 +147,57 @@ const ApiSettings: React.FC = observer(() => {
         });
     }, []);
 
-    // Filter providers by selected groups and search
     const filteredProviders = React.useMemo(() => {
-        let providers = llmStore.providers;
+        let result = providers;
         if (selectedGroups.length > 0) {
-            providers = providers.filter((provider) =>
+            result = result.filter((provider) =>
                 provider.models.some((model) => selectedGroups.includes(model.group)),
             );
         }
         if (providerSearch.trim()) {
             const searchLower = providerSearch.trim().toLowerCase();
-            providers = providers.filter((provider) =>
+            result = result.filter((provider) =>
                 getProviderName(provider).toLowerCase().includes(searchLower),
             );
         }
-        return providers;
-    }, [llmStore.providers, selectedGroups, providerSearch]);
-
-    // Helper to group models for the Select dropdown
-    function getModelGroupOptions(models: any[] = []) {
-        const groupMap: Record<string, any[]> = {};
-        models.forEach((model) => {
-            const group = model.group || '其他';
-            if (!groupMap[group]) groupMap[group] = [];
-            groupMap[group].push({ label: model.name, value: model.id });
-        });
-        // Sort: free group first, then alphabetically
-        const sortedGroups = Object.keys(groupMap).sort((a, b) => {
-            const aFree = a.includes('免费');
-            const bFree = b.includes('免费');
-            if (aFree && !bFree) return -1;
-            if (!aFree && bFree) return 1;
-            return a.localeCompare(b);
-        });
-        return sortedGroups.map((group) => ({
-            label: group,
-            options: groupMap[group],
-        }));
-    }
-
-    const validateApiHost = async () => {
-        if (!currentProvider) return;
-
-        setTesting(true);
-
-        try {
-            const apiKey = form.getFieldValue('apiKey');
-            const apiHost = form.getFieldValue('apiHost');
-
-            // Only check for API key if the provider requires it and is not localhost
-            if (requiresApiKey && !isLocalhost(currentProvider.id) && !apiKey) {
-                message.error(t('pleaseEnterApiKey'));
-                setTesting(false);
-                return;
-            }
-
-            const selectedModel = form.getFieldValue('model');
-
-            const model =
-                currentProvider.models.find((m) => m.id === selectedModel) ||
-                currentProvider.models[0];
-
-            const { setDefaultModel, updateProvider } = llmStore;
-
-            setDefaultModel(model);
-            updateProvider({
-                ...currentProvider,
-                apiKey,
-                apiHost,
-            });
-
-            const { valid, error } = await checkApiProvider(
-                { ...currentProvider, apiKey, apiHost },
-                model,
-            );
-
-            if (valid) {
-                setApiKeyValidated(true);
-                message.success(t('apiValidSuccess'));
-            } else {
-                setApiKeyValidated(false);
-                message.error(error?.message || t('apiValidFailed'));
-            }
-        } catch (error) {
-            console.error('API 验证错误:', error);
-            setApiKeyValidated(false);
-
-            if (error instanceof Error) {
-                message.error(error.message);
-            } else {
-                message.error(String(error));
-            }
-        } finally {
-            setTesting(false);
-        }
-    };
+        return result;
+    }, [providers, selectedGroups, providerSearch]);
 
     const openModal = async (provider: Provider) => {
-        console.log('provider', provider);
-        setCurrentProvider(provider);
-        setApiKeyValidated(false);
-        const { defaultModel } = llmStore;
-
-        if (provider.models.length === 0 || isLocalhost(provider.id)) {
-            const models = await getModels({
-                ...provider,
-                apiKey: provider.apiKey || 'xxx',
-                apiHost: provider.apiHost,
-            });
-
-            provider.models = models;
-            llmStore.updateProvider({
-                ...provider,
-                models,
-            });
-        }
-        const model =
-            defaultModel?.provider === provider.id
-                ? defaultModel?.id
-                : provider.models[0]?.id || '';
-
-        // 设置表单数据
-        form.setFieldsValue({
-            provider: provider.id,
-            apiKey: provider.apiKey || '',
-            apiHost: provider.apiHost || '',
-            model,
-        });
-
+        setSelectProviderId(provider.id);
         setIsModalOpen(true);
     };
 
-    const onUpdateApiHost = () => {
-        const { apiHost } = form.getFieldsValue();
-        if (!currentProvider) return;
-        llmStore.updateProvider({ ...currentProvider, apiHost });
-    };
-
     const handleOk = async () => {
-        try {
-            await form.validateFields();
-
-            if (currentProvider) {
-                const values = form.getFieldsValue();
-                const modelObj = currentProvider.models.find((m) => m.id === values.model);
-
-                // 更新llmStore中的配置
-                llmStore.updateProvider({
-                    ...currentProvider,
-                    apiKey: values.apiKey,
-                    apiHost: values.apiHost,
-                });
-
-                // 如果找到选择的模型，设置为默认
-                if (modelObj && currentProvider.id === llmStore.defaultModel?.provider) {
-                    llmStore.setDefaultModel({
-                        ...modelObj,
-                        provider: currentProvider.id,
-                    });
-                }
-
-                // 确保存储中的数据已更新
-                await new Promise((resolve) => setTimeout(resolve, 100));
-
-                // 通知其他页面（如chat页面）配置已更新
-                if (chrome && chrome.runtime) {
-                    try {
-                        // 先尝试使用 chrome.storage 直接更新
-                        await chrome.storage.local.set({
-                            'llm-store': JSON.stringify({
-                                providers: llmStore.providers,
-                                defaultModel: llmStore.defaultModel,
-                            }),
-                        });
-
-                        // 然后发送消息通知
-                        await chrome.runtime.sendMessage({
-                            action: 'providerSettingsUpdated',
-                            provider: currentProvider.id,
-                            timestamp: Date.now(),
-                        });
-
-                        console.log('已通知其他页面配置更新');
-                    } catch (error) {
-                        console.error('Failed to notify about provider settings update:', error);
-                    }
-                }
-
-                message.success(`${getProviderName(currentProvider)} 配置已保存`);
-                setIsModalOpen(false);
-            }
-        } catch (error) {
-            console.error('表单验证失败:', error);
-        }
+        setIsModalOpen(false);
     };
 
     const handleCancel = () => {
         setIsModalOpen(false);
     };
 
-    const setAsDefault = async () => {
-        if (!currentProvider) return;
+    // 处理拖拽结束事件
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
 
-        const values = form.getFieldsValue();
+        if (over && active.id !== over.id) {
+            setProviders((items) => {
+                const oldIndex = items.findIndex((item) => item.id === active.id);
+                const newIndex = items.findIndex((item) => item.id === over.id);
 
-        // Only check for API key if the provider requires it
-        if (requiresApiKey && !values.apiKey) {
-            message.error('请输入 API 密钥');
-            return;
-        }
+                // 更新本地状态
+                const newProviders = arrayMove(items, oldIndex, newIndex);
 
-        if (!values.apiHost) {
-            message.error('请输入 API 地址');
-            return;
-        }
+                // 同步到 llmStore
+                llmStore.providers = newProviders;
 
-        const modelObj = currentProvider.models.find((m) => m.id === values.model);
-
-        if (modelObj) {
-            // 设置为默认模型
-            llmStore.setDefaultModel({
-                ...modelObj,
-                provider: currentProvider.id,
+                return newProviders;
             });
-
-            // 确保存储中的数据已更新
-            await new Promise((resolve) => setTimeout(resolve, 100));
-
-            // 通知其他页面（如chat页面）默认提供商已更新
-            if (chrome && chrome.runtime) {
-                try {
-                    // 先尝试使用 chrome.storage 直接更新
-                    await chrome.storage.local.set({
-                        'llm-store': JSON.stringify({
-                            providers: llmStore.providers,
-                            defaultModel: llmStore.defaultModel,
-                        }),
-                    });
-
-                    // 然后发送消息通知
-                    await chrome.runtime.sendMessage({
-                        action: 'providerSettingsUpdated',
-                        provider: currentProvider.id,
-                        timestamp: Date.now(),
-                    });
-
-                    console.log('已通知其他页面默认提供商更新');
-                } catch (error) {
-                    console.error('Failed to notify about default provider update:', error);
-                }
-            }
-
-            message.success(`已将 ${getProviderName(currentProvider)} 设为默认提供商`);
         }
     };
 
-    console.log(
-        'currentProvider',
-        currentProvider?.models.map((m) => m.id),
-    );
-
-    // @ts-ignore
-    const providerConfig = (PROVIDER_CONFIG as any)[currentProvider?.id] || {};
-    const officialWebsite = providerConfig?.websites?.official;
-    const apiKeyWebsite = providerConfig?.websites?.apiKey;
-    const modelsPage = providerConfig?.websites?.models;
-    const docs = providerConfig?.websites?.docs;
-
     return (
         <>
-            {/* Provider Search and Group Filter */}
             <div style={{ marginBottom: 16, display: 'flex', gap: 8 }}>
                 <Input
                     placeholder="搜索供应商"
@@ -349,195 +217,47 @@ const ApiSettings: React.FC = observer(() => {
                     maxTagCount={2}
                 />
             </div>
-            {/* Provider List */}
-            <List
-                itemLayout="horizontal"
-                dataSource={filteredProviders}
-                renderItem={(item) => (
-                    <List.Item key={item.id}>
-                        <List.Item.Meta
-                            avatar={<Avatar src={getProviderLogo(item.id)} />}
-                            title={
-                                <a
-                                    href={
-                                        // @ts-ignore
-                                        PROVIDER_CONFIG[item.id]?.websites?.official
-                                    }
-                                >
-                                    {getProviderName(item)}
-                                </a>
-                            }
-                        />
-                        <div>
-                            {item.id === llmStore.defaultModel?.provider && (
-                                <Tag color="#2db7f5">目前在用</Tag>
-                            )}
-                            <Button color="cyan" variant="solid" onClick={() => openModal(item)}>
-                                设置
-                            </Button>
-                        </div>
-                    </List.Item>
-                )}
-            />
-            <Modal
-                title={
-                    currentProvider && (
-                        <Space>
-                            <Avatar size="small" src={getProviderLogo(currentProvider.id)} />
-                            {`配置 ${getProviderName(currentProvider)}`}
-                        </Space>
-                    )
-                }
-                open={isModalOpen}
-                onOk={handleOk}
-                onCancel={handleCancel}
-                width={600}
-                footer={[
-                    <Button
-                        key="test"
-                        type="default"
-                        onClick={validateApiHost}
-                        loading={testing}
-                        icon={apiKeyValidated ? <CheckCircleOutlined /> : null}
-                    >
-                        {testing ? '测试中...' : apiKeyValidated ? '连接成功' : '测试连接'}
-                    </Button>,
-                    <Button
-                        key="default"
-                        type="default"
-                        onClick={setAsDefault}
-                        disabled={currentProvider?.id === llmStore.defaultModel?.provider}
-                    >
-                        设置使用
-                    </Button>,
-                    <Button key="cancel" onClick={handleCancel}>
-                        取消
-                    </Button>,
-                    <Button key="save" type="primary" onClick={handleOk}>
-                        保存
-                    </Button>,
-                ]}
+
+            <div
+                style={{
+                    maxHeight: '60vh',
+                    overflow: 'auto',
+                    border: '1px solid #f0f0f0',
+                    borderRadius: '4px',
+                    padding: '0 4px',
+                }}
             >
-                <Form form={form} layout="vertical" requiredMark={false}>
-                    {!currentProvider || (!isLocalhost(currentProvider.id) && requiresApiKey) ? (
-                        <Form.Item
-                            label={
-                                <Space>
-                                    <KeyOutlined />
-                                    <span>API 密钥</span>
-                                </Space>
-                            }
-                            tooltip="您的密钥仅存储在本地，请放心填写"
-                        >
-                            <Form.Item
-                                name="apiKey"
-                                rules={[
-                                    {
-                                        required: requiresApiKey,
-                                        message: '请输入 API 密钥',
-                                    },
-                                ]}
-                                noStyle
-                            >
-                                <Input.Password placeholder="您的密钥存储在您本地，请放心填写" />
-                            </Form.Item>
-                            {apiKeyWebsite && (
-                                <Button
-                                    icon={<KeyOutlined />}
-                                    type="link"
-                                    href={apiKeyWebsite}
-                                    target="_blank"
-                                    style={{ textAlign: 'left', padding: 0 }}
-                                >
-                                    获取 API 密钥
-                                </Button>
+                <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                >
+                    <SortableContext
+                        items={filteredProviders.map((item) => item.id)}
+                        strategy={verticalListSortingStrategy}
+                    >
+                        <List
+                            itemLayout="horizontal"
+                            dataSource={filteredProviders}
+                            renderItem={(item) => (
+                                <SortableItem
+                                    key={item.id}
+                                    provider={item}
+                                    llmStore={llmStore}
+                                    openModal={openModal}
+                                />
                             )}
-                        </Form.Item>
-                    ) : null}
-
-                    <Form.Item
-                        label={
-                            <Space>
-                                <GlobalOutlined />
-                                <span>API 地址</span>
-                            </Space>
-                        }
-                        name="apiHost"
-                        rules={[{ required: true, message: '请输入 API 地址' }]}
-                        tooltip="如果不确定，请保留默认值"
-                    >
-                        <Input placeholder="请输入 API 地址" onBlur={onUpdateApiHost} />
-                    </Form.Item>
-
-                    <Form.Item
-                        label={
-                            <Space>
-                                <CodeOutlined />
-                                <span>默认模型</span>
-                            </Space>
-                        }
-                        name="model"
-                        rules={[{ required: true, message: '请选择默认模型' }]}
-                    >
-                        <Select
-                            placeholder="请选择默认模型"
-                            options={getModelGroupOptions(currentProvider?.models)}
                         />
-                    </Form.Item>
-                </Form>
-                <div>
-                    {officialWebsite && (
-                        <Button
-                            icon={<GlobalOutlined />}
-                            type="link"
-                            href={officialWebsite}
-                            target="_blank"
-                            style={{ textAlign: 'left' }}
-                        >
-                            官网
-                        </Button>
-                    )}
-                    {docs && (
-                        <Button
-                            icon={<CodeOutlined />}
-                            type="link"
-                            href={docs}
-                            target="_blank"
-                            style={{ textAlign: 'left' }}
-                        >
-                            官方文档
-                        </Button>
-                    )}
-                    {modelsPage && (
-                        <Button
-                            icon={<GlobalOutlined />}
-                            type="link"
-                            href={modelsPage}
-                            target="_blank"
-                            style={{ textAlign: 'left' }}
-                        >
-                            模型列表
-                        </Button>
-                    )}
-                </div>
+                    </SortableContext>
+                </DndContext>
+            </div>
 
-                {apiKeyValidated && (
-                    <Card
-                        style={{
-                            marginBottom: 16,
-                            backgroundColor: '#f6ffed',
-                            border: '1px solid #b7eb8f',
-                        }}
-                        size="small"
-                        bordered
-                    >
-                        <Space>
-                            <CheckCircleOutlined style={{ color: '#52c41a' }} />
-                            <Text>API 连接测试成功</Text>
-                        </Space>
-                    </Card>
-                )}
-            </Modal>
+            <ConfigModal
+                isModalOpen={isModalOpen}
+                onCancel={handleCancel}
+                onOk={handleOk}
+                selectProviderId={selectProviderId}
+            />
         </>
     );
 });

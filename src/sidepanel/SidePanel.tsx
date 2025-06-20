@@ -6,10 +6,9 @@ import MarkdownIt from 'markdown-it';
 import mathjax3 from 'markdown-it-mathjax3';
 import './SidePanel.scss';
 import { extractWebsiteMetadata } from '@/utils';
-import { sendMessage } from '@/services/chatService';
 import { existWebSummarizerRobot, getWebSummarizerRobot } from '@/services/RobotService';
 import robotDB from '@/store/robot';
-import { Robot } from '@/types';
+import { ConfigModelType, Robot } from '@/types';
 import { useMessageSender } from '@/chat/hooks/useMessageSender';
 import rootStore from '@/store';
 
@@ -48,8 +47,15 @@ const SidePanel: React.FC = () => {
         });
         const tabId = tab?.id?.toString();
         setTabId(tabId);
-        handleSendMessage({ userInput: message, robot: webSummarizerRobot });
-    }, [t, setTabId, sendMessage, extractWebsiteMetadata]);
+
+        if (webSummarizerRobot) {
+            handleSendMessage({
+                userInput: message,
+                robot: webSummarizerRobot,
+                interfaceType: ConfigModelType.SIDEBAR,
+            });
+        }
+    }, [t, setTabId]);
 
     useEffect(() => {
         const handleMessage = async (event: MessageEvent) => {

@@ -16,8 +16,8 @@ export function getUserMessage({ robot, topic, type, content }: InputMessage): {
     message: Message;
     blocks: MessageBlock[];
 } {
-    const defaultModel = llmStore.defaultModel;
-    const model = robot.model || defaultModel;
+    const chatModel = llmStore.chatModel;
+    const model = robot.model || chatModel;
     const messageId = uuidv4();
     const blocks: MessageBlock[] = [];
     const blockIds: string[] = [];

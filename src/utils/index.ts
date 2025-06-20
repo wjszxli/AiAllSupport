@@ -1,5 +1,7 @@
 import { t } from '@/locales/i18n';
-import type { RequestMethod, WebsiteMetadata } from '@/types';
+import type { Model, RequestMethod, WebsiteMetadata } from '@/types';
+import { ConfigModelType } from '@/types';
+import llmStore from '@/store/llm';
 
 import { CHAT_BOX_ID, CHAT_BUTTON_ID, PROVIDERS_DATA } from './constant';
 import { Logger } from './logger';
@@ -411,3 +413,48 @@ export const getDefaultGroupName = (id: string, provider?: string) => {
 
     return str;
 };
+
+export const getModelGroupOptions = (models: Model[] = []) => {
+    const groupMap: Record<string, any[]> = {};
+    models.forEach((model) => {
+        const group = model.group || 'Other';
+        if (!groupMap[group]) groupMap[group] = [];
+        groupMap[group].push({ label: model.name, value: model.id });
+    });
+
+    const sortedGroups = Object.keys(groupMap).sort((a, b) => {
+        const aFree = a.includes('Free');
+        const bFree = b.includes('Free');
+        if (aFree && !bFree) return -1;
+        if (!aFree && bFree) return 1;
+        return a.localeCompare(b);
+    });
+
+    return sortedGroups.map((group) => ({
+        label: group,
+        options: groupMap[group],
+    }));
+};
+
+/**
+ * 获取特定界面类型的模型
+ *
+ * 根据界面类型（聊天、弹窗、侧边栏）获取相应的模型。
+ * 如果特定界面类型没有设置模型，会按照以下顺序回退：
+ * 1. 指定界面类型的模型
+ * 2. 聊天界面的模型
+ * 3. 默认模型
+ *
+ * @example
+ * // 在聊天界面获取模型
+ * const chatModel = getModelForInterface(ConfigModelType.CHAT);
+ *
+ * // 在弹窗界面获取模型
+ * const popupModel = getModelForInterface(ConfigModelType.POPUP);
+ *
+ * @param type 界面类型
+ * @returns 对应界面类型的模型
+ */
+export function getModelForInterface(type: ConfigModelType) {
+    return llmStore.getModelForType(type);
+}

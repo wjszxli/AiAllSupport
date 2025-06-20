@@ -12,14 +12,14 @@ import { Logger } from '@/utils/logger';
 
 // Create a logger for this module
 const logger = new Logger('useChatMessages');
-import {
-    saveChatAppMessages,
-    getChatAppMessages,
-    saveChatInterfaceMessages,
-    getChatInterfaceMessages,
-    deleteChatAppConversation,
-    deleteChatInterfaceConversation,
-} from '@/utils/indexedDBStorage';
+// import {
+//     saveChatAppMessages,
+//     getChatAppMessages,
+//     saveChatInterfaceMessages,
+//     getChatInterfaceMessages,
+//     deleteChatAppConversation,
+//     deleteChatInterfaceConversation,
+// } from '@/utils/indexedDBStorage';
 
 export const markdownCache = new LRUCache<string, string>(50);
 
@@ -51,11 +51,11 @@ export const useChatMessages = ({
         const loadMessages = async () => {
             try {
                 let loadedMessages: ChatMessage[] = [];
-                if (storeType === 'app') {
-                    loadedMessages = await getChatAppMessages(conversationId);
-                } else {
-                    loadedMessages = await getChatInterfaceMessages(conversationId);
-                }
+                // if (storeType === 'app') {
+                //     loadedMessages = await getChatAppMessages(conversationId);
+                // } else {
+                //     loadedMessages = await getChatInterfaceMessages(conversationId);
+                // }
 
                 if (loadedMessages && loadedMessages.length > 0) {
                     setMessages(loadedMessages);
@@ -76,11 +76,11 @@ export const useChatMessages = ({
 
         const saveMessagesToIndexedDB = async () => {
             try {
-                if (storeType === 'app') {
-                    await saveChatAppMessages(conversationId, messages);
-                } else {
-                    await saveChatInterfaceMessages(conversationId, messages);
-                }
+                // if (storeType === 'app') {
+                //     await saveChatAppMessages(conversationId, messages);
+                // } else {
+                //     await saveChatInterfaceMessages(conversationId, messages);
+                // }
             } catch (error) {
                 logger.error('Failed to save messages to IndexedDB:', error);
             }
@@ -258,11 +258,11 @@ export const useChatMessages = ({
             setMessages([]);
 
             // Clear messages from IndexedDB based on storeType
-            if (storeType === 'app') {
-                await deleteChatAppConversation(conversationId);
-            } else {
-                await deleteChatInterfaceConversation(conversationId);
-            }
+            // if (storeType === 'app') {
+            //     await deleteChatAppConversation(conversationId);
+            // } else {
+            //     await deleteChatInterfaceConversation(conversationId);
+            // }
 
             return true;
         } catch (error) {

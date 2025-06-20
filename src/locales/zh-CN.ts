@@ -306,10 +306,18 @@ export const zhCN = {
 
     // Model settings
     modelSettings: '模型设置',
-    chatModel: '聊天模型',
-    popupModel: '弹窗模型',
+    chatModel: '聊天界面模型',
+    popupModel: '弹窗界面模型',
     sidebarModel: '侧边栏模型',
-    chatModelDescription: '选择用于主界面的模型',
-    popupModelDescription: '选择用于弹窗的模型',
+    chatModelDescription: '选择用于主聊天界面的模型',
+    popupModelDescription: '选择用于弹窗界面的模型',
     sidebarModelDescription: '选择用于侧边栏的模型',
+    modelProvider: '提供商',
+    modelName: '模型',
+    selectModelFirst: '请先选择一个模型',
+    modelSettingsSaved: '模型设置已保存',
+    failedToLoadModelSettings: '加载模型设置失败',
+    failedToSaveModelSettings: '保存模型设置失败',
+    noProvidersConfigured: '未配置提供商。请先在 API 设置中设置提供商',
+    modelSettingsInfo: '为每个界面配置不同的 AI 模型。您的选择将自动保存。',
 };

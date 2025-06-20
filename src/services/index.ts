@@ -1,6 +1,6 @@
 import { t } from '@/locales/i18n';
-import type { IMessage } from '@/types';
-import { requestAIStream, requestApi } from '@/utils';
+import { ConfigModelType, IMessage } from '@/types';
+import { getModelForInterface, requestAIStream, requestApi } from '@/utils';
 import { SERVICE_MAP } from '@/utils/constant';
 import storage from '@/utils/storage';
 
@@ -20,15 +20,16 @@ export const validateApiKey = async () => {
     return requestApi(url, 'POST', data);
 };
 
-export const chat = async (messages: IMessage[]) => {
-    const { selectedModel, selectedProvider } = await storage.getConfig();
+export const chat = async (messages: IMessage[], interfaceType = ConfigModelType.CHAT) => {
+    const model = getModelForInterface(interfaceType);
+    const selectedProvider = model.provider;
 
     if (!selectedProvider || !(selectedProvider in SERVICE_MAP)) {
         throw new Error(t('selectProvider'));
     }
     const url = SERVICE_MAP[selectedProvider as keyof typeof SERVICE_MAP].chat;
     const data = {
-        model: selectedModel,
+        model: model.id,
         messages: [{ role: 'system', content: t('systemPrompt') }, ...messages],
         stream: true,
     };
@@ -51,16 +52,19 @@ export const chatAIStream = async (
     messages: IMessage[],
     onData: (chunk: { data: string; done: boolean }) => void,
     tabId?: string | null,
+    interfaceType = ConfigModelType.CHAT,
 ) => {
-    const { selectedModel, selectedProvider } = await storage.getConfig();
+    const model = getModelForInterface(interfaceType);
+    const selectedProvider = model.provider;
 
     if (!selectedProvider || !(selectedProvider in SERVICE_MAP)) {
         throw new Error(t('selectProvider'));
     }
     const url = SERVICE_MAP[selectedProvider as keyof typeof SERVICE_MAP].chat;
-    console.log('urls', url);
+    console.log(`Using ${interfaceType} model:`, model);
+
     const data = {
-        model: selectedModel,
+        model: model.id,
         messages: [{ role: 'system', content: t('systemPrompt') }, ...messages],
         stream: true,
     };

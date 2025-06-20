@@ -101,7 +101,7 @@ const ChatBody: React.FC<ChatBodyProps> = observer(
         const streamingMessageId = rootStore.messageStore.streamingMessageId;
 
         // 使用消息发送 hook
-        const { handleSendMessage: sendMessage } = useMessageSender();
+        const { handleSendMessage } = useMessageSender();
 
         // 获取 MessageService 实例
         const messageService = useMemo(() => getMessageService(rootStore), []);
@@ -129,10 +129,7 @@ const ChatBody: React.FC<ChatBodyProps> = observer(
             // 使用独立的 MessageService 来正确取消流式响应
             messageService.cancelCurrentStream(selectedTopicId);
 
-            // cancelCurrentStream 已经设置了 streamingMessageId 为 null，不需要重复设置
             setIsLoading(false);
-
-            console.log('[ChatBody] Cancel streaming response completed');
         }, [streamingMessageId, messageService]);
 
         // 当话题变化时加载消息
@@ -146,30 +143,10 @@ const ChatBody: React.FC<ChatBodyProps> = observer(
             }
         }, [selectedTopicId, streamingMessageId, messageService]);
 
-        // 当提供商设置更新时，确保使用最新的模型
-        // useEffect(() => {
-        //     if (selectedRobot && llmStore.defaultModel) {
-        //         // 检查机器人的模型是否需要更新
-        //         const currentModel = selectedRobot.model || selectedRobot.defaultModel;
-        //         const defaultModel = llmStore.defaultModel;
-
-        //         // 如果模型不同，更新机器人的模型
-        //         if (
-        //             currentModel?.id !== defaultModel.id ||
-        //             currentModel?.provider !== defaultModel.provider
-        //         ) {
-        //             robotStore.updateSelectedRobot({
-        //                 ...selectedRobot,
-        //                 model: defaultModel,
-        //             });
-        //         }
-        //     }
-        // }, [selectedRobot, llmStore.defaultModel]);
-
-        const handleSendMessage = () => {
+        const handleSendMessageClick = () => {
             if (!userInput.trim() || isLoading) return;
 
-            sendMessage({
+            handleSendMessage({
                 userInput,
                 robot: selectedRobot,
                 onSuccess: () => {
@@ -181,7 +158,7 @@ const ChatBody: React.FC<ChatBodyProps> = observer(
         const handleKeyDown = (e: React.KeyboardEvent) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                handleSendMessage();
+                handleSendMessageClick();
             }
         };
 
@@ -288,7 +265,7 @@ const ChatBody: React.FC<ChatBodyProps> = observer(
                                     onClick={
                                         streamingMessageId !== null
                                             ? cancelStreamingResponse
-                                            : handleSendMessage
+                                            : handleSendMessageClick
                                     }
                                     disabled={
                                         !streamingMessageId && (!userInput.trim() || isLoading)

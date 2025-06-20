@@ -1,6 +1,6 @@
 import { extractWebpageContent } from '../utils/webContentExtractor';
 import { chatAIStream } from '@/services';
-import type { ChatMessage, IMessage } from '@/types';
+import { ChatMessage, ConfigModelType, IMessage } from '@/types';
 import storage from '@/utils/storage';
 import { t } from '../locales/i18n';
 import React from 'react';
@@ -14,12 +14,15 @@ const logger = new Logger('chatService');
  * 向AI服务发送消息
  * @param {string} message - 要发送的消息
  * @param {(chunk: string) => void} onStreamUpdate - 用于增量更新的可选回调
+ * @param {string | null} tabId - 标签页ID
+ * @param {ConfigModelType} interfaceType - 界面类型，默认为聊天界面
  * @returns {Promise<string>} AI的响应
  */
 export async function sendMessage(
     message: string,
     onStreamUpdate?: (response: string, thinking: string) => void,
     tabId?: string | null,
+    interfaceType = ConfigModelType.CHAT,
 ): Promise<string> {
     try {
         const previousMessages: IMessage[] = (await storage.get('chatHistory')) || [];
@@ -100,7 +103,7 @@ export async function sendMessage(
                 }
             };
 
-            chatAIStream(sendMessage, onData, tabId).catch((error) => {
+            chatAIStream(sendMessage, onData, tabId, interfaceType).catch((error) => {
                 logger.error('Error in chatAIStream:', { error });
                 if (!signal.aborted) {
                     reject(error);

@@ -148,6 +148,7 @@ export type Provider = {
     apiHost: string;
     apiVersion?: string;
     models: Model[];
+    selectedModel?: Model;
     enabled?: boolean;
     isSystem?: boolean;
     isAuthed?: boolean;
@@ -206,7 +207,7 @@ export interface CompletionsParams {
     messages: Message[];
     robot: Robot;
     onChunk: (chunk: Chunk) => void;
-    onFilterMessages: (messages: Message[]) => void;
+    onFilterMessages?: (messages: Message[]) => void;
     abortController?: AbortController;
 }
 
@@ -221,3 +222,9 @@ export type Topic = {
     prompt?: string;
     isNameManuallyEdited?: boolean;
 };
+
+export enum ConfigModelType {
+    CHAT = 'chat',
+    POPUP = 'popup',
+    SIDEBAR = 'sidebar',
+}

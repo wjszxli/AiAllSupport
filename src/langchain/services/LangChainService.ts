@@ -13,8 +13,8 @@ export default class LangChainService {
         this.provider = LangChainProviderFactory.create(provider);
     }
 
-    async check(model: Model): Promise<{ valid: boolean; error: Error | null }> {
-        return this.provider.check(model);
+    async check(): Promise<{ valid: boolean; error: Error | null }> {
+        return this.provider.check();
     }
 
     async getModels(provider: Provider): Promise<Model[]> {

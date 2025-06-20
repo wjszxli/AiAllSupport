@@ -1,52 +1,45 @@
 import LangChainService from '@/langchain/services/LangChainService';
-import { Model, Provider, Robot } from '@/types';
+import { ConfigModelType, Provider, Robot } from '@/types';
 import { Message } from '@/types/message';
 import { Chunk } from '@/types/chunk';
 import { filterContextMessages } from '@/utils/message/filters';
 import { findLast } from 'lodash';
+import { getModelForInterface } from '@/utils';
 
 import llmStore from '@/store/llm';
 
-export const checkApiProvider = async (provider: Provider, model: Model) => {
-    // if (USE_LANGCHAIN) {
+export const checkApiProvider = async (provider: Provider) => {
     const langChainService = new LangChainService(provider);
-    const result = await langChainService.check(model);
+    const result = await langChainService.check();
     if (result.valid && !result.error) {
         return result;
     }
-    return langChainService.check(model);
-    // } else {
-    //     const ai = new AiProvider(provider);
-    //     const result = await ai.check(model, true);
-    //     if (result.valid && !result.error) {
-    //         return result;
-    //     }
-    //     return ai.check(model, false);
-    // }
+    return langChainService.check();
 };
 
 export const getModels = async (provider: Provider) => {
-    // if (USE_LANGCHAIN) {
     const langChainService = new LangChainService(provider);
     return langChainService.getModels(provider);
-    // } else {
-    //     const ai = new AiProvider(provider);
-    //     return ai.models(provider);
-    // }
 };
 
 export async function fetchChatCompletion({
     messages,
     robot,
     onChunkReceived,
+    interfaceType = ConfigModelType.CHAT,
 }: {
     messages: Message[];
     robot: Robot;
     onChunkReceived: (chunk: Chunk) => void;
-    abortController?: AbortController;
+    interfaceType?: ConfigModelType;
 }) {
-    const provider = llmStore.providers.find((p) => p.id === robot.model?.provider);
-    console.log('robot', robot);
+    // 使用特定界面类型的模型
+    const model = getModelForInterface(interfaceType);
+    const provider = llmStore.providers.find((p) => p.id === model.provider);
+
+    // 更新机器人使用的模型
+    robot.model = model;
+    console.log(`Using ${interfaceType} model:`, model);
 
     if (!provider) {
         throw new Error('Provider not found');
@@ -60,21 +53,13 @@ export async function fetchChatCompletion({
         return;
     }
 
-    // if (USE_LANGCHAIN) {
     const langChainService = new LangChainService(provider);
     await langChainService.completions({
         messages,
         robot,
         onChunk: onChunkReceived,
+        onFilterMessages: (filteredMessages) => {
+            console.log('Filtered messages:', filteredMessages.length);
+        },
     });
-    // } else {
-    //     const AI = new AiProvider(provider);
-    //     const filteredMessages = filterUsefulMessages(messages);
-    //     await AI.completions({
-    //         messages: filteredMessages,
-    //         robot,
-    //         onFilterMessages: () => {},
-    //         onChunk: onChunkReceived,
-    //     });
-    // }
 }

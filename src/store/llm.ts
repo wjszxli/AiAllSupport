@@ -4,13 +4,15 @@ import { makePersistable } from 'mobx-persist-store';
 // import { isLocalAi } from '@renderer/config/env';
 import { uniqBy } from 'lodash';
 import chromeStorageAdapter from './chromeStorageAdapter';
-import { Model, Provider } from '@/types';
+import { ConfigModelType, Model, Provider } from '@/types';
 import { SYSTEM_MODELS } from '../config/models';
 import { INITIAL_PROVIDERS } from '../config/providers';
 
 class LlmStore {
     providers: Provider[] = INITIAL_PROVIDERS;
-    defaultModel: Model;
+    chatModel: Model;
+    popupModel: Model;
+    sidebarModel: Model;
 
     constructor() {
         makeAutoObservable(this);
@@ -18,11 +20,13 @@ class LlmStore {
         // 持久化数据存储
         makePersistable(this, {
             name: 'llm-store',
-            properties: ['providers', 'defaultModel'],
+            properties: ['providers', 'chatModel', 'popupModel', 'sidebarModel'],
             storage: chromeStorageAdapter as any,
         });
 
-        this.defaultModel = SYSTEM_MODELS.silicon[0];
+        this.chatModel = SYSTEM_MODELS.silicon[0];
+        this.popupModel = SYSTEM_MODELS.silicon[0];
+        this.sidebarModel = SYSTEM_MODELS.silicon[0];
     }
 
     // 转换为动作方法
@@ -62,8 +66,33 @@ class LlmStore {
         }
     };
 
-    setDefaultModel = (model: Model) => {
-        this.defaultModel = model;
+    // 设置特定场景的模型
+    setModelForType = (type: ConfigModelType, model: Model) => {
+        switch (type) {
+            case ConfigModelType.CHAT:
+                this.chatModel = model;
+                break;
+            case ConfigModelType.POPUP:
+                this.popupModel = model;
+                break;
+            case ConfigModelType.SIDEBAR:
+                this.sidebarModel = model;
+                break;
+        }
+    };
+
+    // 获取特定场景的模型
+    getModelForType = (type: ConfigModelType): Model => {
+        switch (type) {
+            case ConfigModelType.CHAT:
+                return this.chatModel;
+            case ConfigModelType.POPUP:
+                return this.popupModel || this.chatModel;
+            case ConfigModelType.SIDEBAR:
+                return this.sidebarModel || this.chatModel;
+            default:
+                return this.chatModel;
+        }
     };
 
     updateModel = (providerId: string, model: Model) => {

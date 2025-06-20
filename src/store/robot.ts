@@ -140,24 +140,26 @@ export class RobotDB {
     }
 
     async updateSelectedRobot(robot: Robot) {
-        try {
-            if (!robot.selectedTopicId && robot.topics && robot.topics.length > 0) {
-                robot.selectedTopicId = robot.topics[0].id;
-            }
-
-            this.selectedRobot = robot;
-
-            await this.saveSettingToDB(SELECTED_ROBOT_KEY, robot.id);
-
-            if (robot.selectedTopicId) {
-                await this.saveSettingToDB(SELECTED_TOPIC_KEY, robot.selectedTopicId);
-            }
-
-            await this.updateRobot(robot);
-        } catch (error) {
-            this.logger.error('Failed to update selected robot:', error);
-            throw error;
+        // try {
+        // this.logger.info('updateSelectedRobot', robot);
+        console.log('updateSelectedRobot', robot);
+        if (!robot.selectedTopicId && robot.topics && robot.topics.length > 0) {
+            robot.selectedTopicId = robot.topics[0].id;
         }
+
+        this.selectedRobot = robot;
+
+        await this.saveSettingToDB(SELECTED_ROBOT_KEY, robot.id);
+
+        if (robot.selectedTopicId) {
+            await this.saveSettingToDB(SELECTED_TOPIC_KEY, robot.selectedTopicId);
+        }
+
+        await this.updateRobot(robot);
+        // } catch (error) {
+        //     this.logger.error('Failed to update selected robot:', error);
+        //     throw error;
+        // }
     }
 
     async getSelectedRobotFromDB() {
@@ -228,7 +230,7 @@ export class RobotDB {
                 this.logger.warn('Cannot delete currently selected robot:', id);
                 return {
                     success: false,
-                    message: '无法删除当前选中的机器人，请先选择其他机器人'
+                    message: '无法删除当前选中的机器人，请先选择其他机器人',
                 };
             }
 
@@ -237,7 +239,7 @@ export class RobotDB {
                 this.logger.warn('Cannot delete robot marked as cannotDelete:', id);
                 return {
                     success: false,
-                    message: '该机器人不允许删除'
+                    message: '该机器人不允许删除',
                 };
             }
 
@@ -247,13 +249,13 @@ export class RobotDB {
             await this.updateRobotList();
             return {
                 success: true,
-                message: '机器人删除成功'
+                message: '机器人删除成功',
             };
         } catch (error) {
             this.logger.error('Failed to remove robot:', error);
             return {
                 success: false,
-                message: `删除机器人失败: ${error instanceof Error ? error.message : '未知错误'}`
+                message: `删除机器人失败: ${error instanceof Error ? error.message : '未知错误'}`,
             };
         }
     }

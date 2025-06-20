@@ -2,17 +2,17 @@
     width: 100%;
 
     .model-settings-loading {
-        align-items: center;
         display: flex;
-        height: 300px;
+        align-items: center;
         justify-content: center;
+        height: 300px;
     }
 
     .model-settings-card {
+        width: 100%;
+        margin-bottom: 20px;
         border-radius: 8px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        margin-bottom: 20px;
-        width: 100%;
 
         .ant-tabs-nav {
             margin-bottom: 24px;
@@ -42,14 +42,13 @@
     }
 
     .model-config-section {
+        padding: 20px;
         background-color: #f9fbfd;
         border-radius: 8px;
-        margin-bottom: 24px;
-        padding: 20px;
         transition: all 0.3s ease;
 
         &:hover {
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 8%);
         }
 
         .ant-typography {
@@ -57,15 +56,15 @@
         }
 
         .model-description {
-            color: #8c8c8c;
             display: block;
             margin-bottom: 16px;
+            color: #8c8c8c;
         }
 
         .provider-select,
         .model-select {
-            margin-bottom: 8px;
             width: 100%;
+            margin-bottom: 8px;
         }
 
         .ant-form-item {
@@ -76,66 +75,36 @@
             }
 
             .ant-form-item-label {
-                font-weight: 500;
                 padding-bottom: 8px;
+                font-weight: 500;
             }
         }
 
         .model-icon {
+            display: flex;
             align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            margin-bottom: 16px;
             background-color: #f0f5ff;
             border-radius: 50%;
-            display: flex;
-            height: 40px;
-            justify-content: center;
-            margin-bottom: 16px;
-            width: 40px;
 
             .anticon {
-                color: #1890ff;
                 font-size: 20px;
+                color: #1890ff;
             }
         }
 
         .model-header {
-            align-items: center;
             display: flex;
+            align-items: center;
             margin-bottom: 16px;
 
             .ant-typography {
                 margin-bottom: 0;
                 margin-left: 12px;
             }
-        }
-    }
-
-    .save-button-container {
-        display: flex;
-        justify-content: flex-end;
-        margin-top: 24px;
-
-        .ant-btn {
-            font-size: 16px;
-            height: 40px;
-            min-width: 120px;
-
-            &:hover {
-                box-shadow: 0 4px 12px rgba(24, 144, 255, 0.2);
-                transform: translateY(-1px);
-            }
-        }
-    }
-
-    .model-info {
-        background-color: #f0f7ff;
-        border-left: 4px solid #1890ff;
-        border-radius: 4px;
-        margin-bottom: 24px;
-        padding: 12px 16px;
-
-        .ant-typography {
-            color: #0050b3;
-            margin-bottom: 0;
         }
     }
 }

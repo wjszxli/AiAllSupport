@@ -1,4 +1,4 @@
-import { ChatDeepSeek } from '@langchain/deepseek';
+import { ChatOllama } from '@langchain/ollama';
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import BaseLangChainProvider from './BaseLangChainProvider';
 import { CompletionsParams, Provider } from '@/types';
@@ -8,25 +8,22 @@ import { Message } from '@/types/message';
 import { ChunkType } from '@/types/chunk';
 import { Logger } from '@/utils/logger';
 
-const logger = new Logger('DeepSeekLangChainProvider');
+const logger = new Logger('OllamaLangChainProvider');
 
-export default class DeepSeekLangChainProvider extends BaseLangChainProvider {
-    private chatModel!: ChatDeepSeek;
+export default class OllamaLangChainProvider extends BaseLangChainProvider {
+    private chatModel!: ChatOllama;
 
     constructor(provider: Provider) {
         super(provider);
         this.chatModel = this.initialize();
     }
 
-    initialize(stream = true): ChatDeepSeek {
-        return new ChatDeepSeek({
-            modelName: this.provider.selectedModel?.id,
+    initialize(stream = true): ChatOllama {
+        return new ChatOllama({
+            model: this.provider.selectedModel?.id,
             temperature: 0.7,
             streaming: stream,
-            apiKey: this.provider.apiKey,
-            configuration: {
-                baseURL: this.provider.apiHost,
-            },
+            baseUrl: this.provider.apiHost,
         });
     }
 
@@ -83,14 +80,16 @@ export default class DeepSeekLangChainProvider extends BaseLangChainProvider {
             let time_first_token_millsec = 0;
 
             for await (const chunk of stream) {
-                const { content, additional_kwargs } = chunk;
+                const {
+                    content,
+                    additional_kwargs: { reasoning_content },
+                } = chunk;
 
-                if (additional_kwargs) {
+                if (reasoning_content) {
                     if (!time_first_token_millsec) {
                         time_first_token_millsec = new Date().getTime();
                     }
 
-                    const { reasoning_content } = additional_kwargs;
                     thinking += reasoning_content;
                     hasThinking = true;
                     onChunk({
@@ -155,6 +154,9 @@ export default class DeepSeekLangChainProvider extends BaseLangChainProvider {
         });
     }
 
+    /**
+     * 实现特定于 DeepSeek 的模型可用性检查
+     */
     protected async checkModelAvailability(): Promise<{ valid: boolean; error: Error | null }> {
         try {
             const checkModel = this.initialize(false);
