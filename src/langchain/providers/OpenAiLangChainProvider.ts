@@ -19,13 +19,17 @@ export default class OpenAiLangChainProvider extends BaseLangChainProvider {
     }
 
     initialize(stream = true): ChatOpenAI {
+        let baseURL = this.provider.apiHost;
+        if (!this.provider.apiHost.endsWith('/v1')) {
+            baseURL = `${this.provider.apiHost}/v1`;
+        }
         return new ChatOpenAI({
             modelName: this.provider.selectedModel?.id,
             temperature: 0.7,
             streaming: stream,
             apiKey: this.provider.apiKey,
             configuration: {
-                baseURL: this.provider.apiHost,
+                baseURL: baseURL,
             },
         });
     }

@@ -19,13 +19,17 @@ export default class DeepSeekLangChainProvider extends BaseLangChainProvider {
     }
 
     initialize(stream = true): ChatDeepSeek {
+        let baseURL = this.provider.apiHost;
+        if (!this.provider.apiHost.endsWith('/v1')) {
+            baseURL = `${this.provider.apiHost}/v1`;
+        }
         return new ChatDeepSeek({
             modelName: this.provider.selectedModel?.id,
             temperature: 0.7,
             streaming: stream,
             apiKey: this.provider.apiKey,
             configuration: {
-                baseURL: this.provider.apiHost,
+                baseURL: baseURL,
             },
         });
     }
@@ -83,14 +87,17 @@ export default class DeepSeekLangChainProvider extends BaseLangChainProvider {
             let time_first_token_millsec = 0;
 
             for await (const chunk of stream) {
-                const { content, additional_kwargs } = chunk;
+                const {
+                    content,
+                    additional_kwargs: { reasoning_content },
+                } = chunk;
 
-                if (additional_kwargs) {
+                if (reasoning_content) {
+                    console.log('reasoning_content', reasoning_content);
                     if (!time_first_token_millsec) {
                         time_first_token_millsec = new Date().getTime();
                     }
 
-                    const { reasoning_content } = additional_kwargs;
                     thinking += reasoning_content;
                     hasThinking = true;
                     onChunk({

@@ -11,16 +11,16 @@ export default class LangChainProviderFactory {
         const { selectedModel } = provider;
 
         if (provider.id === 'ollama') {
-            logger.info('Creating OllamaLangChainProvider');
+            console.log('Creating OllamaLangChainProvider');
             return new OllamaLangChainProvider(provider);
         }
 
         if (selectedModel?.id.includes('deepseek')) {
-            logger.info('Creating DeepSeekLangChainProvider');
+            console.log('Creating DeepSeekLangChainProvider');
             return new DeepSeekLangChainProvider(provider);
         }
 
-        logger.info('Creating OpenAiLangChainProvider');
+        console.log('Creating OpenAiLangChainProvider');
         return new OpenAiLangChainProvider(provider);
     }
 }

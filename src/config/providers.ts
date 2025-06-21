@@ -923,7 +923,7 @@ export const PROVIDER_CONFIG = {
     },
     'aihubmix': {
         api: {
-            url: 'https://aihubmix.com',
+            url: 'https://aihubmix.com/v1',
         },
         websites: {
             official: 'https://aihubmix.com?aff=SJyh',

@@ -8,7 +8,6 @@ import { getMessageService } from '@/services/MessageService';
 import { ConfigModelType, Robot } from '@/types';
 import { Logger } from '@/utils/logger';
 
-// Create a logger for this module
 const logger = new Logger('useMessageSender');
 
 export const useMessageSender = () => {
@@ -27,7 +26,7 @@ export const useMessageSender = () => {
             if (!userInput.trim()) return;
 
             const selectedRobot = robot || robotStore?.selectedRobot;
-            logger.debug('robot', selectedRobot);
+            logger.info('robot', selectedRobot);
             const { selectedTopicId } = selectedRobot;
 
             if (!selectedTopicId) {

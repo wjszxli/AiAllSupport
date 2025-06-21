@@ -98,7 +98,6 @@ const ModelSettings: React.FC = observer(() => {
 
     // 获取模型对象
     const getModelFromValue = (value: string) => {
-        console.log('value', value);
         const [providerId, modelId] = value.split('#');
 
         // 查找提供商和模型
@@ -118,7 +117,7 @@ const ModelSettings: React.FC = observer(() => {
     };
 
     // 处理模型选择
-    const handleModelChange = (value: string, type: ConfigModelType) => {
+    const handleModelChange = async (value: string, type: ConfigModelType) => {
         setSelectedModels((prev) => ({ ...prev, [type]: value }));
 
         const model = getModelFromValue(value);
@@ -127,6 +126,19 @@ const ModelSettings: React.FC = observer(() => {
         // 使用 llmStore 的新方法设置特定场景的模型
         llmStore.setModelForType(type, model);
         message.success(t('modelSettingsSaved'));
+
+        if (chrome && chrome.runtime) {
+            const [providerId, _] = value.split('#');
+            try {
+                await chrome.runtime.sendMessage({
+                    action: 'providerSettingsUpdated',
+                    provider: providerId,
+                    timestamp: Date.now(),
+                });
+            } catch (error) {
+                console.error('Failed to notify about provider settings update:', error);
+            }
+        }
     };
 
     return (

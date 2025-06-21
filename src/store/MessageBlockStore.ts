@@ -17,6 +17,7 @@ export class MessageBlockStore {
 
     // Actions - 状态修改方法
     upsertBlock(block: MessageBlock) {
+        console.log('upsertBlock', block);
         this.blocks.set(block.id, block);
     }
 

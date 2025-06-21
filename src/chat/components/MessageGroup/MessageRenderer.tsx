@@ -445,7 +445,6 @@ const MessageRenderer: React.FC<MessageRendererProps> = observer(
             processMainTextContent,
             isStreaming,
             messageBlocks,
-            // Use a stable representation of the thinking blocks instead of spreading them
             JSON.stringify(
                 messageBlocks
                     .filter((block) => block.type === MessageBlockType.THINKING)

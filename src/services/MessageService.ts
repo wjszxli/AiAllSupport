@@ -183,22 +183,9 @@ export class MessageService {
         const assistantMsgId = assistantMessage.id;
         let callbacks: StreamProcessorCallbacks = {};
 
-        // 设置当前话题ID，用于取消时清空队列
-        // this.currentTopicId = topicId;
-
         // 创建新的 AbortController
         this.currentAbortController = new AbortController();
         const abortController = this.currentAbortController;
-
-        console.log('[MessageService] Created new AbortController for message:', assistantMsgId);
-
-        // 监听中止信号
-        abortController.signal.addEventListener('abort', () => {
-            console.log(
-                '[MessageService] AbortController signal fired for message:',
-                assistantMsgId,
-            );
-        });
 
         try {
             // 1. 设置加载状态
@@ -291,14 +278,6 @@ export class MessageService {
                     runInAction(() => {
                         this.rootStore.messageStore.setStreamingMessageId(assistantMsgId);
                     });
-
-                    // 调试信息：只在开发环境下输出
-                    if (process.env.NODE_ENV === 'development') {
-                        console.log('[onLLMResponseCreated] Setting streamingMessageId:', {
-                            assistantMsgId,
-                            streamingMessageId: this.rootStore.messageStore.streamingMessageId,
-                        });
-                    }
 
                     const baseBlock = createBaseMessageBlock(
                         assistantMsgId,

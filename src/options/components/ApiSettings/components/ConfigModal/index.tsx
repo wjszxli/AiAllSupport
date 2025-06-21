@@ -178,6 +178,7 @@ const ConfigModal: React.FC<ConfigModalProps> = ({
             }
         }
         onOk();
+        setApiKeyValidated(false);
     };
 
     // @ts-ignore
@@ -199,7 +200,10 @@ const ConfigModal: React.FC<ConfigModalProps> = ({
             }
             open={isModalOpen}
             onOk={handleOk}
-            onCancel={onCancel}
+            onCancel={() => {
+                onCancel();
+                setApiKeyValidated(false);
+            }}
             width={600}
             footer={[
                 <Button
@@ -211,7 +215,13 @@ const ConfigModal: React.FC<ConfigModalProps> = ({
                 >
                     {testing ? '测试中...' : apiKeyValidated ? '连接成功' : '测试连接'}
                 </Button>,
-                <Button key="cancel" onClick={onCancel}>
+                <Button
+                    key="cancel"
+                    onClick={() => {
+                        onCancel();
+                        setApiKeyValidated(false);
+                    }}
+                >
                     取消
                 </Button>,
                 <Button key="save" type="primary" onClick={handleOk}>

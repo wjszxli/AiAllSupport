@@ -42,7 +42,6 @@ const ChatBody: React.FC<ChatBodyProps> = observer(
         // 获取当前机器人
         const selectedRobot = useMemo(() => robotStore.selectedRobot, [robotStore.selectedRobot]);
 
-        // 使用 robotStore 的 selectedRobot 的 selectedTopicId（现在是从 robotDB 中获取的）
         const selectedTopicId = useMemo(
             () => selectedRobot?.selectedTopicId || '',
             [selectedRobot?.selectedTopicId],
@@ -121,11 +120,6 @@ const ChatBody: React.FC<ChatBodyProps> = observer(
         }, [messages, computeDisplayMessages]);
 
         const cancelStreamingResponse = useCallback(() => {
-            console.log(
-                '[ChatBody] Cancel streaming response called, streamingMessageId:',
-                streamingMessageId,
-            );
-
             // 使用独立的 MessageService 来正确取消流式响应
             messageService.cancelCurrentStream(selectedTopicId);
 

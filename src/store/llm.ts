@@ -7,6 +7,7 @@ import chromeStorageAdapter from './chromeStorageAdapter';
 import { ConfigModelType, Model, Provider } from '@/types';
 import { SYSTEM_MODELS } from '../config/models';
 import { INITIAL_PROVIDERS } from '../config/providers';
+import robotStore from './robot';
 
 class LlmStore {
     providers: Provider[] = INITIAL_PROVIDERS;
@@ -71,6 +72,19 @@ class LlmStore {
         switch (type) {
             case ConfigModelType.CHAT:
                 this.chatModel = model;
+
+                // 更新当前选中的机器人的模型
+                if (robotStore.selectedRobot && robotStore.selectedRobot.id) {
+                    const updatedRobot = {
+                        ...robotStore.selectedRobot,
+                        model: model,
+                    };
+
+                    // 异步更新机器人，但不等待结果
+                    robotStore.updateRobot(updatedRobot).catch((error) => {
+                        console.error('Failed to update robot model:', error);
+                    });
+                }
                 break;
             case ConfigModelType.POPUP:
                 this.popupModel = model;

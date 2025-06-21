@@ -33,17 +33,15 @@ export async function fetchChatCompletion({
     onChunkReceived: (chunk: Chunk) => void;
     interfaceType?: ConfigModelType;
 }) {
-    // 使用特定界面类型的模型
     const model = getModelForInterface(interfaceType);
     const provider = llmStore.providers.find((p) => p.id === model.provider);
-
-    // 更新机器人使用的模型
-    robot.model = model;
-    console.log(`Using ${interfaceType} model:`, model);
 
     if (!provider) {
         throw new Error('Provider not found');
     }
+
+    robot.model = model;
+    provider.selectedModel = model;
 
     messages = filterContextMessages(messages);
 
