@@ -174,34 +174,41 @@ export const SEARCH_COUNT = 5;
 
 // 搜索引擎配置
 export const SEARCH_ENGINES = {
-    BAIDU: 'baidu',
     GOOGLE: 'google',
-    DUCKDUCKGO: 'duckduckgo',
+    BAIDU: 'baidu',
     SOGOU: 'sogou',
-    BRAVE: 'brave',
+    BIYING: 'biying',
+    DUCKDUCKGO: 'duckduckgo',
     SEARXNG: 'searxng',
     TAVILY: 'tavily',
+    EXA: 'exa',
+    BOCHA: 'bocha',
 };
 
 // 默认启用的搜索引擎
 export const DEFAULT_SEARCH_ENGINES = [
     SEARCH_ENGINES.BAIDU,
     SEARCH_ENGINES.GOOGLE,
-    SEARCH_ENGINES.DUCKDUCKGO,
+    SEARCH_ENGINES.BIYING,
     SEARCH_ENGINES.SOGOU,
-    SEARCH_ENGINES.BRAVE,
+    SEARCH_ENGINES.DUCKDUCKGO,
     SEARCH_ENGINES.SEARXNG,
+    SEARCH_ENGINES.TAVILY,
+    SEARCH_ENGINES.EXA,
+    SEARCH_ENGINES.BOCHA,
 ];
 
 // 搜索引擎显示名称
 export const SEARCH_ENGINE_NAMES = {
-    [SEARCH_ENGINES.BAIDU]: '百度',
-    [SEARCH_ENGINES.GOOGLE]: 'Google',
-    [SEARCH_ENGINES.DUCKDUCKGO]: 'DuckDuckGo',
-    [SEARCH_ENGINES.SOGOU]: '搜狗',
-    [SEARCH_ENGINES.BRAVE]: 'Brave',
-    [SEARCH_ENGINES.SEARXNG]: 'SearXNG',
-    [SEARCH_ENGINES.TAVILY]: 'Tavily',
+    [SEARCH_ENGINES.BAIDU]: '百度(免费)',
+    [SEARCH_ENGINES.BIYING]: '必应(免费)',
+    [SEARCH_ENGINES.SOGOU]: '搜狗(免费)',
+    [SEARCH_ENGINES.GOOGLE]: 'Google(免费)',
+    [SEARCH_ENGINES.DUCKDUCKGO]: 'DuckDuckGo(免费)',
+    [SEARCH_ENGINES.SEARXNG]: 'SearXNG(免费)',
+    [SEARCH_ENGINES.TAVILY]: 'Tavily(需密钥)',
+    [SEARCH_ENGINES.EXA]: 'Exa(需密钥)',
+    [SEARCH_ENGINES.BOCHA]: 'Bocha(需密钥)',
 };
 
 // 搜索结果中需要过滤的域名列表

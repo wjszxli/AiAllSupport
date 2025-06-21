@@ -3,12 +3,14 @@ import llmStore from './llm';
 import robotDB from '@/store/robot'; // Import the new robotDB
 import { MessageStore } from './MessageStore';
 import { MessageBlockStore } from './MessageBlockStore';
+import settingStore from './setting';
 
 export class RootStore {
     llmStore = llmStore;
     robotStore = robotDB; // Use robotDB instead of robotStore
     messageStore: MessageStore;
     messageBlockStore: MessageBlockStore;
+    settingStore = settingStore;
 
     constructor() {
         this.messageStore = new MessageStore();

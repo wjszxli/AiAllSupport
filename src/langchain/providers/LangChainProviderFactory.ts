@@ -3,9 +3,6 @@ import BaseLangChainProvider from './BaseLangChainProvider';
 import DeepSeekLangChainProvider from './DeepSeekLangChainProvider';
 import OpenAiLangChainProvider from './OpenAiLangChainProvider';
 import OllamaLangChainProvider from './OllamaLangChainProvider';
-import { getLogger } from 'loglevel';
-
-const logger = getLogger('LangChainProviderFactory');
 export default class LangChainProviderFactory {
     static create(provider: Provider): BaseLangChainProvider {
         const { selectedModel } = provider;

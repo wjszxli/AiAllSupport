@@ -1,7 +1,8 @@
 import { t } from '@/locales/i18n';
 import type { ProviderConfig, StorageData } from '@/types';
+import settingStore, { SettingsState } from '@/store/setting';
 
-import { DEFAULT_SEARCH_ENGINES, FILTERED_DOMAINS, PROVIDERS_DATA } from './constant';
+import { PROVIDERS_DATA } from './constant';
 
 // 封装存储 & 读取 & 监听变化的方法
 const storageUtils = {
@@ -106,11 +107,13 @@ const storageUtils = {
         const height = (await storageUtils.get<number>('height')) || 500;
         return { width, height };
     },
+
+    // Settings-related methods now use settingStore
     setIsChatBoxIcon: async (isIcon: boolean): Promise<void> => {
-        await storageUtils.set('isIcon', isIcon);
+        settingStore.setIsChatBoxIcon(isIcon);
     },
     getIsChatBoxIcon: async () => {
-        return await storageUtils.get<boolean>('isIcon');
+        return settingStore.isChatBoxIcon;
     },
 
     getLocale: async (): Promise<string | null> => {
@@ -133,49 +136,59 @@ const storageUtils = {
     },
 
     setWebSearchEnabled: async (enabled: boolean): Promise<void> => {
-        await storageUtils.set('webSearchEnabled', enabled);
+        settingStore.setWebSearchEnabled(enabled);
     },
 
     getWebSearchEnabled: async (): Promise<boolean> => {
-        return (await storageUtils.get<boolean>('webSearchEnabled')) ?? false;
+        return settingStore.webSearchEnabled;
     },
 
     setUseWebpageContext: async (enabled: boolean): Promise<void> => {
-        await storageUtils.set('useWebpageContext', enabled);
+        settingStore.setUseWebpageContext(enabled);
     },
 
     getUseWebpageContext: async (): Promise<boolean> => {
-        return (await storageUtils.get<boolean>('useWebpageContext')) ?? false;
+        return settingStore.useWebpageContext;
     },
 
     // 获取启用的搜索引擎列表
     getEnabledSearchEngines: async (): Promise<string[]> => {
-        return (await storageUtils.get<string[]>('enabledSearchEngines')) ?? DEFAULT_SEARCH_ENGINES;
+        return settingStore.enabledSearchEngines;
     },
 
     // 设置启用的搜索引擎列表
     setEnabledSearchEngines: async (engines: string[]): Promise<void> => {
-        await storageUtils.set('enabledSearchEngines', engines);
+        settingStore.setEnabledSearchEngines(engines);
     },
 
     // 获取Tavily API密钥
     getTavilyApiKey: async (): Promise<string | null> => {
-        return (await storageUtils.get<string>('tavilyApiKey')) || null;
+        return settingStore.tavilyApiKey || null;
     },
 
     // 设置Tavily API密钥
     setTavilyApiKey: async (apiKey: string): Promise<void> => {
-        await storageUtils.set('tavilyApiKey', apiKey);
+        settingStore.setTavilyApiKey(apiKey);
     },
 
     // 获取搜索过滤的域名列表
     getFilteredDomains: async (): Promise<string[]> => {
-        return (await storageUtils.get<string[]>('filteredDomains')) || FILTERED_DOMAINS;
+        return settingStore.filteredDomains;
     },
 
     // 设置搜索过滤的域名列表
     setFilteredDomains: async (domains: string[]): Promise<void> => {
-        await storageUtils.set('filteredDomains', domains);
+        settingStore.setFilteredDomains(domains);
+    },
+
+    // Get all settings at once
+    getAllSettings: async (): Promise<SettingsState> => {
+        return settingStore.getAllSettings();
+    },
+
+    // Set all settings at once
+    setAllSettings: async (settings: Partial<SettingsState>): Promise<void> => {
+        await settingStore.importSettings(settings);
     },
 };
 

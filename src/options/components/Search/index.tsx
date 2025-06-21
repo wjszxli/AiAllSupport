@@ -1,6 +1,5 @@
 import {
     Button,
-    Checkbox,
     Form,
     Input,
     message as messageApi,
@@ -8,77 +7,114 @@ import {
     Tag,
     Tooltip,
     Typography,
+    Select,
 } from 'antd';
 import React, { useEffect, useState } from 'react';
+import { observer } from 'mobx-react-lite';
 
 import { t } from '@/locales/i18n';
-import { FILTERED_DOMAINS, SEARCH_ENGINE_NAMES, SEARCH_ENGINES } from '@/utils/constant';
-import storage from '@/utils/storage';
+import { SEARCH_ENGINE_NAMES, SEARCH_ENGINES } from '@/utils/constant';
+import rootStore from '@/store';
 
 interface SearchProps {
     form: any;
     onValuesChange: (changedValues: any, allValues: any) => void;
 }
 
-const Search: React.FC<SearchProps> = ({ form, onValuesChange }) => {
-    const [enabledSearchEngines, setEnabledSearchEngines] = useState<string[]>([]);
-    const [tavilyApiKey, setTavilyApiKey] = useState<string>('');
-    const [filteredDomains, setFilteredDomains] = useState<string[]>(FILTERED_DOMAINS);
+const Search: React.FC<SearchProps> = observer(({ form, onValuesChange }) => {
+    const { settingStore } = rootStore;
     const [newFilterDomain, setNewFilterDomain] = useState<string>('');
+    const [tavilyApiKey, setTavilyApiKey] = useState<string>('');
+    const [exaApiKey, setExaApiKey] = useState<string>('');
+    const [bochaApiKey, setBochaApiKey] = useState<string>('');
+    const [selectedEngines, setSelectedEngines] = useState<string[]>(
+        settingStore.enabledSearchEngines,
+    );
+
+    // Group search engines
+    const freeSearchEngines = Object.entries(SEARCH_ENGINES).filter(([_, value]) =>
+        SEARCH_ENGINE_NAMES[value]?.includes('免费'),
+    );
+
+    const apiKeySearchEngines = Object.entries(SEARCH_ENGINES).filter(([_, value]) =>
+        SEARCH_ENGINE_NAMES[value]?.includes('需密钥'),
+    );
+
+    // Track changes in enabledSearchEngines from the store
+    useEffect(() => {
+        setSelectedEngines(settingStore.enabledSearchEngines);
+    }, [settingStore.enabledSearchEngines]);
 
     useEffect(() => {
         const initData = async () => {
-            const userEnabledSearchEngines = await storage.getEnabledSearchEngines();
-            const userTavilyApiKey = (await storage.getTavilyApiKey()) || '';
-            const userFilteredDomains = await storage.getFilteredDomains();
-
-            setEnabledSearchEngines(userEnabledSearchEngines);
-            setTavilyApiKey(userTavilyApiKey);
-            setFilteredDomains(userFilteredDomains);
+            const currentSearchEngines = settingStore.enabledSearchEngines || [];
+            setSelectedEngines(currentSearchEngines);
 
             form.setFieldsValue({
-                webSearchEnabled: await storage.getWebSearchEnabled(),
-                searchEngines: userEnabledSearchEngines,
-                tavilyApiKey: userTavilyApiKey,
+                webSearchEnabled: settingStore.webSearchEnabled,
+                searchEngines: currentSearchEngines,
+                tavilyApiKey: settingStore.tavilyApiKey,
+                exaApiKey: settingStore.exaApiKey,
+                bochaApiKey: settingStore.bochaApiKey,
             });
+
+            setTavilyApiKey(settingStore.tavilyApiKey || '');
+            setExaApiKey(settingStore.exaApiKey || '');
+            setBochaApiKey(settingStore.bochaApiKey || '');
         };
 
         initData();
-    }, [form]);
+    }, [form, settingStore]);
+
+    // Update form when selected engines change
+    useEffect(() => {
+        form.setFieldsValue({ searchEngines: selectedEngines });
+    }, [selectedEngines, form]);
 
     const handleAddFilterDomain = () => {
-        if (newFilterDomain && !filteredDomains.includes(newFilterDomain)) {
-            const newDomains = [...filteredDomains, newFilterDomain];
-            setFilteredDomains(newDomains);
+        if (newFilterDomain && !settingStore.filteredDomains.includes(newFilterDomain)) {
+            settingStore.addFilteredDomain(newFilterDomain);
             setNewFilterDomain('');
-            storage.setFilteredDomains(newDomains);
         }
     };
 
     const handleRemoveFilterDomain = (domain: string) => {
-        const newDomains = filteredDomains.filter((d) => d !== domain);
-        setFilteredDomains(newDomains);
-        storage.setFilteredDomains(newDomains);
+        settingStore.removeFilteredDomain(domain);
     };
 
     const handleSearchEnginesChange = (value: string[]) => {
-        setEnabledSearchEngines(value);
+        if (value.length > 3) {
+            messageApi.warning(t('selectAtMostThreeSearchEngines'));
+            return;
+        }
+
+        setSelectedEngines(value);
+        settingStore.setEnabledSearchEngines(value);
         form.setFieldsValue({ searchEngines: value });
-        storage.setEnabledSearchEngines(value);
     };
 
     const handleTavilyApiKeyChange = (value: string) => {
         setTavilyApiKey(value);
-        storage.setTavilyApiKey(value);
+        settingStore.setTavilyApiKey(value);
+    };
+
+    const handleExaApiKeyChange = (value: string) => {
+        setExaApiKey(value);
+        settingStore.setExaApiKey(value);
+    };
+
+    const handleBochaApiKeyChange = (value: string) => {
+        setBochaApiKey(value);
+        settingStore.setBochaApiKey(value);
     };
 
     const handleWebSearchChange = (checked: boolean) => {
-        if (checked && form.getFieldValue('useWebpageContext')) {
+        if (checked && settingStore.useWebpageContext) {
             messageApi.warning(t('exclusiveFeatureWarning'));
             form.setFieldsValue({ webSearchEnabled: false });
             return;
         }
-        storage.setWebSearchEnabled(checked);
+        settingStore.setWebSearchEnabled(checked);
     };
 
     return (
@@ -131,53 +167,155 @@ const Search: React.FC<SearchProps> = ({ form, onValuesChange }) => {
                                     },
                                 ]}
                             >
-                                <div className="search-engines-container">
-                                    <Checkbox.Group
-                                        value={enabledSearchEngines}
-                                        onChange={handleSearchEnginesChange}
-                                    >
-                                        {Object.entries(SEARCH_ENGINES).map(([_, value]) => (
-                                            <Checkbox value={value} key={value}>
+                                <Select
+                                    mode="multiple"
+                                    placeholder={t('selectAtLeastOneSearchEngine')}
+                                    value={selectedEngines}
+                                    onChange={handleSearchEnginesChange}
+                                    style={{ width: '100%' }}
+                                    optionLabelProp="label"
+                                >
+                                    <Select.OptGroup label="免费搜索引擎">
+                                        {freeSearchEngines.map(([_, value]) => (
+                                            <Select.Option
+                                                key={value}
+                                                value={value}
+                                                label={SEARCH_ENGINE_NAMES[value] || value}
+                                            >
                                                 {SEARCH_ENGINE_NAMES[value] || value}
-                                            </Checkbox>
+                                            </Select.Option>
                                         ))}
-                                    </Checkbox.Group>
-                                </div>
+                                    </Select.OptGroup>
+                                    <Select.OptGroup label="需要API密钥的搜索引擎">
+                                        {apiKeySearchEngines.map(([_, value]) => (
+                                            <Select.Option
+                                                key={value}
+                                                value={value}
+                                                label={SEARCH_ENGINE_NAMES[value] || value}
+                                            >
+                                                {SEARCH_ENGINE_NAMES[value] || value}
+                                            </Select.Option>
+                                        ))}
+                                    </Select.OptGroup>
+                                </Select>
                             </Form.Item>
 
-                            {enabledSearchEngines.includes(SEARCH_ENGINES.TAVILY) && (
-                                <Form.Item
-                                    label={t('tavilyApiKey')}
-                                    name="tavilyApiKey"
-                                    rules={[{ required: true, message: t('enterTavilyApiKey') }]}
-                                >
+                            {/* API Key Inputs */}
+                            {(() => {
+                                // Use direct string values for comparison
+                                const tavilyValue = 'tavily';
+                                const exaValue = 'exa';
+                                const bochaValue = 'bocha';
+
+                                const showTavily = selectedEngines.includes(tavilyValue);
+                                const showExa = selectedEngines.includes(exaValue);
+                                const showBocha = selectedEngines.includes(bochaValue);
+
+                                return (
                                     <>
-                                        <Input.Password
-                                            value={tavilyApiKey}
-                                            onChange={(e) =>
-                                                handleTavilyApiKeyChange(e.target.value)
-                                            }
-                                            placeholder={t('enterTavilyApiKey')}
-                                        />
-                                        <div className="api-link">
-                                            <Tooltip title={t('getTavilyApiKey')}>
-                                                <Typography.Link
-                                                    href="https://tavily.com/#api"
-                                                    target="_blank"
-                                                >
-                                                    {t('getTavilyApiKey')}
-                                                </Typography.Link>
-                                            </Tooltip>
-                                        </div>
+                                        {showTavily && (
+                                            <Form.Item
+                                                label={t('tavilyApiKey')}
+                                                name="tavilyApiKey"
+                                                rules={[
+                                                    {
+                                                        required: true,
+                                                        message: t('enterTavilyApiKey'),
+                                                    },
+                                                ]}
+                                            >
+                                                <>
+                                                    <Input.Password
+                                                        value={tavilyApiKey}
+                                                        onChange={(e) =>
+                                                            handleTavilyApiKeyChange(e.target.value)
+                                                        }
+                                                        placeholder={t('enterTavilyApiKey')}
+                                                    />
+                                                    <div className="api-link">
+                                                        <Tooltip title={t('getTavilyApiKey')}>
+                                                            <Typography.Link
+                                                                href="https://tavily.com/#api"
+                                                                target="_blank"
+                                                            >
+                                                                {t('getTavilyApiKey')}
+                                                            </Typography.Link>
+                                                        </Tooltip>
+                                                    </div>
+                                                </>
+                                            </Form.Item>
+                                        )}
+
+                                        {showExa && (
+                                            <Form.Item
+                                                label={t('exaApiKey')}
+                                                name="exaApiKey"
+                                                rules={[
+                                                    {
+                                                        required: true,
+                                                        message: t('enterExaApiKey'),
+                                                    },
+                                                ]}
+                                            >
+                                                <>
+                                                    <Input.Password
+                                                        value={exaApiKey}
+                                                        onChange={(e) =>
+                                                            handleExaApiKeyChange(e.target.value)
+                                                        }
+                                                        placeholder={t('enterExaApiKey')}
+                                                    />
+                                                    <div className="api-link">
+                                                        <Typography.Link
+                                                            href="https://exa.ai/pricing"
+                                                            target="_blank"
+                                                        >
+                                                            {t('getExaApiKey')}
+                                                        </Typography.Link>
+                                                    </div>
+                                                </>
+                                            </Form.Item>
+                                        )}
+
+                                        {showBocha && (
+                                            <Form.Item
+                                                label={t('bochaApiKey')}
+                                                name="bochaApiKey"
+                                                rules={[
+                                                    {
+                                                        required: true,
+                                                        message: t('enterBochaApiKey'),
+                                                    },
+                                                ]}
+                                            >
+                                                <>
+                                                    <Input.Password
+                                                        value={bochaApiKey}
+                                                        onChange={(e) =>
+                                                            handleBochaApiKeyChange(e.target.value)
+                                                        }
+                                                        placeholder={t('enterBochaApiKey')}
+                                                    />
+                                                    <div className="api-link">
+                                                        <Typography.Link
+                                                            href="https://open.bochaai.com/api-keys"
+                                                            target="_blank"
+                                                        >
+                                                            {t('getBochaApiKey')}
+                                                        </Typography.Link>
+                                                    </div>
+                                                </>
+                                            </Form.Item>
+                                        )}
                                     </>
-                                </Form.Item>
-                            )}
+                                );
+                            })()}
 
                             <Form.Item label={t('filteredDomains')}>
                                 <div className="filtered-domains-container">
                                     <div className="filtered-domains-list">
-                                        {filteredDomains.length > 0 ? (
-                                            filteredDomains.map((domain, index) => (
+                                        {settingStore.filteredDomains.length > 0 ? (
+                                            settingStore.filteredDomains.map((domain, index) => (
                                                 <Tag
                                                     closable
                                                     key={index}
@@ -222,6 +360,6 @@ const Search: React.FC<SearchProps> = ({ form, onValuesChange }) => {
             </Form.Item>
         </Form>
     );
-};
+});
 
 export default Search;

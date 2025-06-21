@@ -1,24 +1,25 @@
 import { Form, Switch } from 'antd';
 import React, { useEffect } from 'react';
+import { observer } from 'mobx-react-lite';
 
 import { t } from '@/locales/i18n';
-import storage from '@/utils/storage';
+import rootStore from '@/store';
 
 interface InterfaceProps {
     form: any;
 }
 
-const Interface: React.FC<InterfaceProps> = ({ form }) => {
+const Interface: React.FC<InterfaceProps> = observer(({ form }) => {
+    const { settingStore } = rootStore;
+
     const onIsIconChange = (checked: boolean) => {
-        storage.setIsChatBoxIcon(checked);
+        settingStore.setIsChatBoxIcon(checked);
     };
 
     const initData = async () => {
-        const isChatBoxIcon = await storage.getIsChatBoxIcon();
-        const isUseWebpageContext = await storage.getUseWebpageContext();
         form.setFieldsValue({
-            isIcon: isChatBoxIcon,
-            useWebpageContext: isUseWebpageContext,
+            isIcon: settingStore.isChatBoxIcon,
+            useWebpageContext: settingStore.useWebpageContext,
         });
     };
 
@@ -33,7 +34,7 @@ const Interface: React.FC<InterfaceProps> = ({ form }) => {
                 label={t('showIcon')}
                 name="isIcon"
                 valuePropName="checked"
-                initialValue={true}
+                initialValue={settingStore.isChatBoxIcon}
                 tooltip={t('showIconTooltip')}
             >
                 <Switch onChange={(checked) => onIsIconChange(checked)} />
@@ -44,17 +45,17 @@ const Interface: React.FC<InterfaceProps> = ({ form }) => {
                 label={t('includeWebpage')}
                 name="useWebpageContext"
                 valuePropName="checked"
-                initialValue={true}
+                initialValue={settingStore.useWebpageContext}
                 tooltip={t('includeWebpageTooltip')}
             >
                 <Switch
                     onChange={(checked) => {
-                        storage.setUseWebpageContext(checked);
+                        settingStore.setUseWebpageContext(checked);
                     }}
                 />
             </Form.Item>
         </Form>
     );
-};
+});
 
 export default Interface;

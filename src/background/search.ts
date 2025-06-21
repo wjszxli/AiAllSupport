@@ -31,7 +31,6 @@ export async function searchWeb(query: string): Promise<SearchResult[]> {
             [SEARCH_ENGINES.GOOGLE]: searchGoogle,
             [SEARCH_ENGINES.DUCKDUCKGO]: searchDuckDuckGo,
             [SEARCH_ENGINES.SOGOU]: searchSogou,
-            [SEARCH_ENGINES.BRAVE]: searchBrave,
             [SEARCH_ENGINES.SEARXNG]: searchSearxng,
             [SEARCH_ENGINES.TAVILY]: searchTavily,
         };

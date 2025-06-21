@@ -165,6 +165,12 @@ export const zhCN = {
     tavilyApiKey: 'Tavily API 密钥',
     enterTavilyApiKey: '请输入 Tavily API 密钥',
     getTavilyApiKey: '获取 Tavily API 密钥',
+    exaApiKey: 'Exa API 密钥',
+    enterExaApiKey: '请输入 Exa API 密钥',
+    getExaApiKey: '获取 Exa API 密钥',
+    bochaApiKey: 'Bocha API 密钥',
+    enterBochaApiKey: '请输入 Bocha API 密钥',
+    getBochaApiKey: '获取 Bocha API 密钥',
     selectAtLeastOneSearchEngine: '启用网络搜索时请至少选择一个搜索引擎',
     noFilteredDomains: '没有过滤的域名',
     enterDomainToFilter: '输入要过滤的域名',
@@ -320,4 +326,5 @@ export const zhCN = {
     failedToSaveModelSettings: '保存模型设置失败',
     noProvidersConfigured: '未配置提供商。请先在 API 设置中设置提供商',
     modelSettingsInfo: '为每个界面配置不同的 AI 模型。您的选择将自动保存。',
+    selectAtMostThreeSearchEngines: '最多选择3个搜索引擎',
 };

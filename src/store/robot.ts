@@ -5,7 +5,6 @@ import { isEmpty, uniqBy } from 'lodash';
 import { getDefaultRobot } from '@/services/RobotService';
 import { Logger } from '@/utils/logger';
 
-// Keys for storing selected robot and topic IDs
 const SELECTED_ROBOT_KEY = 'selectedRobotId';
 const SELECTED_TOPIC_KEY = 'selectedTopicId';
 
