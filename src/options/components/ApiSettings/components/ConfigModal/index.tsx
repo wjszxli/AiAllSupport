@@ -6,7 +6,7 @@ import { t } from '@/locales/i18n';
 import { isLocalhost } from '@/utils';
 import { Provider } from '@/types';
 import { getProviderLogo, PROVIDER_CONFIG } from '@/config/providers';
-import { checkApiProvider, getModels } from '@/services/AiService';
+import LangChainService from '@/langchain/services/LangChainService';
 import { getProviderName } from '@/utils/i18n';
 import { getModelGroupOptions } from '@/utils';
 import llmStore from '@/store/llm';
@@ -38,7 +38,7 @@ const ConfigModal: React.FC<ConfigModalProps> = ({
             currentProvider &&
             (currentProvider.models.length === 0 || isLocalhost(currentProvider.id))
         ) {
-            const models = await getModels({
+            const models = await LangChainService.getModels({
                 ...currentProvider,
                 apiKey: currentProvider.apiKey || 'xxx',
                 apiHost: currentProvider.apiHost,
@@ -99,7 +99,7 @@ const ConfigModal: React.FC<ConfigModalProps> = ({
 
             llmStore.updateProvider(newProvider);
 
-            const { valid, error } = await checkApiProvider(newProvider);
+            const { valid, error } = await LangChainService.checkApiProvider(newProvider);
 
             if (valid) {
                 setApiKeyValidated(true);

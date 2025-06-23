@@ -1,6 +1,6 @@
 import { db } from '@/db';
 // import { autoRenameTopic } from '@renderer/hooks/useTopic';
-import { fetchChatCompletion } from '@/services/AiService';
+import LangChainService from '@/langchain/services/LangChainService';
 // import { EVENT_NAMES, EventEmitter } from '@/services/EventService';
 import {
     createStreamProcessor,
@@ -559,7 +559,7 @@ export class MessageService {
 
             // 7. 创建流处理器并发起请求
             const streamProcessorCallbacks = createStreamProcessor(callbacks);
-            await fetchChatCompletion({
+            await LangChainService.fetchChatCompletion({
                 messages: messagesForContext,
                 robot: robot,
                 onChunkReceived: streamProcessorCallbacks,

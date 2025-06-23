@@ -1,10 +1,13 @@
 import { Model, Provider, Robot } from '@/types';
+import { ConfigModelType } from '@/types';
 import { Message } from '@/types/message';
 import { Chunk } from '@/types/chunk';
 import BaseLangChainProvider from '../providers/BaseLangChainProvider';
 import LangChainProviderFactory from '../providers/LangChainProviderFactory';
 import { filterContextMessages, filterUsefulMessages } from '@/utils/message/filters';
 import { findLast } from 'lodash';
+import { getModelForInterface } from '@/utils';
+import llmStore from '@/store/llm';
 
 export default class LangChainService {
     private provider: BaseLangChainProvider;
@@ -48,6 +51,65 @@ export default class LangChainService {
             robot,
             onChunk,
             onFilterMessages: onFilterMessages || (() => {}),
+        });
+    }
+
+    // Static methods merged from AiService.ts
+    static async checkApiProvider(
+        provider: Provider,
+    ): Promise<{ valid: boolean; error: Error | null }> {
+        const langChainService = new LangChainService(provider);
+        const result = await langChainService.check();
+        if (result.valid && !result.error) {
+            return result;
+        }
+        return langChainService.check();
+    }
+
+    static async getModels(provider: Provider): Promise<Model[]> {
+        const langChainService = new LangChainService(provider);
+        return langChainService.getModels(provider);
+    }
+
+    static async fetchChatCompletion({
+        messages,
+        robot,
+        onChunkReceived,
+        interfaceType = ConfigModelType.CHAT,
+    }: {
+        messages: Message[];
+        robot: Robot;
+        onChunkReceived: (chunk: Chunk) => void;
+        interfaceType?: ConfigModelType;
+    }): Promise<void> {
+        const model = getModelForInterface(interfaceType);
+        const provider = llmStore.providers.find((p) => p.id === model.provider);
+
+        if (!provider) {
+            throw new Error('Provider not found');
+        }
+
+        robot.model = model;
+        provider.selectedModel = model;
+
+        messages = filterContextMessages(messages);
+
+        const lastUserMessage = findLast(messages, (m) => m.role === 'user');
+        if (!lastUserMessage) {
+            console.error(
+                'fetchChatCompletion returning early: Missing lastUserMessage or lastAnswer',
+            );
+            return;
+        }
+
+        const langChainService = new LangChainService(provider);
+        await langChainService.completions({
+            messages,
+            robot,
+            onChunk: onChunkReceived,
+            onFilterMessages: (filteredMessages) => {
+                console.log('Filtered messages:', filteredMessages.length);
+            },
         });
     }
 }
