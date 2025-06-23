@@ -6,14 +6,51 @@ import BaseLangChainProvider from '../providers/BaseLangChainProvider';
 import LangChainProviderFactory from '../providers/LangChainProviderFactory';
 import { filterContextMessages, filterUsefulMessages } from '@/utils/message/filters';
 import { findLast } from 'lodash';
-import { getModelForInterface } from '@/utils';
+import { getModelForInterface, navigateToSettings, requiresApiKey } from '@/utils';
 import llmStore from '@/store/llm';
 
 export default class LangChainService {
     private provider: BaseLangChainProvider;
 
     constructor(provider: Provider) {
+        // 检测 apiKey 是否需要配置
+        this.checkApiKey(provider);
+
         this.provider = LangChainProviderFactory.create(provider);
+    }
+
+    private checkApiKey(provider: Provider) {
+        // 如果不需要 apiKey，跳过检测
+        if (!requiresApiKey(provider)) {
+            return;
+        }
+
+        // 如果需要 apiKey 但没有值，弹出提示
+        if (!provider.apiKey || provider.apiKey.trim() === '') {
+            this.showApiKeyMissingDialog(provider);
+        }
+    }
+
+    private showApiKeyMissingDialog(provider: Provider) {
+        const providerName = provider.name || provider.id;
+
+        // 延迟弹窗，避免阻塞构造函数
+        setTimeout(() => {
+            if (typeof window !== 'undefined' && window.confirm) {
+                const userConfirmed = window.confirm(
+                    `${providerName} 需要配置 API Key 才能正常使用。\n\n是否现在前往设置页面进行配置？`,
+                );
+
+                if (userConfirmed) {
+                    navigateToSettings();
+                }
+            } else {
+                // 在非浏览器环境中，使用 console 提示
+                console.warn(
+                    `${providerName} requires API Key configuration. Please configure it in settings.`,
+                );
+            }
+        }, 100);
     }
 
     async check(): Promise<{ valid: boolean; error: Error | null }> {

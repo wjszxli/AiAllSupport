@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { GlobalOutlined, KeyOutlined, CodeOutlined, CheckCircleOutlined } from '@ant-design/icons';
 
 import { t } from '@/locales/i18n';
-import { isLocalhost } from '@/utils';
+import { requiresApiKey } from '@/utils';
 import { Provider } from '@/types';
 import { getProviderLogo, PROVIDER_CONFIG } from '@/config/providers';
 import LangChainService from '@/langchain/services/LangChainService';
@@ -31,13 +31,10 @@ const ConfigModal: React.FC<ConfigModalProps> = ({
     const currentProvider = llmStore.providers.find((p: Provider) => p.id === selectProviderId);
     const [form] = Form.useForm();
 
-    const requiresApiKey = currentProvider?.requiresApiKey !== false;
+    const needsApiKey = currentProvider ? requiresApiKey(currentProvider) : true;
 
     const initializeSelectedModels = async () => {
-        if (
-            currentProvider &&
-            (currentProvider.models.length === 0 || isLocalhost(currentProvider.id))
-        ) {
+        if (currentProvider && (currentProvider.models.length === 0 || !needsApiKey)) {
             const models = await LangChainService.getModels({
                 ...currentProvider,
                 apiKey: currentProvider.apiKey || 'xxx',
@@ -80,7 +77,7 @@ const ConfigModal: React.FC<ConfigModalProps> = ({
             const apiHost = form.getFieldValue('apiHost');
             const selectedModelId = form.getFieldValue('model');
 
-            if (requiresApiKey && !isLocalhost(currentProvider.id) && !apiKey) {
+            if (needsApiKey && !apiKey) {
                 message.error(t('pleaseEnterApiKey'));
                 setTesting(false);
                 return;
@@ -147,7 +144,7 @@ const ConfigModal: React.FC<ConfigModalProps> = ({
             return;
         }
 
-        if (currentProvider && requiresApiKey && !isLocalhost(currentProvider.id) && !apiKey) {
+        if (currentProvider && needsApiKey && !apiKey) {
             message.error(t('pleaseEnterApiKey'));
             return;
         }
@@ -230,7 +227,7 @@ const ConfigModal: React.FC<ConfigModalProps> = ({
             ]}
         >
             <Form form={form} layout="vertical" requiredMark={false}>
-                {!currentProvider || (!isLocalhost(currentProvider.id) && requiresApiKey) ? (
+                {!currentProvider || needsApiKey ? (
                     <Form.Item
                         label={
                             <Space>
@@ -244,7 +241,7 @@ const ConfigModal: React.FC<ConfigModalProps> = ({
                             name="apiKey"
                             rules={[
                                 {
-                                    required: requiresApiKey,
+                                    required: needsApiKey,
                                     message: '请输入 API 密钥',
                                 },
                             ]}

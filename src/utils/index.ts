@@ -1,5 +1,5 @@
 import { t } from '@/locales/i18n';
-import type { Model, RequestMethod, WebsiteMetadata } from '@/types';
+import type { Model, Provider, RequestMethod, WebsiteMetadata } from '@/types';
 import { ConfigModelType } from '@/types';
 import llmStore from '@/store/llm';
 
@@ -40,7 +40,8 @@ export const fetchData = async ({
     }
 
     const apiKey = await storage.getApiKey(selectedProvider);
-    if (!apiKey && !isLocalhost(selectedProvider)) {
+
+    if (!apiKey && requiresApiKey(selectedProvider, providers)) {
         logger.error('No API key provided for provider that requires it', {
             provider: selectedProvider,
         });
@@ -67,7 +68,7 @@ export const fetchData = async ({
             signal: controller.signal,
         };
 
-        if (isLocalhost(selectedProvider)) {
+        if (!requiresApiKey(selectedProvider, providers)) {
             delete (config.headers as Record<string, string>).Authorization;
         }
 
@@ -225,15 +226,6 @@ export const removeChatBox = async () => {
         // @ts-expect-error
         window.currentAbortController = null;
     }
-};
-
-export const isLocalhost = (selectedProvider: string | null) => {
-    // Check for specific providers that are known to be localhost or don't require API key
-    return (
-        selectedProvider === 'Ollama' ||
-        selectedProvider === 'ollama' ||
-        selectedProvider === 'lmstudio'
-    );
 };
 
 export const handleMessage = (message: string, sender: { tab: { id: number } }) => {
@@ -458,3 +450,61 @@ export const getModelGroupOptions = (models: Model[] = []) => {
 export function getModelForInterface(type: ConfigModelType) {
     return llmStore.getModelForType(type);
 }
+
+/**
+ * Navigate to settings page
+ * Handles both Chrome extension and web environments
+ */
+export const navigateToSettings = () => {
+    try {
+        // 检查是否在 Chrome 扩展环境中
+        if (typeof chrome !== 'undefined' && chrome.runtime) {
+            // 在扩展环境中，打开设置页面
+            chrome.tabs
+                .create({
+                    url: chrome.runtime.getURL('options.html'),
+                })
+                .catch((error) => {
+                    console.error('Failed to open settings page:', error);
+                    // 如果创建新标签页失败，尝试在当前页面打开
+                    if (window && window.open) {
+                        window.open(chrome.runtime.getURL('options.html'), '_blank');
+                    }
+                });
+        } else if (typeof window !== 'undefined') {
+            // 在网页环境中，尝试导航到设置页面
+            if (window.location.hash) {
+                window.location.hash = '#/settings';
+            } else {
+                const settingsUrl = chrome?.runtime?.getURL?.('options.html') || '/options.html';
+                window.location.href = settingsUrl;
+            }
+        }
+    } catch (error) {
+        console.error('Failed to navigate to settings:', error);
+    }
+};
+
+/**
+ * 判断指定的 provider 是否需要 API Key
+ * @param provider Provider对象或provider ID字符串
+ * @param providers 可选的providers配置对象
+ * @returns boolean 是否需要API Key
+ */
+export const requiresApiKey = (
+    provider: Provider | string,
+    providers?: Record<string, any>,
+): boolean => {
+    let providerConfig: any;
+
+    if (typeof provider === 'string') {
+        // 如果传入的是字符串ID，从配置中查找
+        providerConfig = providers?.[provider] || PROVIDERS_DATA[provider];
+    } else {
+        // 如果传入的是Provider对象，直接使用
+        providerConfig = provider;
+    }
+
+    // 默认需要API Key，除非明确设置为false
+    return providerConfig?.requiresApiKey !== false;
+};

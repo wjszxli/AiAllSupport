@@ -1,5 +1,5 @@
 import type { OllamaResponse } from '@/types';
-import { fetchData, handleMessage, initLogger, isLocalhost, Logger } from '@/utils';
+import { fetchData, handleMessage, initLogger, Logger, requiresApiKey } from '@/utils';
 import { MODIFY_HEADERS_RULE_ID, PROVIDERS_DATA } from '@/utils/constant';
 import storage from '@/utils/storage';
 
@@ -118,9 +118,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             headers: request.headers,
             body: request.body,
             onStream: (chunk) => {
-                storage.getConfig().then((config) => {
-                    const { selectedProvider } = config;
-                    if (isLocalhost(selectedProvider)) {
+                storage.getConfig().then(async (config) => {
+                    const { selectedProvider, providers } = config;
+                    if (!selectedProvider) return;
+
+                    if (!requiresApiKey(selectedProvider, providers)) {
                         try {
                             const data: OllamaResponse = JSON.parse(chunk);
                             const {

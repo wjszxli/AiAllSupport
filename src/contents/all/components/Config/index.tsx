@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Form, message, Select } from 'antd';
 import { modelList } from '@/services';
 import type { ProviderConfig } from '@/types';
-import { isLocalhost } from '@/utils';
+import { requiresApiKey } from '@/utils';
 import { PROVIDERS_DATA } from '@/utils/constant';
 import storage from '@/utils/storage';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -76,7 +76,7 @@ const Config = (props: {
         // 先清空模型列表
         setModels([]);
 
-        if (isLocalhost(selectedProvider)) {
+        if (!requiresApiKey(selectedProvider, configProviders)) {
             const res = (await modelList(selectedProvider)) as {
                 models?: Array<{ name: string; model: string }>;
             };
@@ -130,7 +130,7 @@ const Config = (props: {
         await getModels(provider);
         const model = providersData[provider]?.selectedModel;
 
-        if (!isLocalhost(provider)) {
+        if (requiresApiKey(provider, configProviders)) {
             const apiKey = providersData[provider]?.apiKey;
             const fieldsValue = { apiKey, model };
             form.setFieldsValue(fieldsValue);
