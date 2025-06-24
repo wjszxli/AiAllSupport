@@ -43,10 +43,12 @@ export async function existWebSummarizerRobot(): Promise<boolean> {
 // 获取默认机器人
 export function getDefaultRobot(): Robot {
     const robots = robotList[0];
+    const defaultTopic = getDefaultTopic(robots.id);
     const defaultRobots = {
         ...robots,
         type: 'assistant',
-        topics: [getDefaultTopic(robots.id)],
+        topics: [defaultTopic],
+        selectedTopicId: defaultTopic.id, // 设置默认选中的话题
         isSystem: true, // 标记为系统机器人
         cannotDelete: true, // 标记为不可删除
     };
