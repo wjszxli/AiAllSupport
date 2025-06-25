@@ -10,6 +10,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useStableCallback, useThrottledCallback } from '@/utils/reactOptimizations';
 
 import './index.scss';
+import { FEEDBACK_SURVEY_URL } from '@/utils/constant';
 
 type ActionType =
     | { type: 'SET_POSITION'; payload: { x: number; y: number } }
@@ -40,8 +41,6 @@ const HighZIndexTooltip: React.FC<React.ComponentProps<typeof Tooltip>> = ({
         {children}
     </Tooltip>
 );
-
-const FEEDBACK_SURVEY_URL = 'https://wj.qq.com/s2/18763807/74b5/';
 
 const HeaderActions = memo(
     ({
@@ -182,7 +181,7 @@ const ChatWindow = ({ x, y, text }: { x: number; y: number; text?: string }) => 
     const onCancel = useCallback(async () => {
         await storage.remove('chatHistory');
         removeChatBox();
-        
+
         // @ts-ignore
         if (window.currentAbortController) {
             // @ts-ignore
