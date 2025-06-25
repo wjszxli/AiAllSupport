@@ -106,5 +106,46 @@
                 margin-left: 12px;
             }
         }
+
+        // 机器人选择区域样式
+        .robot-selection-section {
+            margin-top: 24px;
+            padding: 16px;
+            background-color: #f5f5f5;
+            border: 1px solid #e8e8e8;
+            border-radius: 8px;
+
+            .robot-header {
+                display: flex;
+                align-items: center;
+                margin-bottom: 12px;
+
+                .ant-typography {
+                    margin-bottom: 0;
+                    margin-left: 0;
+                }
+            }
+
+            .robot-description {
+                display: block;
+                margin-bottom: 16px;
+                color: #8c8c8c;
+                font-size: 14px;
+            }
+
+            .robot-select {
+                border-radius: 6px 0 0 6px;
+            }
+
+            .ant-btn {
+                border-radius: 0 6px 6px 0;
+                border-left: 0;
+
+                &:hover {
+                    border-color: #1890ff;
+                    z-index: 1;
+                }
+            }
+        }
     }
 }

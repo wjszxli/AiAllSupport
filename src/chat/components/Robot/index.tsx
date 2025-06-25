@@ -12,7 +12,7 @@ import { observer } from 'mobx-react-lite';
 import { Robot as RobotType } from '@/types';
 import { getShortRobotName, getShortRobotDescription } from '@/utils/robotUtils';
 import robotStore from '@/store/robot';
-import AddRobotModal from './components/AddRobotModal';
+import AddRobotModal from '@/components/AddRobotModal';
 import EditRobotModal from './components/EditRobotModal';
 
 import './index.scss';
