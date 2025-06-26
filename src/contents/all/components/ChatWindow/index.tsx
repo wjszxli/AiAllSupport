@@ -166,7 +166,6 @@ const ChatWindow = ({ x, y, text }: { x: number; y: number; text?: string }) => 
 
     useEffect(() => {
         initData();
-        // Hide the chat button when chat window is open
         removeChatButton();
     }, [initData]);
 
