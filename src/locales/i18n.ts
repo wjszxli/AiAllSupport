@@ -14,7 +14,8 @@ const initializeLocale = async () => {
     if (i18nState.initialized) return;
 
     try {
-        const savedLocale = await storage.getLocale();
+        // const savedLocale = await storage.getLocale();
+        const savedLocale = 'en-US';
         if (savedLocale && Object.keys(locales).includes(savedLocale)) {
             i18nState.currentLocale = savedLocale as LocaleType;
             console.log('i18n service initialized with locale:', savedLocale);

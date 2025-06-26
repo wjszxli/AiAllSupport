@@ -1,4 +1,4 @@
-import { ActionType, WindowState } from '@/contents/type';
+import { ActionType, WindowState } from '@/contents/types';
 import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 import storage from '@/utils/storage';
 import { t } from '@/locales/i18n';
@@ -9,6 +9,7 @@ import { Typography } from 'antd';
 import { removeChatBox, removeChatButton } from '@/utils';
 
 import './index.scss';
+import ChatInterface from './components/ChatInterface';
 
 const windowReducer = (state: WindowState, action: ActionType): WindowState => {
     switch (action.type) {
@@ -23,8 +24,6 @@ const windowReducer = (state: WindowState, action: ActionType): WindowState => {
             return { ...state, isVisible: action.payload };
         case 'TOGGLE_PIN':
             return { ...state, isPinned: !state.isPinned };
-        case 'INITIALIZE':
-            return { ...state, provider: action.payload.provider };
         default:
             return state;
     }
@@ -44,32 +43,14 @@ const ChatWindow = ({ x, y, text }: { x: number; y: number; text?: string }) => 
         provider: null,
     });
 
-    useEffect(() => {
-        const loadSavedSize = async () => {
-            try {
-                const savedSize = await storage.getChatBoxSize();
-                dispatch({ type: 'SET_SIZE', payload: savedSize });
-            } catch (error) {
-                console.error('Error reading saved size:', error);
-            }
-        };
-
-        loadSavedSize();
-    }, []);
-
     const initData = useCallback(async () => {
         try {
             await storage.remove('chatHistory');
 
-            setTimeout(() => {
-                dispatch({ type: 'SET_VISIBILITY', payload: true });
-            }, 50);
+            dispatch({ type: 'SET_VISIBILITY', payload: true });
 
-            const config = await storage.getConfig();
-            dispatch({
-                type: 'INITIALIZE',
-                payload: { provider: config.selectedProvider || null },
-            });
+            const savedSize = await storage.getChatBoxSize();
+            dispatch({ type: 'SET_SIZE', payload: savedSize });
         } catch (error) {
             console.error('Error initializing chat window:', error);
         }
@@ -80,7 +61,7 @@ const ChatWindow = ({ x, y, text }: { x: number; y: number; text?: string }) => 
         removeChatButton();
     }, [initData]);
 
-    const { position, size, isVisible, isPinned, provider } = state;
+    const { position, size, isVisible, isPinned } = state;
 
     const chatBoxStyle = useMemo(
         () => ({
@@ -160,6 +141,43 @@ const ChatWindow = ({ x, y, text }: { x: number; y: number; text?: string }) => 
         [position, isPinned],
     );
 
+    const handleResizeMouseDown = useCallback(
+        (e: React.MouseEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (chatBoxRef.current) {
+                chatBoxRef.current.classList.add('resizing');
+            }
+
+            const startWidth = size.width;
+            const startHeight = size.height;
+            const startX = e.clientX;
+            const startY = e.clientY;
+
+            const handleResizeMove = (moveEvent: MouseEvent) => {
+                moveEvent.preventDefault();
+
+                const newWidth = Math.max(350, startWidth + moveEvent.clientX - startX);
+                const newHeight = Math.max(550, startHeight + moveEvent.clientY - startY);
+
+                dispatch({ type: 'SET_SIZE', payload: { width: newWidth, height: newHeight } });
+            };
+
+            const handleResizeUp = () => {
+                if (chatBoxRef.current) {
+                    chatBoxRef.current.classList.remove('resizing');
+                }
+                document.removeEventListener('mousemove', handleResizeMove);
+                document.removeEventListener('mouseup', handleResizeUp);
+            };
+
+            document.addEventListener('mousemove', handleResizeMove);
+            document.addEventListener('mouseup', handleResizeUp);
+        },
+        [size],
+    );
+
     return (
         <div
             ref={chatBoxRef}
@@ -185,6 +203,16 @@ const ChatWindow = ({ x, y, text }: { x: number; y: number; text?: string }) => 
                     }}
                 />
             </div>
+            <div className="chat-content-container">
+                <ChatInterface initialText={text} />
+            </div>
+            <div
+                className="resize-handle"
+                onMouseDown={handleResizeMouseDown}
+                role="button"
+                tabIndex={0}
+                aria-label="Resize"
+            />
         </div>
     );
 };
