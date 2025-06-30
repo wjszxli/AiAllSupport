@@ -28,6 +28,19 @@ const debounce = <F extends (...args: any[]) => any>(
     };
 };
 
+// 计算聊天窗口居中位置的函数
+const calculateCenterPosition = () => {
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const chatWidth = 600;
+    const chatHeight = 800;
+
+    const centerX = Math.max(0, (viewportWidth - chatWidth) / 2);
+    const centerY = Math.max(0, (viewportHeight - chatHeight) / 2);
+
+    return { x: centerX, y: centerY };
+};
+
 // 初始化语言设置
 (async () => {
     try {
@@ -77,16 +90,15 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         const selectedText = message.selectedText || '';
         console.log('Opening chat window with selected text:', selectedText);
 
-        // 获取当前视窗的中心点
-        const centerX = window.innerWidth / 2;
-        const centerY = window.innerHeight / 2;
+        // 计算真正的居中位置
+        const { x: centerX, y: centerY } = calculateCenterPosition();
 
         // 先移除已存在的聊天窗口和按钮
         removeChatButton();
         removeChatBox();
 
-        // 注入聊天窗口
-        injectChatBox(centerX, centerY, selectedText);
+        // 注入聊天窗口到页面中心
+        injectChatBox(centerX, centerY, selectedText, true);
         sendResponse({ success: true });
         return true;
     }
@@ -219,7 +231,7 @@ const injectChatButton = (x: number, y: number, text: string) => {
 };
 
 // 在选中文字后插入对话框
-const injectChatBox = (x: number, y: number, text: string) => {
+const injectChatBox = (x: number, y: number, text: string, isCentered: boolean = false) => {
     // 保存当前滚动位置
     const scrollPos = {
         x: window.scrollX,
@@ -230,20 +242,27 @@ const injectChatBox = (x: number, y: number, text: string) => {
     removeChatButton();
     window.getSelection()?.removeAllRanges();
 
-    // 确保位置在视图区域内
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-    const chatWidth = 600;
-    const chatHeight = 800;
+    let centerX = x;
+    let centerY = y;
 
-    // 计算居中位置
-    let centerX = Math.max(0, Math.min(x, viewportWidth - chatWidth - 20));
-    let centerY = Math.max(0, Math.min(y, viewportHeight - chatHeight - 20));
+    // 如果不是预计算的居中位置，则进行位置调整
+    if (!isCentered) {
+        // 确保位置在视图区域内
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const chatWidth = 600;
+        const chatHeight = 800;
 
-    // 如果位置在视图之外，则使用居中位置
-    if (x < 0 || x > viewportWidth || y < 0 || y > viewportHeight) {
-        centerX = (viewportWidth - chatWidth) / 2;
-        centerY = (viewportHeight - chatHeight) / 2;
+        // 计算调整后的位置
+        centerX = Math.max(0, Math.min(x, viewportWidth - chatWidth - 20));
+        centerY = Math.max(0, Math.min(y, viewportHeight - chatHeight - 20));
+
+        // 如果位置在视图之外，则使用居中位置
+        if (x < 0 || x > viewportWidth || y < 0 || y > viewportHeight) {
+            const centeredPos = calculateCenterPosition();
+            centerX = centeredPos.x;
+            centerY = centeredPos.y;
+        }
     }
 
     let chatContainer = document.getElementById(CHAT_BOX_ID);
@@ -295,21 +314,14 @@ const injectFloatingChatButton = () => {
             <FloatingChatButton
                 onClick={() => {
                     // 点击浮动按钮时打开聊天窗口，显示在页面中心
-                    const viewportWidth = window.innerWidth;
-                    const viewportHeight = window.innerHeight;
-                    const chatWidth = 600;
-                    const chatHeight = 800;
-
-                    // 计算居中位置
-                    const centerX = Math.max(0, (viewportWidth - chatWidth) / 2);
-                    const centerY = Math.max(0, (viewportHeight - chatHeight) / 2);
+                    const { x: centerX, y: centerY } = calculateCenterPosition();
 
                     // 移除已存在的聊天窗口和按钮
                     removeChatButton();
                     removeChatBox();
 
                     // 注入聊天窗口到页面中心
-                    injectChatBox(centerX, centerY, '');
+                    injectChatBox(centerX, centerY, '', true);
                 }}
             />
         </LanguageProvider>,
