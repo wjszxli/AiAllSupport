@@ -1,7 +1,7 @@
 import { createRoot } from 'react-dom/client';
 
-import { removeChatBox, removeChatButton } from '@/utils';
-import { CHAT_BOX_ID, CHAT_BUTTON_ID } from '@/utils/constant';
+import { removeChatBox, removeChatButton, removeFloatingChatButton } from '@/utils';
+import { CHAT_BOX_ID, CHAT_BUTTON_ID, FLOATING_CHAT_BUTTON_ID } from '@/utils/constant';
 import storage from '@/utils/storage';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { setLocale } from '@/locales/i18n';
@@ -9,6 +9,7 @@ import type { LocaleType } from '@/locales';
 
 import ChatWindow from '@/contents/chat-windows';
 import { IframeSidePanelManager } from './components/IframeSidePanel/index';
+import FloatingChatButton from './components/FloatingChatButton';
 import './styles/animations.css';
 import './styles/highlight.css';
 
@@ -123,6 +124,18 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
             });
         }
 
+        return true;
+    }
+
+    // 处理浮动聊天按钮显示/隐藏设置变化
+    if (message.action === 'floatingButtonSettingsChanged') {
+        const isEnabled = message.enabled;
+        if (isEnabled) {
+            injectFloatingChatButton();
+        } else {
+            removeFloatingChatButton();
+        }
+        sendResponse({ success: true });
         return true;
     }
 
@@ -261,3 +274,65 @@ document.addEventListener('keydown', async (event) => {
         removeChatButton();
     }
 });
+
+// 注入浮动聊天按钮
+const injectFloatingChatButton = () => {
+    const isExist = document.getElementById(FLOATING_CHAT_BUTTON_ID);
+    // 检查是否已经存在浮动按钮
+    if (isExist) {
+        return;
+    }
+
+    // 创建浮动按钮容器
+    const floatingButtonContainer = document.createElement('div');
+    floatingButtonContainer.id = FLOATING_CHAT_BUTTON_ID;
+    document.body.appendChild(floatingButtonContainer);
+
+    // 渲染浮动聊天按钮
+    const root = createRoot(floatingButtonContainer);
+    root.render(
+        <LanguageProvider>
+            <FloatingChatButton
+                onClick={() => {
+                    // 点击浮动按钮时打开聊天窗口，显示在页面中心
+                    const viewportWidth = window.innerWidth;
+                    const viewportHeight = window.innerHeight;
+                    const chatWidth = 600;
+                    const chatHeight = 800;
+
+                    // 计算居中位置
+                    const centerX = Math.max(0, (viewportWidth - chatWidth) / 2);
+                    const centerY = Math.max(0, (viewportHeight - chatHeight) / 2);
+
+                    // 移除已存在的聊天窗口和按钮
+                    removeChatButton();
+                    removeChatBox();
+
+                    // 注入聊天窗口到页面中心
+                    injectChatBox(centerX, centerY, '');
+                }}
+            />
+        </LanguageProvider>,
+    );
+};
+
+// 初始化浮动聊天按钮
+const initializeFloatingButton = async () => {
+    try {
+        // 检查是否启用了聊天按钮功能
+        const isIcon = await storage.getIsChatBoxIcon();
+        if (isIcon) {
+            injectFloatingChatButton();
+        }
+    } catch (error) {
+        console.error('Error initializing floating chat button:', error);
+    }
+};
+
+// 页面加载完成后初始化浮动按钮
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeFloatingButton);
+} else {
+    // 如果页面已经加载完成
+    initializeFloatingButton();
+}

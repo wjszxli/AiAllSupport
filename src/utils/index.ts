@@ -3,7 +3,7 @@ import type { Model, Provider, RequestMethod, WebsiteMetadata } from '@/types';
 import { ConfigModelType } from '@/types';
 import llmStore from '@/store/llm';
 
-import { CHAT_BOX_ID, CHAT_BUTTON_ID, PROVIDERS_DATA } from './constant';
+import { CHAT_BOX_ID, CHAT_BUTTON_ID, PROVIDERS_DATA, FLOATING_CHAT_BUTTON_ID } from './constant';
 import { Logger } from './logger';
 import storage from './storage';
 
@@ -226,6 +226,11 @@ export const removeChatBox = async () => {
         // @ts-expect-error
         window.currentAbortController = null;
     }
+};
+
+export const removeFloatingChatButton = async () => {
+    const floatingButton = document.getElementById(FLOATING_CHAT_BUTTON_ID);
+    if (floatingButton) floatingButton.remove();
 };
 
 export const handleMessage = (message: string, sender: { tab: { id: number } }) => {
