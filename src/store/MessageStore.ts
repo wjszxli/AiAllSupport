@@ -252,9 +252,19 @@ export class MessageStore {
 
     // 获取指定主题的消息（按顺序）
     getMessagesForTopic(topicId: string): Message[] {
-        console.log('this.messageIdsByTopic', this.messageIdsByTopic);
+        console.log('getMessagesForTopic called with topicId:', topicId);
+        console.log('this.messageIdsByTopic:', this.messageIdsByTopic);
+        console.log('this.messages size:', this.messages.size);
+
         const messageIds = this.messageIdsByTopic.get(topicId) || [];
-        return messageIds.map((id) => this.messages.get(id)).filter((msg): msg is Message => !!msg);
+        console.log('messageIds for topic:', messageIds);
+
+        const messages = messageIds
+            .map((id) => this.messages.get(id))
+            .filter((msg): msg is Message => !!msg);
+        console.log('resolved messages:', messages.length);
+
+        return messages;
     }
 
     // 根据ID获取消息

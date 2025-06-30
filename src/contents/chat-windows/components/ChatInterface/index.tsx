@@ -1,7 +1,7 @@
 import { t } from '@/locales/i18n';
 import rootStore from '@/store';
 import { Button, Input, message } from 'antd';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import './index.scss';
 import { useMessageSender } from '@/chat/hooks/useMessageSender';
@@ -9,8 +9,9 @@ import { ConfigModelType } from '@/types';
 import { Message } from '@/types/message';
 import MessageList from '@/chat/components/MessageList';
 import getMessageService from '@/services/MessageService';
+import { observer } from 'mobx-react-lite';
 
-const ChatInterface = memo(({ initialText }: { initialText?: string }) => {
+const ChatInterface = observer(({ initialText }: { initialText?: string }) => {
     const [inputMessage, setInputMessage] = useState(initialText || '');
     const [isComposing, setIsComposing] = useState(false);
     const [displayMessages, setDisplayMessages] = useState<Message[]>([]);
@@ -29,15 +30,13 @@ const ChatInterface = memo(({ initialText }: { initialText?: string }) => {
 
     // 当话题变化时加载消息
     useEffect(() => {
+        console.log('loadTopicMessages', selectedTopicId);
         if (selectedTopicId) {
-            // 只有在没有正在流式处理的消息时才重新加载
-            // 避免在流式过程中清理当前的流式块
-            if (!streamingMessageId) {
-                messageService.loadTopicMessages(selectedTopicId);
-            }
+            messageService.loadTopicMessages(selectedTopicId);
         }
-    }, [selectedTopicId, streamingMessageId, messageService]);
+    }, [selectedTopicId, messageService]);
 
+    // 使用 MobX 的响应式数据，移除 useMemo 以确保正确跟踪状态变化
     const messages = useMemo(() => {
         const data = rootStore.messageStore.getMessagesForTopic(selectedTopicId || '');
         return data;

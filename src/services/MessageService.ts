@@ -874,6 +874,7 @@ export class MessageService {
                             });
                         }
                     }
+                    console.log('correctedMessages', correctedMessages);
                     this.rootStore.messageStore.messagesReceived(topicId, correctedMessages);
                 });
             } else {
