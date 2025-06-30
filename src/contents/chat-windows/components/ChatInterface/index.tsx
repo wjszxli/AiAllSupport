@@ -97,6 +97,19 @@ const ChatInterface = observer(({ initialText }: { initialText?: string }) => {
         });
     };
 
+    const handleKeyDown = useCallback(
+        (e: React.KeyboardEvent) => {
+            // 按回车键发送消息，但排除以下情况：
+            // 1. 同时按住了Shift键（Shift+Enter换行）
+            // 2. 正在进行输入法组合输入（isComposing为true）
+            if (e.key === 'Enter' && !e.shiftKey && !isComposing) {
+                e.preventDefault();
+                handleSendMessageClick();
+            }
+        },
+        [isComposing, handleSendMessageClick],
+    );
+
     const handleEditMessage = useCallback(
         (text: string) => {
             setInputMessage(text);
@@ -118,7 +131,7 @@ const ChatInterface = observer(({ initialText }: { initialText?: string }) => {
                         onChange={handleInputChange}
                         onCompositionStart={handleCompositionStart}
                         onCompositionEnd={handleCompositionEnd}
-                        // onKeyDown={handleKeyDown}
+                        onKeyDown={handleKeyDown}
                         placeholder={t('typeMessage')}
                         autoSize={{ minRows: 1, maxRows: 6 }}
                         className="message-input"

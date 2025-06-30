@@ -5,11 +5,14 @@ import { t } from '@/locales/i18n';
 import HeaderActions from './components/HeaderActions';
 
 import { useThrottledCallback } from '@/utils/reactOptimizations';
-import { Typography } from 'antd';
+import { Typography, message } from 'antd';
 import { removeChatBox, removeChatButton } from '@/utils';
 
 import './index.scss';
 import ChatInterface from './components/ChatInterface';
+import rootStore from '@/store';
+import { ConfigModelType } from '@/types';
+import getMessageService from '@/services/MessageService';
 
 const windowReducer = (state: WindowState, action: ActionType): WindowState => {
     switch (action.type) {
@@ -80,6 +83,22 @@ const ChatWindow = ({ x, y, text }: { x: number; y: number; text?: string }) => 
     const onCancel = useCallback(async () => {
         await storage.remove('chatHistory');
         removeChatBox();
+    }, []);
+
+    const onClearMessages = useCallback(async () => {
+        try {
+            const selectedRobot = rootStore.llmStore.getRobotForType(ConfigModelType.POPUP);
+            const selectedTopicId = selectedRobot?.selectedTopicId;
+
+            if (selectedTopicId) {
+                const messageService = getMessageService(rootStore);
+                await messageService.clearTopicMessages(selectedTopicId);
+                message.success(t('chatCleared'));
+            }
+        } catch (error) {
+            console.error('Error clearing messages:', error);
+            message.error('清空消息失败');
+        }
     }, []);
 
     const handleMouseMove = useThrottledCallback(
@@ -201,6 +220,7 @@ const ChatWindow = ({ x, y, text }: { x: number; y: number; text?: string }) => 
                         onCancel();
                         dispatch({ type: 'SET_VISIBILITY', payload: false });
                     }}
+                    onClearMessages={onClearMessages}
                 />
             </div>
             <div className="chat-content-container">

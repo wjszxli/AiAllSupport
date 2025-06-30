@@ -105,6 +105,11 @@ export const en = {
     exampleHowToUse: 'How can I use this information?',
     unpinWindow: 'Unpin Window',
     pinWindow: 'Fixed Window',
+    clearMessages: 'Clear Messages',
+    confirmClearMessages: 'Confirm Clear Messages',
+    clearMessagesDescription:
+        'Are you sure you want to clear all messages? This action cannot be undone.',
+    confirm: 'Confirm',
 
     // Web search
     webSearch: 'Web Search',

@@ -189,7 +189,11 @@ export type TranslationKey =
     | 'failedToLoadModelSettings'
     | 'failedToSaveModelSettings'
     | 'providersWithApiKey'
-    | 'providersWithoutApiKey';
+    | 'providersWithoutApiKey'
+    | 'clearMessages'
+    | 'confirmClearMessages'
+    | 'clearMessagesDescription'
+    | 'confirm';
 
 // 模型设置相关
 export const CHAT_MODEL = 'chatModel';

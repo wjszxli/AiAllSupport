@@ -327,4 +327,8 @@ export const zhCN = {
     noProvidersConfigured: '未配置提供商。请先在 API 设置中设置提供商',
     modelSettingsInfo: '为每个界面配置不同的 AI 模型。您的选择将自动保存。',
     selectAtMostThreeSearchEngines: '最多选择3个搜索引擎',
+    clearMessages: '清空消息',
+    confirmClearMessages: '确认清空消息',
+    clearMessagesDescription: '您确定要清空所有消息吗？此操作无法撤销。',
+    confirm: '确认',
 };
