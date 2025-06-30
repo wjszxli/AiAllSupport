@@ -26,7 +26,6 @@ import { FEEDBACK_SURVEY_URL } from '@/utils/constant';
 const { Option } = Select;
 
 const App: React.FC = () => {
-    const [selectedProvider, setSelectedProvider] = useState('DeepSeek');
     const [currentLocale, setCurrentLocale] = useState<LocaleType>(getLocale());
     const [userInput, setUserInput] = useState('');
     const [activeTab, setActiveTab] = useState('assistant');
@@ -90,8 +89,6 @@ const App: React.FC = () => {
                     setCurrentLocale(savedLocale as LocaleType);
                     console.log('Initialized locale from storage:', savedLocale);
                 }
-                const selectedProvider = await storage.getSelectedProvider();
-                setSelectedProvider(selectedProvider || 'DeepSeek');
             } catch (error) {
                 console.error('Failed to initialize locale:', error);
             }
@@ -105,12 +102,7 @@ const App: React.FC = () => {
         const handleMessage = async (message: any) => {
             if (message.action === 'providerSettingsUpdated') {
                 try {
-                    const defaultProvider = await storage.getSelectedProvider();
-
-                    // 2. 更新 selectedProvider 状态
-                    setSelectedProvider(defaultProvider || 'DeepSeek');
-
-                    // 4. 如果有选定的机器人，更新其模型为最新的默认模型
+                    // 1. 如果有选定的机器人，更新其模型为最新的默认模型
                     if (rootStore.robotStore.selectedRobot) {
                         // 强制从存储中获取最新的默认模型
                         const chatModel = rootStore.llmStore.chatModel;
@@ -121,7 +113,7 @@ const App: React.FC = () => {
                             model: chatModel,
                         });
 
-                        // 5. 刷新页面以确保所有组件都使用最新数据
+                        // 2. 刷新页面以确保所有组件都使用最新数据
                         // 这是一个临时解决方案，理想情况下我们应该找出为什么数据不同步
                         window.location.reload();
                     }
@@ -361,11 +353,7 @@ const App: React.FC = () => {
                     )}
 
                     {/* 右侧聊天区域 */}
-                    <ChatBody
-                        selectedProvider={selectedProvider}
-                        userInput={userInput}
-                        setUserInput={setUserInput}
-                    />
+                    <ChatBody userInput={userInput} setUserInput={setUserInput} />
                 </div>
             </div>
         </div>

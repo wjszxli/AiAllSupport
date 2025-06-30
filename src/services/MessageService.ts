@@ -180,6 +180,7 @@ export class MessageService {
         robot: Robot,
         assistantMessage: Message,
     ) {
+        debugger;
         const assistantMsgId = assistantMessage.id;
         let callbacks: StreamProcessorCallbacks = {};
 
@@ -219,6 +220,7 @@ export class MessageService {
                 newBlock: MessageBlock,
                 blockType: MessageBlockType,
             ) => {
+                debugger;
                 currentBlockId = newBlock.id;
                 currentBlockType = blockType;
 

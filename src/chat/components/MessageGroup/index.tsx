@@ -25,13 +25,12 @@ import rootStore from '@/store';
 interface MessageGroupProps {
     groupKey: string;
     messages: (Message & { index: number })[];
-    selectedProvider: string;
     streamingMessageId: string | null;
     onEditMessage: (text: string) => void;
 }
 
 const MessageGroup: React.FC<MessageGroupProps> = observer(
-    ({ messages, selectedProvider, streamingMessageId, onEditMessage }) => {
+    ({ messages, streamingMessageId, onEditMessage }) => {
         if (!messages || messages.length === 0) return null;
 
         // 使用消息操作 hook
@@ -54,7 +53,7 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
 
         // 状态保存提供商图标和显示名称
         const [providerIcon, setProviderIcon] = useState<string | null>(null);
-        const [displayName, setDisplayName] = useState<string>(selectedProvider);
+        const [displayName, setDisplayName] = useState<string>('DeepSeek');
 
         // 从消息块中获取模型和提供商信息
         const messageModel = useMemo(() => {
@@ -84,7 +83,7 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
         // 当消息模型或提供商变化时更新图标和名称
         useEffect(() => {
             updateProviderInfo();
-        }, [messageModel, selectedProvider, firstMessage.id]);
+        }, [messageModel, firstMessage.id]);
 
         // 更新提供商信息
         const updateProviderInfo = () => {
@@ -139,7 +138,7 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
             }
 
             // 后备：使用选定的提供商
-            return selectedProvider;
+            return 'DeepSeek';
         };
 
         // 获取提供商图标
@@ -153,7 +152,7 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
             }
 
             // 后备：使用选定的提供商
-            return selectedProvider ? getProviderLogo(selectedProvider) : null;
+            return getProviderLogo('DeepSeek');
         };
 
         // 处理复制代码块

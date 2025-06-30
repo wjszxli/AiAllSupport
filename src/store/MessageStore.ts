@@ -252,6 +252,7 @@ export class MessageStore {
 
     // 获取指定主题的消息（按顺序）
     getMessagesForTopic(topicId: string): Message[] {
+        console.log('this.messageIdsByTopic', this.messageIdsByTopic);
         const messageIds = this.messageIdsByTopic.get(topicId) || [];
         return messageIds.map((id) => this.messages.get(id)).filter((msg): msg is Message => !!msg);
     }

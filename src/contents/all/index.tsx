@@ -7,7 +7,7 @@ import { LanguageProvider } from '@/contexts/LanguageContext';
 import { setLocale } from '@/locales/i18n';
 import type { LocaleType } from '@/locales';
 
-import ChatWindow from '@/contents/chat';
+import ChatWindow from '@/contents/chat-windows';
 import { IframeSidePanelManager } from './components/IframeSidePanel/index';
 import './styles/animations.css';
 import './styles/highlight.css';

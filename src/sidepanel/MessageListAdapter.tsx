@@ -11,11 +11,7 @@ interface MessageListAdapterProps {
 }
 
 // This component adapts ChatMessage[] to Message[] for MessageList
-const MessageListAdapter: React.FC<MessageListAdapterProps> = ({
-    messages,
-    selectedProvider,
-    onEditMessage,
-}) => {
+const MessageListAdapter: React.FC<MessageListAdapterProps> = ({ messages, onEditMessage }) => {
     // Convert ChatMessage[] to Message[]
     const adaptedMessages: Message[] = messages.map((msg) => ({
         id: String(msg.id),
@@ -30,13 +26,7 @@ const MessageListAdapter: React.FC<MessageListAdapterProps> = ({
         thinking: msg.thinking,
     }));
 
-    return (
-        <MessageList
-            messages={adaptedMessages}
-            selectedProvider={selectedProvider}
-            onEditMessage={onEditMessage}
-        />
-    );
+    return <MessageList messages={adaptedMessages} onEditMessage={onEditMessage} />;
 };
 
 export default MessageListAdapter;
