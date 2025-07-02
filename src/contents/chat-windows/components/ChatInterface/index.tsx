@@ -2,6 +2,7 @@ import { t } from '@/locales/i18n';
 import rootStore from '@/store';
 import { Button, Input, message } from 'antd';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ExpandOutlined, ShrinkOutlined } from '@ant-design/icons';
 
 import './index.scss';
 import { useMessageSender } from '@/chat/hooks/useMessageSender';
@@ -15,6 +16,7 @@ const ChatInterface = observer(({ initialText }: { initialText?: string }) => {
     const [inputMessage, setInputMessage] = useState(initialText || '');
     const [isComposing, setIsComposing] = useState(false);
     const [displayMessages, setDisplayMessages] = useState<Message[]>([]);
+    const [isInputExpanded, setIsInputExpanded] = useState(false);
     const inputRef = useRef<any>(null);
 
     const streamingMessageId = rootStore.messageStore.streamingMessageId;
@@ -120,22 +122,41 @@ const ChatInterface = observer(({ initialText }: { initialText?: string }) => {
         [setInputMessage],
     );
 
+    const toggleInputExpanded = useCallback(() => {
+        setIsInputExpanded(!isInputExpanded);
+    }, [isInputExpanded]);
+
     return (
         <div className="chat-interface-container">
             <MessageList messages={displayMessages} onEditMessage={handleEditMessage} />
             <div className="input-container">
                 <div className="input-wrapper">
-                    <Input.TextArea
-                        ref={inputRef}
-                        value={inputMessage}
-                        onChange={handleInputChange}
-                        onCompositionStart={handleCompositionStart}
-                        onCompositionEnd={handleCompositionEnd}
-                        onKeyDown={handleKeyDown}
-                        placeholder={t('typeMessage')}
-                        autoSize={{ minRows: 1, maxRows: 6 }}
-                        className="message-input"
-                    />
+                    <div className="textarea-wrapper">
+                        <Input.TextArea
+                            ref={inputRef}
+                            value={inputMessage}
+                            onChange={handleInputChange}
+                            onCompositionStart={handleCompositionStart}
+                            onCompositionEnd={handleCompositionEnd}
+                            onKeyDown={handleKeyDown}
+                            placeholder={t('typeMessage')}
+                            autoSize={{
+                                minRows: isInputExpanded ? 16 : 2,
+                                maxRows: isInputExpanded ? 40 : 4,
+                            }}
+                            className="message-input"
+                        />
+                        <div className="input-controls">
+                            <Button
+                                type="text"
+                                size="small"
+                                icon={isInputExpanded ? <ShrinkOutlined /> : <ExpandOutlined />}
+                                onClick={toggleInputExpanded}
+                                className="expand-button"
+                                title={isInputExpanded ? '收起输入框' : '展开输入框'}
+                            />
+                        </div>
+                    </div>
                 </div>
                 <Button
                     type="primary"
