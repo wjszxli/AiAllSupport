@@ -579,11 +579,6 @@
                 transition: all 0.3s;
                 font-size: 15px;
                 border: 1px solid #e2e8f0;
-
-                &:focus {
-                    box-shadow: 0 4px 16px rgba(71, 118, 230, 0.15);
-                    border-color: #4776e6;
-                }
             }
 
             .input-actions {

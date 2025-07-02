@@ -1,11 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Input, Tooltip } from 'antd';
+import { Button, Input, Tooltip, Modal, message } from 'antd';
 import {
     SendOutlined,
     CloseCircleOutlined,
     DownOutlined,
     UpOutlined,
     EditOutlined,
+    DeleteOutlined,
+    ExpandOutlined,
+    ShrinkOutlined,
 } from '@ant-design/icons';
 
 import { t } from '@/locales/i18n';
@@ -35,6 +38,7 @@ const ChatBody: React.FC<ChatBodyProps> = observer(({ userInput, setUserInput })
     const [isLoading, setIsLoading] = useState(false);
     const [showFullPrompt, setShowFullPrompt] = useState(false);
     const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+    const [isInputExpanded, setIsInputExpanded] = useState(false);
     const inputRef = useRef<any>(null);
 
     // 获取当前机器人
@@ -181,6 +185,36 @@ const ChatBody: React.FC<ChatBodyProps> = observer(({ userInput, setUserInput })
         setIsEditModalVisible(false);
     }, []);
 
+    // 清空消息处理函数
+    const handleClearMessages = useCallback(async () => {
+        if (!selectedTopicId || !selectedRobot) {
+            message.error('无法清空消息：未选择话题或机器人');
+            return;
+        }
+
+        Modal.confirm({
+            title: '清空聊天记录',
+            content: '确定要清空当前对话的所有消息吗？此操作不可撤销。',
+            okText: '确认清空',
+            cancelText: '取消',
+            okType: 'danger',
+            onOk: async () => {
+                try {
+                    await messageService.clearTopicMessages(selectedTopicId);
+                    message.success('聊天记录已清空');
+                } catch (error) {
+                    console.error('Error clearing messages:', error);
+                    message.error('清空消息失败');
+                }
+            },
+        });
+    }, [selectedTopicId, selectedRobot, messageService]);
+
+    // 切换输入框展开状态
+    const toggleInputExpanded = useCallback(() => {
+        setIsInputExpanded((prev) => !prev);
+    }, []);
+
     return (
         <div className="chat-body">
             {shouldShowPrompt && (
@@ -214,49 +248,97 @@ const ChatBody: React.FC<ChatBodyProps> = observer(({ userInput, setUserInput })
             <MessageList messages={displayMessages} onEditMessage={handleEditMessage} />
             <div className="chat-footer">
                 <div className="input-container">
-                    <TextArea
-                        ref={inputRef}
-                        value={userInput}
-                        onChange={(e) => setUserInput(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        placeholder={t('typeMessage') || '输入您的问题...'}
-                        autoSize={{ minRows: 1, maxRows: 5 }}
-                        disabled={isLoading && streamingMessageId === null}
-                    />
-                    <div className="input-actions">
-                        <Tooltip
-                            title={
-                                streamingMessageId !== null
-                                    ? t('stop') || '停止'
-                                    : userInput.trim()
-                                    ? t('sendMessage') || '发送'
-                                    : t('enterQuestion') || '请输入问题'
-                            }
-                        >
-                            <Button
-                                className={
-                                    streamingMessageId !== null ? 'stop-button' : 'send-button'
-                                }
-                                type={streamingMessageId !== null ? 'default' : 'primary'}
-                                icon={
-                                    streamingMessageId !== null ? (
-                                        <CloseCircleOutlined />
-                                    ) : (
-                                        <SendOutlined />
-                                    )
-                                }
-                                onClick={
-                                    streamingMessageId !== null
-                                        ? cancelStreamingResponse
-                                        : handleSendMessageClick
-                                }
-                                disabled={!streamingMessageId && (!userInput.trim() || isLoading)}
-                            >
-                                {streamingMessageId !== null
-                                    ? t('stop') || '停止'
-                                    : t('send') || '发送'}
-                            </Button>
-                        </Tooltip>
+                    <div className="textarea-container">
+                        <div className="text-input-area">
+                            <TextArea
+                                ref={inputRef}
+                                value={userInput}
+                                onChange={(e) => setUserInput(e.target.value)}
+                                onKeyDown={handleKeyDown}
+                                placeholder={t('typeMessage') || '输入您的问题...'}
+                                autoSize={{
+                                    minRows: isInputExpanded ? 12 : 3,
+                                    maxRows: isInputExpanded ? 30 : 8,
+                                }}
+                                disabled={isLoading && streamingMessageId === null}
+                                bordered={false}
+                            />
+                        </div>
+                        <div className="input-toolbar">
+                            <div className="toolbar-left">
+                                {/* 展开/收起按钮 */}
+                                <Tooltip title={isInputExpanded ? '收起输入框' : '展开输入框'}>
+                                    <Button
+                                        type="text"
+                                        size="small"
+                                        icon={
+                                            isInputExpanded ? (
+                                                <ShrinkOutlined />
+                                            ) : (
+                                                <ExpandOutlined />
+                                            )
+                                        }
+                                        onClick={toggleInputExpanded}
+                                        className="expand-button"
+                                    />
+                                </Tooltip>
+
+                                {/* 清空消息按钮 */}
+                                {displayMessages.length > 0 && !streamingMessageId && (
+                                    <Tooltip title="清空聊天记录">
+                                        <Button
+                                            type="text"
+                                            size="small"
+                                            icon={<DeleteOutlined />}
+                                            onClick={handleClearMessages}
+                                            className="clear-button"
+                                            disabled={isLoading}
+                                        />
+                                    </Tooltip>
+                                )}
+                            </div>
+                            <div className="toolbar-right">
+                                {/* 发送/停止按钮 - 独占右侧 */}
+                                <Tooltip
+                                    title={
+                                        streamingMessageId !== null
+                                            ? t('stop') || '停止'
+                                            : userInput.trim()
+                                            ? t('sendMessage') || '发送'
+                                            : t('enterQuestion') || '请输入问题'
+                                    }
+                                >
+                                    <Button
+                                        className={
+                                            streamingMessageId !== null
+                                                ? 'stop-button'
+                                                : 'send-button'
+                                        }
+                                        type={streamingMessageId !== null ? 'default' : 'primary'}
+                                        size="small"
+                                        icon={
+                                            streamingMessageId !== null ? (
+                                                <CloseCircleOutlined />
+                                            ) : (
+                                                <SendOutlined />
+                                            )
+                                        }
+                                        onClick={
+                                            streamingMessageId !== null
+                                                ? cancelStreamingResponse
+                                                : handleSendMessageClick
+                                        }
+                                        disabled={
+                                            !streamingMessageId && (!userInput.trim() || isLoading)
+                                        }
+                                    >
+                                        {streamingMessageId !== null
+                                            ? t('stop') || '停止'
+                                            : t('send') || '发送'}
+                                    </Button>
+                                </Tooltip>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
