@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Avatar, Button, message as messageApi } from 'antd';
+import { Avatar, Button, message as messageApi, Modal } from 'antd';
 import {
     UserOutlined,
     RobotOutlined,
     CopyOutlined,
     ReloadOutlined,
     EditOutlined,
+    DeleteOutlined,
 } from '@ant-design/icons';
 import { Message } from '@/types/message';
 import { t } from '@/locales/i18n';
@@ -40,6 +41,7 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
             isMessageStreaming,
             handleRegenerateResponse,
             handleCopyMessage,
+            handleDeleteMessage,
             getMessageError,
         } = useMessageOperations(streamingMessageId);
 
@@ -153,6 +155,20 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
 
             // 后备：使用选定的提供商
             return getProviderLogo('DeepSeek');
+        };
+
+        // 处理删除消息的确认对话框
+        const handleDeleteConfirm = (message: Message) => {
+            Modal.confirm({
+                title: '删除消息',
+                content: '确定要删除这条消息吗？此操作无法撤销。',
+                okText: '删除',
+                cancelText: '取消',
+                okType: 'danger',
+                onOk: () => {
+                    handleDeleteMessage(message);
+                },
+            });
         };
 
         // 处理复制代码块
@@ -292,22 +308,44 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
                                 >
                                     {t('regenerate') || '重新生成'}
                                 </Button>
+                                <Button
+                                    type="text"
+                                    icon={<DeleteOutlined />}
+                                    size="small"
+                                    onClick={() => handleDeleteConfirm(firstMessage)}
+                                    title="删除消息"
+                                    danger
+                                >
+                                    删除
+                                </Button>
                             </>
                         )}
 
                         {isUserMessage && (
-                            <Button
-                                type="text"
-                                icon={<EditOutlined />}
-                                size="small"
-                                onClick={() => {
-                                    const content = getMessageContent(firstMessage);
-                                    onEditMessage(content);
-                                }}
-                                title={t('edit') || '编辑'}
-                            >
-                                {t('edit') || '编辑'}
-                            </Button>
+                            <>
+                                <Button
+                                    type="text"
+                                    icon={<EditOutlined />}
+                                    size="small"
+                                    onClick={() => {
+                                        const content = getMessageContent(firstMessage);
+                                        onEditMessage(content);
+                                    }}
+                                    title={t('edit') || '编辑'}
+                                >
+                                    {t('edit') || '编辑'}
+                                </Button>
+                                <Button
+                                    type="text"
+                                    icon={<DeleteOutlined />}
+                                    size="small"
+                                    onClick={() => handleDeleteConfirm(firstMessage)}
+                                    title="删除消息"
+                                    danger
+                                >
+                                    删除
+                                </Button>
+                            </>
                         )}
                     </div>
                 </div>

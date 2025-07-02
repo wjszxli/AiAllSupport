@@ -191,12 +191,35 @@ export const useMessageOperations = (streamingMessageId: string | null) => {
         }
     }, []);
 
+    // 删除单条消息
+    const handleDeleteMessage = useCallback((message: Message) => {
+        try {
+            // 获取当前选中的话题ID
+            const selectedTopicId = robotStore.selectedRobot.selectedTopicId;
+            if (!selectedTopicId) {
+                logger.error('No selected topic');
+                AntdMessage.error('删除失败：未选择话题');
+                return;
+            }
+
+            // 使用MessageService删除消息
+            const messageService = getMessageService(rootStore);
+            messageService.deleteSingleMessage(selectedTopicId, message.id);
+
+            AntdMessage.success('消息已删除', 2);
+        } catch (error) {
+            logger.error('Error during message deletion:', error);
+            AntdMessage.error('删除消息失败');
+        }
+    }, []);
+
     return {
         getMessageContent,
         getMessageThinking,
         isMessageStreaming,
         handleCopyMessage,
         handleRegenerateResponse,
+        handleDeleteMessage,
         getMessageError,
     };
 };

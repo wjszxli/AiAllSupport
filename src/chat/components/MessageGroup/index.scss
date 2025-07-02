@@ -221,6 +221,15 @@
                     color: #333;
                     background: rgb(0 0 0 / 4%);
                 }
+
+                // 删除按钮特殊样式
+                &.ant-btn-dangerous {
+                    &:hover {
+                        color: #ff4d4f;
+                        background: rgb(255 77 79 / 8%);
+                        border-color: rgb(255 77 79 / 20%);
+                    }
+                }
             }
         }
 
