@@ -136,33 +136,33 @@
         flex-direction: column;
         gap: 8px;
 
-        .stop-button,
-        .regenerate-button {
-            align-self: center;
-            min-width: 80px;
-            height: 36px;
-            padding: 0 16px;
-            font-weight: 500;
-            border-radius: 6px;
-            transition: all 0.3s;
-        }
+        // .stop-button,
+        // .regenerate-button {
+        //     align-self: center;
+        //     min-width: 80px;
+        //     height: 36px;
+        //     padding: 0 16px;
+        //     font-weight: 500;
+        //     border-radius: 6px;
+        //     transition: all 0.3s;
+        // }
 
-        .stop-button {
-            color: white;
-            background-color: #ff4d4f;
-            border: none;
-            box-shadow: 0 2px 8px rgb(255 77 79 / 25%);
+        // .stop-button {
+        //     color: white;
+        //     background-color: #ff4d4f;
+        //     border: none;
+        //     box-shadow: 0 2px 8px rgb(255 77 79 / 25%);
 
-            &:hover:not(:disabled) {
-                background-color: #ff7875;
-                box-shadow: 0 4px 12px rgb(255 77 79 / 35%);
-                transform: translateY(-1px);
-            }
+        //     &:hover:not(:disabled) {
+        //         background-color: #ff7875;
+        //         box-shadow: 0 4px 12px rgb(255 77 79 / 35%);
+        //         transform: translateY(-1px);
+        //     }
 
-            &:active:not(:disabled) {
-                transform: translateY(0);
-            }
-        }
+        //     &:active:not(:disabled) {
+        //         transform: translateY(0);
+        //     }
+        // }
 
         .regenerate-button {
             background-color: #f5f7fa;

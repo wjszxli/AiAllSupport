@@ -2,7 +2,7 @@ import { t } from '@/locales/i18n';
 import rootStore from '@/store';
 import { Button, Input, message } from 'antd';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ExpandOutlined, ShrinkOutlined } from '@ant-design/icons';
+import { ExpandOutlined, ShrinkOutlined, SendOutlined, StopOutlined } from '@ant-design/icons';
 
 import './index.scss';
 import { useMessageSender } from '@/chat/hooks/useMessageSender';
@@ -126,6 +126,24 @@ const ChatInterface = observer(({ initialText }: { initialText?: string }) => {
         setIsInputExpanded(!isInputExpanded);
     }, [isInputExpanded]);
 
+    // 取消流式响应
+    const cancelStreamingResponse = useCallback(() => {
+        if (selectedTopicId) {
+            messageService.cancelCurrentStream(selectedTopicId);
+        }
+    }, [messageService, selectedTopicId]);
+
+    // 处理发送或停止按钮点击
+    const handleButtonClick = useCallback(() => {
+        if (streamingMessageId) {
+            // 如果正在流式输出，则停止
+            cancelStreamingResponse();
+        } else {
+            // 否则发送消息
+            handleSendMessageClick();
+        }
+    }, [streamingMessageId, cancelStreamingResponse, handleSendMessageClick, inputMessage]);
+
     return (
         <div className="chat-interface-container">
             <MessageList messages={displayMessages} onEditMessage={handleEditMessage} />
@@ -160,14 +178,9 @@ const ChatInterface = observer(({ initialText }: { initialText?: string }) => {
                 </div>
                 <Button
                     type="primary"
-                    // icon={streamingMessageId ? <CloseOutlined /> : <SendOutlined />}
-                    onClick={handleSendMessageClick}
-                    // loading={isLoading && !streamingMessageId}
-                    // className={`send-button ${
-                    //     shouldDisableButton && !streamingMessageId ? 'disabled' : 'enabled'
-                    // }`}
-                    className="send-button"
-                    // disabled={shouldDisableButton && !streamingMessageId}
+                    icon={streamingMessageId ? <StopOutlined /> : <SendOutlined />}
+                    onClick={handleButtonClick}
+                    className={streamingMessageId ? 'stop-message-button' : 'send-message-button'}
                 >
                     {streamingMessageId ? t('stop') : t('send')}
                 </Button>

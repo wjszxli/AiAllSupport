@@ -593,42 +593,6 @@
                 display: flex;
                 gap: 10px;
 
-                .send-button {
-                    background: linear-gradient(135deg, #4776e6 0%, #8e54e9 100%);
-                    border: none;
-                    box-shadow: 0 4px 12px rgba(78, 88, 222, 0.15);
-                    transition: all 0.3s ease;
-
-                    &:hover,
-                    &:focus {
-                        background: linear-gradient(135deg, #5784ec 0%, #9a66ed 100%);
-                        transform: translateY(-2px);
-                        box-shadow: 0 6px 16px rgba(78, 88, 222, 0.25);
-                    }
-
-                    &:active {
-                        transform: translateY(0);
-                    }
-                }
-
-                .stop-button {
-                    background-color: #f54242;
-                    border: none;
-                    color: white;
-                    transition: all 0.3s ease;
-                    box-shadow: 0 4px 12px rgba(245, 66, 66, 0.15);
-
-                    &:hover {
-                        background-color: #ff5a5a;
-                        transform: translateY(-2px);
-                        box-shadow: 0 6px 16px rgba(245, 66, 66, 0.25);
-                    }
-
-                    &:active {
-                        transform: translateY(0);
-                    }
-                }
-
                 button {
                     height: 36px;
                     display: flex;

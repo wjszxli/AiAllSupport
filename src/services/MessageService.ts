@@ -61,7 +61,7 @@ export class MessageService {
         }
 
         runInAction(() => {
-            // this.rootStore.messageStore.setStreamingMessageId(null);
+            this.rootStore.messageStore.setStreamingMessageId(null);
             this.rootStore.messageStore.setTopicLoading(currentTopicId, false);
         });
     }

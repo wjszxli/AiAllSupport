@@ -1,6 +1,8 @@
 // 定义变量
 $primary-color: #4776e6;
 $danger-color: #e53e3e;
+$stop-color: #ff4d4f;
+$stop-color-hover: #ff7875;
 $bg-color: rgb(255 255 255 / 95%);
 $bg-color-header: rgb(248 250 252 / 90%);
 $border-color: rgb(229 231 235 / 70%);
@@ -28,6 +30,7 @@ $thinking-border-color: #e1e8ed;
             gap: 12px;
             align-items: flex-end;
             width: 100%;
+            margin-bottom: 0;
 
             .textarea-wrapper {
                 position: relative;
@@ -35,31 +38,6 @@ $thinking-border-color: #e1e8ed;
 
                 .message-input {
                     width: 100%;
-
-                    textarea {
-                        width: 100%;
-                        min-height: 80px;
-                        padding: 12px 16px 40px; // 增加底部padding为控制按钮留空间
-                        font-size: 14px;
-                        line-height: 1.5;
-                        color: #333;
-                        background-color: #f5f7fa;
-                        border: 1px solid #e1e4e8;
-                        border-radius: 8px;
-                        resize: none;
-                        transition: all 0.3s ease;
-
-                        &:focus {
-                            background-color: #fff;
-                            border-color: #4776e6;
-                            outline: none;
-                            box-shadow: 0 0 0 2px rgb(71 118 230 / 10%);
-                        }
-
-                        &::placeholder {
-                            color: #999;
-                        }
-                    }
                 }
 
                 .input-controls {
@@ -77,7 +55,7 @@ $thinking-border-color: #e1e8ed;
                         height: 24px;
                         padding: 0;
                         color: #666;
-                        background-color: rgba(255, 255, 255, 0.8);
+                        background-color: rgb(255 255 255 / 80%);
                         border: 1px solid #e1e4e8;
                         border-radius: 4px;
                         transition: all 0.2s ease;
@@ -99,34 +77,176 @@ $thinking-border-color: #e1e8ed;
                     }
                 }
             }
+        }
 
-            .send-button {
-                min-width: 80px;
-                height: 40px;
-                padding: 0 36px;
-                font-weight: 500;
-                color: white;
+        // 发送按钮样式
+        .send-message-button {
+            position: relative;
+            box-sizing: border-box;
+            flex-shrink: 0;
+            align-self: flex-end;
+            width: 110px !important; // 强制统一宽度
+            height: 40px;
+            padding: 0 16px !important;
+            font-weight: 500;
+            color: white !important;
+            background: linear-gradient(135deg, #4776e6 0%, #8e54e9 100%) !important;
+            border: 1px solid transparent !important;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgb(71 118 230 / 25%);
+            transition: all 0.3s ease;
+
+            &:hover:not(:disabled) {
+                color: white !important;
+                background: linear-gradient(135deg, #5a84ea 0%, #9d63ec 100%) !important;
+                border: 1px solid transparent !important;
+                box-shadow: 0 4px 12px rgb(71 118 230 / 35%);
+                transform: translateY(-1px);
+            }
+
+            &:active:not(:disabled) {
+                transform: translateY(0);
+            }
+
+            &:disabled {
+                cursor: not-allowed;
+                opacity: 0.5;
+            }
+
+            .anticon {
+                font-size: 14px;
+                animation: pulse-send 2s infinite;
+            }
+
+            // 添加呼吸效果来吸引注意
+            &::before {
+                position: absolute;
+                top: -2px;
+                right: -2px;
+                bottom: -2px;
+                left: -2px;
+                z-index: -1;
+                content: '';
                 background: linear-gradient(135deg, #4776e6 0%, #8e54e9 100%);
-                border: none;
-                border-radius: 6px;
-                box-shadow: 0 2px 8px rgb(71 118 230 / 25%);
-                transition: all 0.3s ease;
-
-                &:hover:not(:disabled) {
-                    box-shadow: 0 4px 12px rgb(71 118 230 / 35%);
-                    transform: translateY(-1px);
-                }
-
-                &:active:not(:disabled) {
-                    transform: translateY(0);
-                }
-
-                &:disabled {
-                    cursor: not-allowed;
-                    opacity: 0.5;
-                }
+                border-radius: 8px;
+                opacity: 0.2;
+                animation: pulse-send-glow 3s infinite;
             }
         }
+
+        // 停止按钮样式
+        .stop-message-button {
+            position: relative;
+            box-sizing: border-box;
+            flex-shrink: 0;
+            align-self: flex-end;
+            width: 110px !important; // 强制统一宽度
+            height: 40px;
+            padding: 0 16px !important;
+            font-weight: 500;
+            color: white !important;
+            background: linear-gradient(135deg, $stop-color 0%, #ff1f24 100%) !important;
+            border: 1px solid $stop-color !important;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgb(255 77 79 / 25%);
+            transition: all 0.3s ease;
+
+            &:hover:not(:disabled) {
+                color: white !important;
+                background: linear-gradient(135deg, $stop-color-hover 0%, #ff4d50 100%) !important;
+                border-color: $stop-color-hover !important;
+                box-shadow: 0 4px 12px rgb(255 77 79 / 35%);
+                transform: translateY(-1px);
+            }
+
+            &:active:not(:disabled) {
+                transform: translateY(0);
+            }
+
+            &:focus {
+                color: white !important;
+                background: linear-gradient(135deg, $stop-color 0%, #ff1f24 100%) !important;
+                border-color: $stop-color !important;
+                box-shadow: 0 0 0 2px rgb(255 77 79 / 20%);
+            }
+
+            &:disabled {
+                cursor: not-allowed;
+                opacity: 0.5;
+            }
+
+            .anticon {
+                font-size: 14px;
+                animation: pulse-stop 1.5s infinite;
+            }
+
+            // 添加脉冲动画来吸引注意
+            &::before {
+                position: absolute;
+                top: -2px;
+                right: -2px;
+                bottom: -2px;
+                left: -2px;
+                z-index: -1;
+                content: '';
+                background: linear-gradient(135deg, $stop-color 0%, #ff1f24 100%);
+                border-radius: 8px;
+                opacity: 0.3;
+                animation: pulse-glow 2s infinite;
+            }
+        }
+    }
+}
+
+// 发送按钮的脉冲动画
+@keyframes pulse-send {
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+// 发送按钮的光晕动画
+@keyframes pulse-send-glow {
+    0%,
+    100% {
+        opacity: 0.2;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.4;
+        transform: scale(1.02);
+    }
+}
+
+// 停止按钮的脉冲动画
+@keyframes pulse-stop {
+    0%,
+    100% {
+        transform: scale(1);
+    }
+    /* stylelint-disable-next-line rule-empty-line-before */
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+// 停止按钮的光晕动画
+@keyframes pulse-glow {
+    0%,
+    100% {
+        opacity: 0.3;
+        transform: scale(1);
+    }
+    /* stylelint-disable-next-line rule-empty-line-before */
+    50% {
+        opacity: 0.6;
+        transform: scale(1.05);
     }
 }
 
