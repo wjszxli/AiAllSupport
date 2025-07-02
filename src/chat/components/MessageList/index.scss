@@ -19,9 +19,39 @@
             margin-top: 40px;
             text-align: center;
 
-            h5 {
+            .suggestions-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
                 margin-bottom: 20px;
-                color: #666;
+
+                h5 {
+                    display: flex;
+                    gap: 8px;
+                    align-items: center;
+                    margin: 0;
+                    color: #666;
+                }
+
+                .refresh-button {
+                    display: flex;
+                    gap: 4px;
+                    align-items: center;
+                    padding: 4px 8px;
+                    font-size: 12px;
+                    color: #666;
+                    border-radius: 4px;
+                    transition: all 0.2s ease;
+
+                    &:hover {
+                        color: #1890ff;
+                        background-color: #f0f8ff;
+                    }
+
+                    .anticon {
+                        font-size: 12px;
+                    }
+                }
             }
 
             .suggestion-items {

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Empty, Typography, Button } from 'antd';
-import { RocketOutlined, BulbOutlined } from '@ant-design/icons';
+import { RocketOutlined, BulbOutlined, ReloadOutlined } from '@ant-design/icons';
 import { Message } from '@/types/message';
 import { t } from '@/locales/i18n';
 import MessageGroup from '../MessageGroup';
@@ -19,7 +19,7 @@ const MessageList: React.FC<MessageListProps> = observer(({ messages, onEditMess
     const messagesWrapperRef = useRef<HTMLDivElement>(null);
     const streamingMessageId = rootStore.messageStore.streamingMessageId;
 
-    const { suggestedPrompts, handleSelectPrompt } = usePromptSuggestions();
+    const { suggestedPrompts, handleSelectPrompt, refreshPrompts } = usePromptSuggestions();
     const groupedMessages = Object.entries(getGroupedMessages(messages));
 
     // 自动滚动到底部
@@ -40,13 +40,25 @@ const MessageList: React.FC<MessageListProps> = observer(({ messages, onEditMess
                         }
                     />
                     <div className="prompt-suggestions">
-                        <Typography.Title level={5}>
-                            <BulbOutlined /> {t('tryAsking')}
-                        </Typography.Title>
+                        <div className="suggestions-header">
+                            <Typography.Title level={5}>
+                                <BulbOutlined /> {t('tryAsking')}
+                            </Typography.Title>
+                            <Button
+                                type="text"
+                                icon={<ReloadOutlined />}
+                                size="small"
+                                onClick={refreshPrompts}
+                                className="refresh-button"
+                                title="刷新提示词"
+                            >
+                                换一批
+                            </Button>
+                        </div>
                         <div className="suggestion-items">
                             {suggestedPrompts.map((prompt, index) => (
                                 <Button
-                                    key={index}
+                                    key={`${prompt}-${index}`}
                                     className="suggestion-item"
                                     onClick={() => handleSelectPrompt(prompt, onEditMessage)}
                                 >
