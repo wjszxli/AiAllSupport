@@ -198,6 +198,7 @@ const ChatBody: React.FC<ChatBodyProps> = observer(({ userInput, setUserInput })
             okText: '确认清空',
             cancelText: '取消',
             okType: 'danger',
+            zIndex: 10000,
             onOk: async () => {
                 try {
                     await messageService.clearTopicMessages(selectedTopicId);

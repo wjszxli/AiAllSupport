@@ -42,12 +42,13 @@ $thinking-border-color: #e1e8ed;
 
                 .input-controls {
                     position: absolute;
-                    right: 8px;
                     bottom: 8px;
+                    left: 8px;
                     display: flex;
                     gap: 4px;
 
-                    .expand-button {
+                    .expand-button,
+                    .clear-button {
                         display: flex;
                         align-items: center;
                         justify-content: center;
@@ -71,8 +72,21 @@ $thinking-border-color: #e1e8ed;
                             transform: scale(0.95);
                         }
 
+                        &:disabled {
+                            cursor: not-allowed;
+                            opacity: 0.5;
+                        }
+
                         .anticon {
                             font-size: 12px;
+                        }
+                    }
+
+                    .clear-button {
+                        &:hover:not(:disabled) {
+                            color: #ef4444;
+                            background-color: #fef2f2;
+                            border-color: #ef4444;
                         }
                     }
                 }
@@ -258,5 +272,46 @@ $thinking-border-color: #e1e8ed;
 
     to {
         opacity: 1;
+    }
+}
+
+@keyframes slide-in-left {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slide-in-right {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.5;
+        transform: scale(0.8);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1);
     }
 }

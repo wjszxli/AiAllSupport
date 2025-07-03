@@ -1,8 +1,14 @@
 import { t } from '@/locales/i18n';
 import rootStore from '@/store';
-import { Button, Input, message } from 'antd';
+import { Button, Input, Tooltip, Modal, message } from 'antd';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ExpandOutlined, ShrinkOutlined, SendOutlined, StopOutlined } from '@ant-design/icons';
+import {
+    ExpandOutlined,
+    ShrinkOutlined,
+    SendOutlined,
+    StopOutlined,
+    DeleteOutlined,
+} from '@ant-design/icons';
 
 import './index.scss';
 import { useMessageSender } from '@/chat/hooks/useMessageSender';
@@ -17,6 +23,7 @@ const ChatInterface = observer(({ initialText }: { initialText?: string }) => {
     const [isComposing, setIsComposing] = useState(false);
     const [displayMessages, setDisplayMessages] = useState<Message[]>([]);
     const [isInputExpanded, setIsInputExpanded] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     const inputRef = useRef<any>(null);
 
     const streamingMessageId = rootStore.messageStore.streamingMessageId;
@@ -34,9 +41,13 @@ const ChatInterface = observer(({ initialText }: { initialText?: string }) => {
     useEffect(() => {
         console.log('loadTopicMessages', selectedTopicId);
         if (selectedTopicId) {
-            messageService.loadTopicMessages(selectedTopicId);
+            // 只有在没有正在流式处理的消息时才重新加载
+            // 避免在流式过程中清理当前的流式块
+            if (!streamingMessageId) {
+                messageService.loadTopicMessages(selectedTopicId);
+            }
         }
-    }, [selectedTopicId, messageService]);
+    }, [selectedTopicId, streamingMessageId, messageService]);
 
     // 使用 MobX 的响应式数据，移除 useMemo 以确保正确跟踪状态变化
     const messages = useMemo(() => {
@@ -83,7 +94,7 @@ const ChatInterface = observer(({ initialText }: { initialText?: string }) => {
 
     const handleSendMessageClick = () => {
         console.log('handleSendMessageClick', inputMessage);
-        if (inputMessage.trim() === '') return;
+        if (!inputMessage.trim() || isLoading) return;
 
         if (!selectedRobot) {
             message.error('请先选择机器人');
@@ -131,7 +142,34 @@ const ChatInterface = observer(({ initialText }: { initialText?: string }) => {
         if (selectedTopicId) {
             messageService.cancelCurrentStream(selectedTopicId);
         }
+        setIsLoading(false);
     }, [messageService, selectedTopicId]);
+
+    // 清空消息处理函数
+    const handleClearMessages = useCallback(async () => {
+        if (!selectedTopicId || !selectedRobot) {
+            message.error('无法清空消息：未选择话题或机器人');
+            return;
+        }
+
+        Modal.confirm({
+            title: '清空聊天记录',
+            content: '确定要清空当前对话的所有消息吗？此操作不可撤销。',
+            okText: '确认清空',
+            cancelText: '取消',
+            okType: 'danger',
+            zIndex: 10000,
+            onOk: async () => {
+                try {
+                    await messageService.clearTopicMessages(selectedTopicId);
+                    message.success('聊天记录已清空');
+                } catch (error) {
+                    console.error('Error clearing messages:', error);
+                    message.error('清空消息失败');
+                }
+            },
+        });
+    }, [selectedTopicId, selectedRobot, messageService]);
 
     // 处理发送或停止按钮点击
     const handleButtonClick = useCallback(() => {
@@ -142,7 +180,7 @@ const ChatInterface = observer(({ initialText }: { initialText?: string }) => {
             // 否则发送消息
             handleSendMessageClick();
         }
-    }, [streamingMessageId, cancelStreamingResponse, handleSendMessageClick, inputMessage]);
+    }, [streamingMessageId, cancelStreamingResponse, handleSendMessageClick]);
 
     return (
         <div className="chat-interface-container">
@@ -165,14 +203,27 @@ const ChatInterface = observer(({ initialText }: { initialText?: string }) => {
                             className="message-input"
                         />
                         <div className="input-controls">
-                            <Button
-                                type="text"
-                                size="small"
-                                icon={isInputExpanded ? <ShrinkOutlined /> : <ExpandOutlined />}
-                                onClick={toggleInputExpanded}
-                                className="expand-button"
-                                title={isInputExpanded ? '收起输入框' : '展开输入框'}
-                            />
+                            <Tooltip title={isInputExpanded ? '收起输入框' : '展开输入框'}>
+                                <Button
+                                    type="text"
+                                    size="small"
+                                    icon={isInputExpanded ? <ShrinkOutlined /> : <ExpandOutlined />}
+                                    onClick={toggleInputExpanded}
+                                    className="expand-button"
+                                />
+                            </Tooltip>
+                            {displayMessages.length > 0 && !streamingMessageId && (
+                                <Tooltip title="清空聊天记录">
+                                    <Button
+                                        type="text"
+                                        size="small"
+                                        icon={<DeleteOutlined />}
+                                        onClick={handleClearMessages}
+                                        className="clear-button"
+                                        disabled={isLoading}
+                                    />
+                                </Tooltip>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -181,6 +232,7 @@ const ChatInterface = observer(({ initialText }: { initialText?: string }) => {
                     icon={streamingMessageId ? <StopOutlined /> : <SendOutlined />}
                     onClick={handleButtonClick}
                     className={streamingMessageId ? 'stop-message-button' : 'send-message-button'}
+                    disabled={!streamingMessageId && (!inputMessage.trim() || isLoading)}
                 >
                     {streamingMessageId ? t('stop') : t('send')}
                 </Button>

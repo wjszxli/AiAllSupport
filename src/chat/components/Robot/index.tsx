@@ -56,6 +56,7 @@ const Robot: React.FC<RobotProps> = observer(({ onSwitchToTopics }) => {
             cancelText: '取消',
             okButtonProps: { loading },
             cancelButtonProps: { disabled: loading },
+            zIndex: 10000,
             onOk: async () => {
                 if (robotStore.robotList.length <= 1) {
                     message.error('至少保留一个机器人');

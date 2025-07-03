@@ -142,6 +142,7 @@ const Topic: React.FC<TopicProps> = observer(() => {
             okText: t('delete') || '删除',
             okType: 'danger',
             cancelText: t('cancel') || '取消',
+            zIndex: 10000,
             onOk: async () => {
                 if (!robotStore.selectedRobot) {
                     messageApi.error('请先选择一个机器人');
