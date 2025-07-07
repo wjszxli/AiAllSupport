@@ -1,27 +1,5 @@
 import type { ProviderConfig } from '@/types';
 
-export const SERVICE_MAP = {
-    DeepSeek: {
-        chat: '/chat/completions',
-    },
-    Ollama: {
-        chat: '/api/chat',
-        modelList: '/api/tags',
-    },
-    SiliconFlow: {
-        chat: '/v1/chat/completions',
-    },
-    Tencent: {
-        chat: '/v1/chat/completions',
-    },
-    Baidu: {
-        chat: '/v2/chat/completions',
-    },
-    Aliyun: {
-        chat: '/compatible-mode/v1/chat/completions',
-    },
-};
-
 export const PROVIDERS_DATA: Record<string, ProviderConfig> = {
     DeepSeek: {
         name: 'DeepSeek',
