@@ -246,7 +246,11 @@ const ChatBody: React.FC<ChatBodyProps> = observer(({ userInput, setUserInput })
                     </div>
                 </div>
             )}
-            <MessageList messages={displayMessages} onEditMessage={handleEditMessage} />
+            <MessageList
+                messages={displayMessages}
+                onEditMessage={handleEditMessage}
+                selectedRobot={selectedRobot || undefined}
+            />
             <div className="chat-footer">
                 <div className="input-container">
                     <div className="textarea-container">
@@ -268,7 +272,10 @@ const ChatBody: React.FC<ChatBodyProps> = observer(({ userInput, setUserInput })
                         <div className="input-toolbar">
                             <div className="toolbar-left">
                                 {/* 展开/收起按钮 */}
-                                <Tooltip title={isInputExpanded ? '收起输入框' : '展开输入框'}>
+                                <Tooltip
+                                    title={isInputExpanded ? '收起输入框' : '展开输入框'}
+                                    overlayStyle={{ zIndex: 10001 }}
+                                >
                                     <Button
                                         type="text"
                                         size="small"
@@ -286,7 +293,7 @@ const ChatBody: React.FC<ChatBodyProps> = observer(({ userInput, setUserInput })
 
                                 {/* 清空消息按钮 */}
                                 {displayMessages.length > 0 && !streamingMessageId && (
-                                    <Tooltip title="清空聊天记录">
+                                    <Tooltip title="清空聊天记录" overlayStyle={{ zIndex: 10001 }}>
                                         <Button
                                             type="text"
                                             size="small"
@@ -308,6 +315,7 @@ const ChatBody: React.FC<ChatBodyProps> = observer(({ userInput, setUserInput })
                                             ? t('sendMessage') || '发送'
                                             : t('enterQuestion') || '请输入问题'
                                     }
+                                    overlayStyle={{ zIndex: 10001 }}
                                 >
                                     <Button
                                         className={

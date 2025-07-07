@@ -7,9 +7,14 @@ import { getMessageService } from '@/services/MessageService';
 import { message as AntdMessage } from 'antd';
 import { t } from '@/locales/i18n';
 import { Logger } from '@/utils/logger';
+import { Robot } from '@/types';
 
-export const useMessageOperations = (streamingMessageId: string | null) => {
+export const useMessageOperations = (streamingMessageId: string | null, selectedRobot?: Robot) => {
     const logger = new Logger('useMessageOperations');
+
+    // 获取机器人实例，优先使用传入的参数
+    const currentRobot = selectedRobot || robotStore.selectedRobot;
+
     // 获取消息的正文内容（不包含思考内容）
     const getMessageContent = useCallback((message: Message): string => {
         if (!message.blocks || message.blocks.length === 0) {
@@ -155,63 +160,75 @@ export const useMessageOperations = (streamingMessageId: string | null) => {
     }, []);
 
     // 重新生成响应
-    const handleRegenerateResponse = useCallback((assistantMessage: Message) => {
-        try {
-            // 获取当前选中的话题ID
-            const selectedTopicId = robotStore.selectedRobot.selectedTopicId;
-            if (!selectedTopicId) {
-                logger.error('No selected topic');
-                AntdMessage.error(t('errorRegenerating') || '重新生成失败：未选择话题');
-                return;
+    const handleRegenerateResponse = useCallback(
+        (assistantMessage: Message) => {
+            try {
+                // 使用当前机器人获取话题ID
+                const selectedTopicId = currentRobot?.selectedTopicId;
+                if (!selectedTopicId) {
+                    logger.error('No selected topic');
+                    AntdMessage.error(t('errorRegenerating') || '重新生成失败：未选择话题');
+                    return;
+                }
+
+                // 使用当前机器人配置
+                const robot = currentRobot;
+                if (!robot) {
+                    logger.error('No selected robot');
+                    AntdMessage.error(t('errorRegenerating') || '重新生成失败：未选择机器人');
+                    return;
+                }
+
+                // 检查是否是助手消息
+                if (assistantMessage.role !== 'assistant') {
+                    logger.error('Message is not from assistant');
+                    AntdMessage.error(
+                        t('errorRegenerating') || '重新生成失败：只能重新生成助手消息',
+                    );
+                    return;
+                }
+
+                // 使用独立的 MessageService 调用重新生成
+                const messageService = getMessageService(rootStore);
+                messageService.regenerateAssistantResponse(
+                    selectedTopicId,
+                    assistantMessage,
+                    robot,
+                );
+
+                AntdMessage.info(t('regenerating') || '正在重新生成...', 2);
+            } catch (error) {
+                logger.error('Error during regeneration:', error);
+                AntdMessage.error(t('errorRegenerating') || '重新生成失败');
             }
-
-            // 获取当前机器人配置
-            const robot = robotStore.selectedRobot;
-            if (!robot) {
-                logger.error('No selected robot');
-                AntdMessage.error(t('errorRegenerating') || '重新生成失败：未选择机器人');
-                return;
-            }
-
-            // 检查是否是助手消息
-            if (assistantMessage.role !== 'assistant') {
-                logger.error('Message is not from assistant');
-                AntdMessage.error(t('errorRegenerating') || '重新生成失败：只能重新生成助手消息');
-                return;
-            }
-
-            // 使用独立的 MessageService 调用重新生成
-            const messageService = getMessageService(rootStore);
-            messageService.regenerateAssistantResponse(selectedTopicId, assistantMessage, robot);
-
-            AntdMessage.info(t('regenerating') || '正在重新生成...', 2);
-        } catch (error) {
-            logger.error('Error during regeneration:', error);
-            AntdMessage.error(t('errorRegenerating') || '重新生成失败');
-        }
-    }, []);
+        },
+        [currentRobot],
+    );
 
     // 删除单条消息
-    const handleDeleteMessage = useCallback((message: Message) => {
-        try {
-            // 获取当前选中的话题ID
-            const selectedTopicId = robotStore.selectedRobot.selectedTopicId;
-            if (!selectedTopicId) {
-                logger.error('No selected topic');
-                AntdMessage.error('删除失败：未选择话题');
-                return;
+    const handleDeleteMessage = useCallback(
+        (message: Message) => {
+            try {
+                // 使用当前机器人获取话题ID
+                const selectedTopicId = currentRobot?.selectedTopicId;
+                if (!selectedTopicId) {
+                    logger.error('No selected topic');
+                    AntdMessage.error('删除失败：未选择话题');
+                    return;
+                }
+
+                // 使用MessageService删除消息
+                const messageService = getMessageService(rootStore);
+                messageService.deleteSingleMessage(selectedTopicId, message.id);
+
+                AntdMessage.success('消息已删除', 2);
+            } catch (error) {
+                logger.error('Error during message deletion:', error);
+                AntdMessage.error('删除消息失败');
             }
-
-            // 使用MessageService删除消息
-            const messageService = getMessageService(rootStore);
-            messageService.deleteSingleMessage(selectedTopicId, message.id);
-
-            AntdMessage.success('消息已删除', 2);
-        } catch (error) {
-            logger.error('Error during message deletion:', error);
-            AntdMessage.error('删除消息失败');
-        }
-    }, []);
+        },
+        [currentRobot],
+    );
 
     return {
         getMessageContent,

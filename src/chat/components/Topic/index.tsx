@@ -280,7 +280,11 @@ const Topic: React.FC<TopicProps> = observer(() => {
                                 }`}
                                 onClick={() => handleTopicSelect(topic)}
                                 actions={[
-                                    <Tooltip title={t('edit') || '编辑'} key="edit">
+                                    <Tooltip
+                                        title={t('edit') || '编辑'}
+                                        key="edit"
+                                        overlayStyle={{ zIndex: 10001 }}
+                                    >
                                         <Button
                                             type="text"
                                             icon={<EditOutlined />}
@@ -291,7 +295,11 @@ const Topic: React.FC<TopicProps> = observer(() => {
                                             }}
                                         />
                                     </Tooltip>,
-                                    <Tooltip title={t('delete') || '删除'} key="delete">
+                                    <Tooltip
+                                        title={t('delete') || '删除'}
+                                        key="delete"
+                                        overlayStyle={{ zIndex: 10001 }}
+                                    >
                                         <Button
                                             type="text"
                                             icon={<DeleteOutlined />}
@@ -342,6 +350,7 @@ const Topic: React.FC<TopicProps> = observer(() => {
                 }}
                 okText={t('create') || '创建'}
                 cancelText={t('cancel') || '取消'}
+                zIndex={10000}
             >
                 <Input
                     placeholder={t('enterTopicName') || '请输入话题名称'}
@@ -364,6 +373,7 @@ const Topic: React.FC<TopicProps> = observer(() => {
                 }}
                 okText={t('save') || '保存'}
                 cancelText={t('cancel') || '取消'}
+                zIndex={10000}
             >
                 <Input
                     placeholder={t('enterTopicName') || '请输入话题名称'}

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Avatar, Button, message as messageApi, Modal } from 'antd';
+import { Avatar, Button, message as messageApi, Modal, Tooltip } from 'antd';
 import {
     UserOutlined,
     RobotOutlined,
@@ -22,19 +22,21 @@ import robotStore from '@/store/robot';
 import { getProviderName } from '@/utils/i18n';
 import { getProviderLogo } from '@/config/providers';
 import rootStore from '@/store';
+import { Robot } from '@/types';
 
 interface MessageGroupProps {
     groupKey: string;
     messages: (Message & { index: number })[];
     streamingMessageId: string | null;
     onEditMessage: (text: string) => void;
+    selectedRobot?: Robot;
 }
 
 const MessageGroup: React.FC<MessageGroupProps> = observer(
-    ({ messages, streamingMessageId, onEditMessage }) => {
+    ({ messages, streamingMessageId, onEditMessage, selectedRobot }) => {
         if (!messages || messages.length === 0) return null;
 
-        // 使用消息操作 hook
+        // 使用消息操作 hook，传入 selectedRobot 参数
         const {
             getMessageThinking,
             getMessageContent,
@@ -43,15 +45,15 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
             handleCopyMessage,
             handleDeleteMessage,
             getMessageError,
-        } = useMessageOperations(streamingMessageId);
+        } = useMessageOperations(streamingMessageId, selectedRobot);
 
         // 获取第一条消息来确定消息类型
         const firstMessage = messages[0];
         const isUserMessage = firstMessage.role === 'user';
         const isAssistantMessage = firstMessage.role === 'assistant';
 
-        // 获取当前机器人信息（作为后备）
-        const selectedRobot = robotStore.selectedRobot;
+        // 获取当前机器人信息（优先使用传入的参数，否则使用默认的）
+        const currentRobot = selectedRobot || robotStore.selectedRobot;
 
         // 状态保存提供商图标和显示名称
         const [providerIcon, setProviderIcon] = useState<string | null>(null);
@@ -78,9 +80,9 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
             }
 
             // 后备：使用当前选中的机器人的模型
-            const fallbackModel = selectedRobot?.model || selectedRobot?.defaultModel;
+            const fallbackModel = currentRobot?.model || currentRobot?.defaultModel;
             return fallbackModel || null;
-        }, [firstMessage, selectedRobot]);
+        }, [firstMessage, currentRobot]);
 
         // 当消息模型或提供商变化时更新图标和名称
         useEffect(() => {
@@ -165,6 +167,7 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
                 okText: '删除',
                 cancelText: '取消',
                 okType: 'danger',
+                zIndex: 10000,
                 onOk: () => {
                     handleDeleteMessage(message);
                 },
@@ -287,64 +290,75 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
                     <div className="message-actions">
                         {isAssistantMessage && streamingMessageId !== firstMessage.id && (
                             <>
-                                <Button
-                                    type="text"
-                                    icon={<CopyOutlined />}
-                                    size="small"
-                                    onClick={() => {
-                                        const content = getMessageContent(firstMessage);
-                                        handleCopyMessage(content);
-                                    }}
+                                <Tooltip
                                     title={t('copy') || '复制'}
+                                    overlayStyle={{ zIndex: 10001 }}
                                 >
-                                    {t('copy') || '复制'}
-                                </Button>
-                                <Button
-                                    type="text"
-                                    icon={<ReloadOutlined />}
-                                    size="small"
-                                    onClick={() => handleRegenerateResponse(firstMessage)}
+                                    <Button
+                                        type="text"
+                                        icon={<CopyOutlined />}
+                                        size="small"
+                                        onClick={() => {
+                                            const content = getMessageContent(firstMessage);
+                                            handleCopyMessage(content);
+                                        }}
+                                    ></Button>
+                                </Tooltip>
+                                <Tooltip
                                     title={t('regenerate') || '重新生成'}
+                                    overlayStyle={{ zIndex: 10001 }}
                                 >
-                                    {t('regenerate') || '重新生成'}
-                                </Button>
-                                <Button
-                                    type="text"
-                                    icon={<DeleteOutlined />}
-                                    size="small"
-                                    onClick={() => handleDeleteConfirm(firstMessage)}
-                                    title="删除消息"
-                                    danger
+                                    <Button
+                                        type="text"
+                                        icon={<ReloadOutlined />}
+                                        size="small"
+                                        onClick={() => handleRegenerateResponse(firstMessage)}
+                                        title={t('regenerate') || '重新生成'}
+                                    ></Button>
+                                </Tooltip>
+                                <Tooltip
+                                    title={t('delete') || '删除'}
+                                    overlayStyle={{ zIndex: 10001 }}
                                 >
-                                    删除
-                                </Button>
+                                    <Button
+                                        type="text"
+                                        icon={<DeleteOutlined />}
+                                        size="small"
+                                        onClick={() => handleDeleteConfirm(firstMessage)}
+                                        danger
+                                    ></Button>
+                                </Tooltip>
                             </>
                         )}
 
                         {isUserMessage && (
                             <>
-                                <Button
-                                    type="text"
-                                    icon={<EditOutlined />}
-                                    size="small"
-                                    onClick={() => {
-                                        const content = getMessageContent(firstMessage);
-                                        onEditMessage(content);
-                                    }}
+                                <Tooltip
                                     title={t('edit') || '编辑'}
+                                    overlayStyle={{ zIndex: 10001 }}
                                 >
-                                    {t('edit') || '编辑'}
-                                </Button>
-                                <Button
-                                    type="text"
-                                    icon={<DeleteOutlined />}
-                                    size="small"
-                                    onClick={() => handleDeleteConfirm(firstMessage)}
-                                    title="删除消息"
-                                    danger
+                                    <Button
+                                        type="text"
+                                        icon={<EditOutlined />}
+                                        size="small"
+                                        onClick={() => {
+                                            const content = getMessageContent(firstMessage);
+                                            onEditMessage(content);
+                                        }}
+                                    ></Button>
+                                </Tooltip>
+                                <Tooltip
+                                    title={t('delete') || '删除'}
+                                    overlayStyle={{ zIndex: 10001 }}
                                 >
-                                    删除
-                                </Button>
+                                    <Button
+                                        type="text"
+                                        icon={<DeleteOutlined />}
+                                        size="small"
+                                        onClick={() => handleDeleteConfirm(firstMessage)}
+                                        danger
+                                    ></Button>
+                                </Tooltip>
                             </>
                         )}
                     </div>

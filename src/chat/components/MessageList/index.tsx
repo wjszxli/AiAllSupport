@@ -9,78 +9,87 @@ import { usePromptSuggestions } from '@/chat/hooks/usePromptSuggestions';
 import rootStore from '@/store';
 import { observer } from 'mobx-react-lite';
 import './index.scss';
+import { Robot } from '@/types';
 
 interface MessageListProps {
     messages: Message[];
     onEditMessage: (text: string) => void;
+    selectedRobot?: Robot;
 }
 
-const MessageList: React.FC<MessageListProps> = observer(({ messages, onEditMessage }) => {
-    const messagesWrapperRef = useRef<HTMLDivElement>(null);
-    const streamingMessageId = rootStore.messageStore.streamingMessageId;
+const MessageList: React.FC<MessageListProps> = observer(
+    ({ messages, onEditMessage, selectedRobot }) => {
+        const messagesWrapperRef = useRef<HTMLDivElement>(null);
+        const streamingMessageId = rootStore.messageStore.streamingMessageId;
 
-    const { suggestedPrompts, handleSelectPrompt, refreshPrompts } = usePromptSuggestions();
-    const groupedMessages = Object.entries(getGroupedMessages(messages));
+        const { suggestedPrompts, handleSelectPrompt, refreshPrompts } = usePromptSuggestions();
+        const groupedMessages = Object.entries(getGroupedMessages(messages));
 
-    // 自动滚动到底部
-    useEffect(() => {
-        if (messagesWrapperRef.current) {
-            messagesWrapperRef.current.scrollTop = messagesWrapperRef.current.scrollHeight;
-        }
-    }, [messages]);
+        // 自动滚动到底部
+        useEffect(() => {
+            if (messagesWrapperRef.current) {
+                messagesWrapperRef.current.scrollTop = messagesWrapperRef.current.scrollHeight;
+            }
+        }, [messages]);
 
-    return (
-        <div className="messages-container" ref={messagesWrapperRef}>
-            {groupedMessages.length === 0 ? (
-                <div className="welcome-container">
-                    <Empty
-                        image={<RocketOutlined style={{ fontSize: '64px', color: '#1890ff' }} />}
-                        description={
-                            <Typography.Text strong>{t('welcomeMessage')}</Typography.Text>
-                        }
-                    />
-                    <div className="prompt-suggestions">
-                        <div className="suggestions-header">
-                            <Typography.Title level={5}>
-                                <BulbOutlined /> {t('tryAsking')}
-                            </Typography.Title>
-                            <Button
-                                type="text"
-                                icon={<ReloadOutlined />}
-                                size="small"
-                                onClick={refreshPrompts}
-                                className="refresh-button"
-                                title="刷新提示词"
-                            >
-                                换一批
-                            </Button>
-                        </div>
-                        <div className="suggestion-items">
-                            {suggestedPrompts.map((prompt, index) => (
+        return (
+            <div className="messages-container" ref={messagesWrapperRef}>
+                {groupedMessages.length === 0 ? (
+                    <div className="welcome-container">
+                        <Empty
+                            image={
+                                <RocketOutlined style={{ fontSize: '64px', color: '#1890ff' }} />
+                            }
+                            description={
+                                <Typography.Text strong>{t('welcomeMessage')}</Typography.Text>
+                            }
+                        />
+                        <div className="prompt-suggestions">
+                            <div className="suggestions-header">
+                                <Typography.Title level={5}>
+                                    <BulbOutlined /> {t('tryAsking')}
+                                </Typography.Title>
                                 <Button
-                                    key={`${prompt}-${index}`}
-                                    className="suggestion-item"
-                                    onClick={() => handleSelectPrompt(prompt, onEditMessage)}
+                                    type="text"
+                                    icon={<ReloadOutlined />}
+                                    size="small"
+                                    onClick={refreshPrompts}
+                                    className="refresh-button"
+                                    title="刷新提示词"
                                 >
-                                    {prompt}
+                                    换一批
                                 </Button>
-                            ))}
+                            </div>
+                            <div className="suggestion-items">
+                                {suggestedPrompts.map((prompt, index) => (
+                                    <Button
+                                        key={`${prompt}-${index}`}
+                                        className="suggestion-item"
+                                        onClick={() => handleSelectPrompt(prompt, onEditMessage)}
+                                    >
+                                        {prompt}
+                                    </Button>
+                                ))}
+                            </div>
                         </div>
                     </div>
-                </div>
-            ) : (
-                groupedMessages.map(([key, groupMessages]) => (
-                    <MessageGroup
-                        key={key}
-                        groupKey={key}
-                        messages={groupMessages}
-                        streamingMessageId={streamingMessageId}
-                        onEditMessage={onEditMessage}
-                    />
-                ))
-            )}
-        </div>
-    );
-});
+                ) : (
+                    <>
+                        {groupedMessages.map(([groupKey, groupMessages]) => (
+                            <MessageGroup
+                                key={groupKey}
+                                groupKey={groupKey}
+                                messages={groupMessages}
+                                streamingMessageId={streamingMessageId}
+                                onEditMessage={onEditMessage}
+                                selectedRobot={selectedRobot}
+                            />
+                        ))}
+                    </>
+                )}
+            </div>
+        );
+    },
+);
 
 export default MessageList;

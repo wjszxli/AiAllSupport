@@ -184,7 +184,11 @@ const ChatInterface = observer(({ initialText }: { initialText?: string }) => {
 
     return (
         <div className="chat-interface-container">
-            <MessageList messages={displayMessages} onEditMessage={handleEditMessage} />
+            <MessageList
+                messages={displayMessages}
+                onEditMessage={handleEditMessage}
+                selectedRobot={selectedRobot || undefined}
+            />
             <div className="input-container">
                 <div className="input-wrapper">
                     <div className="textarea-wrapper">
@@ -197,13 +201,16 @@ const ChatInterface = observer(({ initialText }: { initialText?: string }) => {
                             onKeyDown={handleKeyDown}
                             placeholder={t('typeMessage')}
                             autoSize={{
-                                minRows: isInputExpanded ? 16 : 2,
-                                maxRows: isInputExpanded ? 40 : 4,
+                                minRows: isInputExpanded ? 8 : 2,
+                                maxRows: isInputExpanded ? 20 : 4,
                             }}
                             className="message-input"
                         />
                         <div className="input-controls">
-                            <Tooltip title={isInputExpanded ? '收起输入框' : '展开输入框'}>
+                            <Tooltip
+                                title={isInputExpanded ? '收起输入框' : '展开输入框'}
+                                overlayStyle={{ zIndex: 10001 }}
+                            >
                                 <Button
                                     type="text"
                                     size="small"
@@ -213,7 +220,7 @@ const ChatInterface = observer(({ initialText }: { initialText?: string }) => {
                                 />
                             </Tooltip>
                             {displayMessages.length > 0 && !streamingMessageId && (
-                                <Tooltip title="清空聊天记录">
+                                <Tooltip title="清空聊天记录" overlayStyle={{ zIndex: 10001 }}>
                                     <Button
                                         type="text"
                                         size="small"

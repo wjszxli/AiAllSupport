@@ -87,6 +87,7 @@ const EditRobotModal: React.FC<EditRobotModalProps> = ({
             closable={!loading}
             okButtonProps={{ disabled: loading }}
             cancelButtonProps={{ disabled: loading }}
+            zIndex={10000}
         >
             <Spin spinning={loading} indicator={antIcon} tip="处理中...">
                 <Form

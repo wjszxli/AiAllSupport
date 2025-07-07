@@ -145,6 +145,7 @@ const AddRobotModal: React.FC<AddRobotModalProps> = ({
             className="robot-selection-modal"
             maskClosable={!loading}
             closable={!loading}
+            zIndex={10000}
         >
             <div className="robot-selection-content">
                 <div className="search-filters">

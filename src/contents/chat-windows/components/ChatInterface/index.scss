@@ -27,7 +27,7 @@ $thinking-border-color: #e1e8ed;
 
         .input-wrapper {
             display: flex;
-            gap: 12px;
+            gap: 16px;
             align-items: flex-end;
             width: 100%;
             margin-bottom: 0;
@@ -38,33 +38,43 @@ $thinking-border-color: #e1e8ed;
 
                 .message-input {
                     width: 100%;
+                    padding-bottom: 45px;
+
+                    .ant-input {
+                        padding-right: 12px;
+                        padding-bottom: 50px;
+                        padding-left: 12px;
+                    }
                 }
 
                 .input-controls {
                     position: absolute;
                     bottom: 8px;
                     left: 8px;
+                    z-index: 10;
                     display: flex;
-                    gap: 4px;
+                    gap: 6px;
 
                     .expand-button,
                     .clear-button {
                         display: flex;
                         align-items: center;
                         justify-content: center;
-                        width: 24px;
-                        height: 24px;
+                        width: 28px;
+                        height: 28px;
                         padding: 0;
                         color: #666;
-                        background-color: rgb(255 255 255 / 80%);
+                        background-color: rgb(255 255 255 / 95%);
                         border: 1px solid #e1e4e8;
                         border-radius: 4px;
+                        box-shadow: 0 2px 6px rgb(0 0 0 / 15%);
                         transition: all 0.2s ease;
 
                         &:hover {
                             color: #4776e6;
                             background-color: #fff;
                             border-color: #4776e6;
+                            box-shadow: 0 4px 12px rgb(0 0 0 / 20%);
                             transform: scale(1.05);
                         }
 
@@ -78,7 +88,7 @@ $thinking-border-color: #e1e8ed;
                         }
 
                         .anticon {
-                            font-size: 12px;
+                            font-size: 13px;
                         }
                     }
 
@@ -99,7 +109,7 @@ $thinking-border-color: #e1e8ed;
             box-sizing: border-box;
             flex-shrink: 0;
             align-self: flex-end;
-            width: 110px !important; // 强制统一宽度
+            width: 110px !important;
             height: 40px;
             padding: 0 16px !important;
             font-weight: 500;
@@ -132,7 +142,6 @@ $thinking-border-color: #e1e8ed;
                 animation: pulse-send 2s infinite;
             }
 
-            // 添加呼吸效果来吸引注意
             &::before {
                 position: absolute;
                 top: -2px;
@@ -154,7 +163,7 @@ $thinking-border-color: #e1e8ed;
             box-sizing: border-box;
             flex-shrink: 0;
             align-self: flex-end;
-            width: 110px !important; // 强制统一宽度
+            width: 110px !important;
             height: 40px;
             padding: 0 16px !important;
             font-weight: 500;
@@ -194,7 +203,6 @@ $thinking-border-color: #e1e8ed;
                 animation: pulse-stop 1.5s infinite;
             }
 
-            // 添加脉冲动画来吸引注意
             &::before {
                 position: absolute;
                 top: -2px;
@@ -212,7 +220,6 @@ $thinking-border-color: #e1e8ed;
     }
 }
 
-// 发送按钮的脉冲动画
 @keyframes pulse-send {
     0%,
     100% {
@@ -224,7 +231,6 @@ $thinking-border-color: #e1e8ed;
     }
 }
 
-// 发送按钮的光晕动画
 @keyframes pulse-send-glow {
     0%,
     100% {
@@ -238,33 +244,30 @@ $thinking-border-color: #e1e8ed;
     }
 }
 
-// 停止按钮的脉冲动画
 @keyframes pulse-stop {
     0%,
     100% {
         transform: scale(1);
     }
-    /* stylelint-disable-next-line rule-empty-line-before */
+
     50% {
         transform: scale(1.1);
     }
 }
 
-// 停止按钮的光晕动画
 @keyframes pulse-glow {
     0%,
     100% {
         opacity: 0.3;
         transform: scale(1);
     }
-    /* stylelint-disable-next-line rule-empty-line-before */
+
     50% {
         opacity: 0.6;
         transform: scale(1.05);
     }
 }
 
-// 动画定义
 @keyframes fade-in {
     from {
         opacity: 0;
@@ -314,4 +317,9 @@ $thinking-border-color: #e1e8ed;
         opacity: 1;
         transform: scale(1);
     }
+}
+
+// 确保所有 Tooltip 都有正确的 z-index
+.ant-tooltip {
+    z-index: 10001 !important;
 }
