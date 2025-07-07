@@ -1,8 +1,8 @@
-import { Metrics, Usage, Model, RobotMessageStatus, UserMessageStatus, Robot, Topic } from '.';
+import type { Metrics, Usage, Model, RobotMessageStatus, UserMessageStatus, Robot, Topic } from '.';
 
-import { MessageBlock } from './messageBlock';
+import type { MessageBlock } from './messageBlock';
 
-export type Message = {
+export interface Message {
     id: string;
     role: 'user' | 'assistant' | 'system';
     assistantId: string;
@@ -29,7 +29,7 @@ export type Message = {
 
     // 块集合
     blocks: MessageBlock['id'][];
-};
+}
 
 export interface InputMessage {
     robot: Robot;

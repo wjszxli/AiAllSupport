@@ -46,7 +46,7 @@ export class MessageBlockStore {
 
     // Computed - 计算属性
     get allBlocks(): MessageBlock[] {
-        return Array.from(this.blocks.values());
+        return [...this.blocks.values()];
     }
 
     get blocksByMessage(): Map<string, MessageBlock[]> {
@@ -73,7 +73,7 @@ export class MessageBlockStore {
 
     // 获取所有块ID
     get allBlockIds(): string[] {
-        return Array.from(this.blocks.keys());
+        return [...this.blocks.keys()];
     }
 
     // 获取块实体字典
@@ -96,7 +96,7 @@ export class MessageBlockStore {
                 status: block.status,
                 content:
                     'content' in block
-                        ? block.content?.substring(0, 50) +
+                        ? block.content?.slice(0, 50) +
                           (block.content && block.content.length > 50 ? '...' : '')
                         : '(无内容)',
             })),

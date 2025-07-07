@@ -8,7 +8,8 @@ import './SidePanel.scss';
 import { extractWebsiteMetadata } from '@/utils';
 import { existWebSummarizerRobot, getWebSummarizerRobot } from '@/services/RobotService';
 import robotDB from '@/store/robot';
-import { ConfigModelType, Robot } from '@/types';
+import type { Robot } from '@/types';
+import { ConfigModelType } from '@/types';
 import { useMessageSender } from '@/chat/hooks/useMessageSender';
 import rootStore from '@/store';
 
@@ -24,7 +25,7 @@ md.use(mathjax3);
 
 const SidePanel: React.FC = () => {
     const { t } = useLanguage();
-    const [tabId, setTabId] = useState<string | undefined>(undefined);
+    const [tabId, setTabId] = useState<string | undefined>();
     const [robot, setRobot] = useState<Robot>();
     const { handleSendMessage } = useMessageSender();
     console.log('tabId', tabId);

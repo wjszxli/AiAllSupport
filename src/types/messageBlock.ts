@@ -1,4 +1,4 @@
-import { Model } from '.';
+import type { Model } from '.';
 
 export enum MessageBlockType {
     UNKNOWN = 'unknown', // 未知类型，用于返回之前

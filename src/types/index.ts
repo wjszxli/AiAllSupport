@@ -1,6 +1,6 @@
-import OpenAI from 'openai';
-import { Chunk } from './chunk';
-import { Message } from './message';
+import type OpenAI from 'openai';
+import type { Chunk } from './chunk';
+import type { Message } from './message';
 
 declare global {
     interface Window {
@@ -122,7 +122,7 @@ export type ModelType =
     | 'function_calling'
     | 'web_search';
 
-export type Model = {
+export interface Model {
     id: string;
     provider: string;
     name: string;
@@ -130,7 +130,7 @@ export type Model = {
     owned_by?: string;
     description?: string;
     type?: ModelType[];
-};
+}
 
 export type ProviderType =
     | 'openai'
@@ -140,7 +140,7 @@ export type ProviderType =
     | 'qwenlm'
     | 'azure-openai';
 
-export type Provider = {
+export interface Provider {
     id: string;
     type: ProviderType;
     name: string;
@@ -156,7 +156,7 @@ export type Provider = {
     isNotSupportArrayContent?: boolean;
     notes?: string;
     requiresApiKey?: boolean; // Whether this provider requires an API key, defaults to true
-};
+}
 
 export enum UserMessageStatus {
     SUCCESS = 'success',
@@ -174,19 +174,19 @@ export type Usage = OpenAI.Completions.CompletionUsage & {
     thoughts_tokens?: number;
 };
 
-export type Metrics = {
+export interface Metrics {
     completion_tokens: number;
     time_completion_millsec: number;
     time_first_token_millsec?: number;
     time_thinking_millsec?: number;
-};
+}
 
-export type RobotMessage = {
+export interface RobotMessage {
     role: 'user' | 'assistant';
     content: string;
-};
+}
 
-export type Robot = {
+export interface Robot {
     id: string;
     name: string;
     prompt: string;
@@ -201,7 +201,7 @@ export type Robot = {
     showPrompt?: boolean; // Whether to display the prompt in the chat interface
     isSystem?: boolean; // 是否为系统机器人
     cannotDelete?: boolean; // 是否不可删除
-};
+}
 
 export interface CompletionsParams {
     messages: Message[];
@@ -211,7 +211,7 @@ export interface CompletionsParams {
     abortController?: AbortController;
 }
 
-export type Topic = {
+export interface Topic {
     id: string;
     assistantId: string;
     name: string;
@@ -221,7 +221,7 @@ export type Topic = {
     pinned?: boolean;
     prompt?: string;
     isNameManuallyEdited?: boolean;
-};
+}
 
 export enum ConfigModelType {
     CHAT = 'chat',

@@ -28,7 +28,7 @@ export function getRobotEnglishName(fullName: string): string {
  * @param maxLength 最大字符数，默认20
  * @returns 处理后的描述
  */
-export function getShortRobotDescription(description: string, maxLength: number = 20): string {
+export function getShortRobotDescription(description: string, maxLength = 20): string {
     if (!description) return '';
 
     // 先提取 - 前的部分
@@ -40,5 +40,5 @@ export function getShortRobotDescription(description: string, maxLength: number 
         return shortDesc;
     }
 
-    return shortDesc.substring(0, maxLength) + '...';
+    return `${shortDesc.slice(0, Math.max(0, maxLength))  }...`;
 }

@@ -1,4 +1,4 @@
-import { Robot, Topic } from '@/types';
+import type { Robot, Topic } from '@/types';
 import { db } from '../db/index';
 import { makeAutoObservable } from 'mobx';
 import { isEmpty, uniqBy } from 'lodash';

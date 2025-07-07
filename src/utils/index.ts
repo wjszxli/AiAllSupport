@@ -1,5 +1,4 @@
-import type { Model, Provider, WebsiteMetadata } from '@/types';
-import { ConfigModelType } from '@/types';
+import type { Model, Provider, WebsiteMetadata , ConfigModelType } from '@/types';
 import llmStore from '@/store/llm';
 
 import { CHAT_BOX_ID, CHAT_BUTTON_ID, PROVIDERS_DATA, FLOATING_CHAT_BUTTON_ID } from './constant';

@@ -1,5 +1,6 @@
 import { RobotMessageStatus } from '@/types';
-import { Chunk, ChunkType } from '@/types/chunk';
+import type { Chunk} from '@/types/chunk';
+import { ChunkType } from '@/types/chunk';
 import { Logger } from '@/utils/logger';
 
 // Create a logger for this module

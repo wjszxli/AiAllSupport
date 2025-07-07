@@ -73,7 +73,7 @@ function preprocessMath(text: string) {
     ]);
 
     // 处理块级公式中的特殊字符
-    processed = processed.replace(/\$\$([\s\S]*?)\$\$/g, (_, content) => {
+    processed = processed.replace(/\$\$([\S\s]*?)\$\$/g, (_, content) => {
         let processedContent = content;
         for (const [char, replacement] of specialChars) {
             processedContent = processedContent.replaceAll(char, replacement);
@@ -194,7 +194,7 @@ md.renderer.rules.fence = (() => {
         if (lang && hljs.getLanguage(lang)) {
             try {
                 highlightedCode = hljs.highlight(code, { language: lang }).value;
-            } catch (e) {
+            } catch {
                 highlightedCode = md.utils.escapeHtml(code);
             }
         } else {

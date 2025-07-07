@@ -1,4 +1,4 @@
-import { Model } from '@/types';
+import type { Model } from '@/types';
 
 function isChatModel(model: Model): boolean {
     // If type is present, must include 'text' or 'reasoning' (for chat)

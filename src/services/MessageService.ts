@@ -8,6 +8,7 @@ import {
 } from '@/services/StreamProcessingService';
 import { RobotMessageStatus, type Model, type Robot, type Topic } from '@/types';
 import type { Message } from '@/types/message';
+import type { MessageBlock } from '@/types/messageBlock';
 import { MessageBlockStatus, MessageBlockType } from '@/types/messageBlock';
 import { isAbortError } from '@/utils/error';
 import {
@@ -25,7 +26,6 @@ import { throttle } from 'lodash';
 import { runInAction } from 'mobx';
 
 import type { RootStore } from '@/store';
-import { MessageBlock } from '@/types/messageBlock';
 import { abortCompletion } from '@/utils/abortController';
 
 export class MessageService {
@@ -86,7 +86,7 @@ export class MessageService {
     private async saveMessageAndBlocksToDB(
         message: Message,
         blocks: MessageBlock[],
-        messageIndex: number = -1,
+        messageIndex = -1,
     ) {
         try {
             if (blocks.length > 0) {
@@ -170,7 +170,7 @@ export class MessageService {
                         });
                 }
             });
-        } catch (error) {
+        } catch {
             console.error(`[saveUpdatesToDB] Failed for message ${messageId}:`);
         }
     }
@@ -180,7 +180,6 @@ export class MessageService {
         robot: Robot,
         assistantMessage: Message,
     ) {
-        debugger;
         const assistantMsgId = assistantMessage.id;
         let callbacks: StreamProcessorCallbacks = {};
 
@@ -220,7 +219,6 @@ export class MessageService {
                 newBlock: MessageBlock,
                 blockType: MessageBlockType,
             ) => {
-                debugger;
                 currentBlockId = newBlock.id;
                 currentBlockType = blockType;
 
@@ -690,7 +688,7 @@ export class MessageService {
     }
 
     // 加载主题消息
-    async loadTopicMessages(topicId: string, forceReload: boolean = false) {
+    async loadTopicMessages(topicId: string, forceReload = false) {
         const topicMessagesExist = this.rootStore.messageStore.messageIdsByTopic.has(topicId);
 
         runInAction(() => {
@@ -931,7 +929,7 @@ export class MessageService {
                 message?.blocks?.forEach((blockId: string) => blockIdsToDeleteSet.add(blockId));
             });
 
-            const blockIdsToDelete = Array.from(blockIdsToDeleteSet);
+            const blockIdsToDelete = [...blockIdsToDeleteSet];
 
             runInAction(() => {
                 this.rootStore.messageStore.clearTopicMessages(topicId);

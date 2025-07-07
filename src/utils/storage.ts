@@ -1,6 +1,7 @@
 import { t } from '@/locales/i18n';
 import type { ProviderConfig, StorageData } from '@/types';
-import settingStore, { SettingsState } from '@/store/setting';
+import type { SettingsState } from '@/store/setting';
+import settingStore from '@/store/setting';
 
 import { PROVIDERS_DATA } from './constant';
 

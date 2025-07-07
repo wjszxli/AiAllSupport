@@ -1,4 +1,4 @@
-import { Provider } from '@/types';
+import type { Provider } from '@/types';
 import { SYSTEM_MODELS } from './models';
 
 import ZhinaoProviderLogo from '@/assets/providers/360.png';

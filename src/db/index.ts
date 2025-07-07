@@ -1,7 +1,8 @@
-import { Message } from '@/types/message';
-import { MessageBlock } from '@/types/messageBlock';
-import { Robot } from '@/types';
-import { Dexie, type EntityTable, Table } from 'dexie';
+import type { Message } from '@/types/message';
+import type { MessageBlock } from '@/types/messageBlock';
+import type { Robot } from '@/types';
+import { Dexie } from 'dexie';
+import type { Table, EntityTable } from 'dexie';
 
 export const db = new Dexie('AiDb') as Dexie & {
     topics: EntityTable<{ id: string; messages: Message[] }, 'id'>;

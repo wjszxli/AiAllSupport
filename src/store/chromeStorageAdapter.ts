@@ -45,9 +45,9 @@ const chromeStorageAdapter = {
                     });
                 } else if (Array.isArray(key)) {
                     const stringKeys = key as string[];
-                    const data = stringKeys.reduce<Record<string, any>>(
-                        (acc: Record<string, any>, k: string) => ({ ...acc, [k]: value }),
-                        {},
+                    const data = Object.fromEntries(
+                        // @ts-ignore
+                        stringKeys.map<Record<string, any>>((k: string) => [k, value]),
                     );
                     chrome.storage.local.set(data, () => {
                         if (chrome.runtime.lastError) {

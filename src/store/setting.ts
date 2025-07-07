@@ -31,15 +31,15 @@ const FILTERED_DOMAINS_KEY = 'filteredDomains';
 
 class SettingStore {
     // Interface settings
-    isChatBoxIcon: boolean = true;
-    useWebpageContext: boolean = true;
+    isChatBoxIcon = true;
+    useWebpageContext = true;
 
     // Search settings
-    webSearchEnabled: boolean = false;
+    webSearchEnabled = false;
     enabledSearchEngines: string[] = [SEARCH_ENGINES.GOOGLE, SEARCH_ENGINES.BAIDU];
-    tavilyApiKey: string = '';
-    exaApiKey: string = '';
-    bochaApiKey: string = '';
+    tavilyApiKey = '';
+    exaApiKey = '';
+    bochaApiKey = '';
     filteredDomains: string[] = FILTERED_DOMAINS;
 
     constructor() {

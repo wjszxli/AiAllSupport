@@ -1,5 +1,5 @@
-import { Model } from '@/types';
-import { ChatCompletionMessageParam } from 'openai/resources';
+import type { Model } from '@/types';
+import type { ChatCompletionMessageParam } from 'openai/resources';
 
 export function processReqMessages(
     model: Model,

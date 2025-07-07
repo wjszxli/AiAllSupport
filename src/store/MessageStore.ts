@@ -234,7 +234,7 @@ export class MessageStore {
 
     // Computed - 计算属性
     get allMessages(): Message[] {
-        return Array.from(this.messages.values());
+        return [...this.messages.values()];
     }
 
     get messageEntities(): Record<string, Message> {
@@ -279,6 +279,6 @@ export class MessageStore {
 
     // 获取所有消息ID
     get allMessageIds(): string[] {
-        return Array.from(this.messages.keys());
+        return [...this.messages.keys()];
     }
 }

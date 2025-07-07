@@ -142,7 +142,7 @@ const App: React.FC = () => {
             const copyButton = target.closest('.copy-button') as HTMLButtonElement;
 
             if (copyButton) {
-                const encodedCode = copyButton.getAttribute('data-code');
+                const encodedCode = copyButton.dataset.code;
                 if (encodedCode) {
                     const code = decodeURIComponent(encodedCode);
                     navigator.clipboard
@@ -340,8 +340,7 @@ const App: React.FC = () => {
                     )}
 
                     {/* 折叠状态下的展开按钮 */}
-                    {sidebarCollapsed && (
-                        <div className="collapsed-sidebar-trigger">
+                    {sidebarCollapsed ? <div className="collapsed-sidebar-trigger">
                             <Button
                                 type="text"
                                 icon={<MenuUnfoldOutlined />}
@@ -349,8 +348,7 @@ const App: React.FC = () => {
                                 className="expand-button"
                                 title={t('expand') || '展开'}
                             />
-                        </div>
-                    )}
+                        </div> : null}
 
                     {/* 右侧聊天区域 */}
                     <ChatBody userInput={userInput} setUserInput={setUserInput} />

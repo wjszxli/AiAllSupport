@@ -1,4 +1,4 @@
-import { Robot, Topic } from '@/types';
+import type { Robot, Topic } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import { robotList } from '../config/robot';
 import { t } from '@/locales/i18n';

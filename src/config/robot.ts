@@ -24,7 +24,7 @@ export function getAllGroups(): string[] {
     robotList.forEach((robot) => {
         robot.group.forEach((g) => groups.add(g));
     });
-    return Array.from(groups);
+    return [...groups];
 }
 
 export function searchRobots(keyword: string): Robot[] {
