@@ -31,15 +31,18 @@ export class RobotDB {
                 this.robotList = [defaultRobot];
                 this.selectedRobot = defaultRobot;
 
-                await this.saveSettingToDB(SELECTED_ROBOT_KEY, defaultRobot.id);
+                await this.saveSettingToStorage(SELECTED_ROBOT_KEY, defaultRobot.id);
                 if (defaultRobot.selectedTopicId) {
-                    await this.saveSettingToDB(SELECTED_TOPIC_KEY, defaultRobot.selectedTopicId);
+                    await this.saveSettingToStorage(
+                        SELECTED_TOPIC_KEY,
+                        defaultRobot.selectedTopicId,
+                    );
                 }
                 return;
             }
 
             // Try to load the selected robot ID from settings
-            const selectedRobotId = await this.getSettingFromDB(SELECTED_ROBOT_KEY);
+            const selectedRobotId = await this.getSettingFromStorage(SELECTED_ROBOT_KEY);
 
             if (selectedRobotId) {
                 // Find the robot with the stored ID
@@ -48,7 +51,7 @@ export class RobotDB {
                     this.selectedRobot = selectedRobot;
 
                     // Try to load the selected topic ID
-                    const selectedTopicId = await this.getSettingFromDB(SELECTED_TOPIC_KEY);
+                    const selectedTopicId = await this.getSettingFromStorage(SELECTED_TOPIC_KEY);
                     if (selectedTopicId && selectedRobot.topics) {
                         // Check if the topic exists in the robot
                         const topicExists = selectedRobot.topics.some(
@@ -66,15 +69,18 @@ export class RobotDB {
             // If no selected robot ID or robot not found, use the first robot or default
             if (robots.length > 0) {
                 this.selectedRobot = robots[0];
-                await this.saveSettingToDB(SELECTED_ROBOT_KEY, robots[0].id);
+                await this.saveSettingToStorage(SELECTED_ROBOT_KEY, robots[0].id);
                 if (robots[0].selectedTopicId) {
-                    await this.saveSettingToDB(SELECTED_TOPIC_KEY, robots[0].selectedTopicId);
+                    await this.saveSettingToStorage(SELECTED_TOPIC_KEY, robots[0].selectedTopicId);
                 }
             } else {
                 this.selectedRobot = defaultRobot;
-                await this.saveSettingToDB(SELECTED_ROBOT_KEY, defaultRobot.id);
+                await this.saveSettingToStorage(SELECTED_ROBOT_KEY, defaultRobot.id);
                 if (defaultRobot.selectedTopicId) {
-                    await this.saveSettingToDB(SELECTED_TOPIC_KEY, defaultRobot.selectedTopicId);
+                    await this.saveSettingToStorage(
+                        SELECTED_TOPIC_KEY,
+                        defaultRobot.selectedTopicId,
+                    );
                 }
             }
         } catch (error) {
@@ -82,18 +88,23 @@ export class RobotDB {
         }
     }
 
-    async saveSettingToDB(key: string, value: any) {
+    async saveSettingToStorage(key: string, value: any) {
         try {
-            await db.table('settings').put({ key, value });
+            await new Promise<void>((resolve) => {
+                chrome.storage.local.set({ [`robot.${key}`]: value }, () => resolve());
+            });
         } catch (error) {
             this.logger.error(`Failed to save setting ${key}:`, error);
         }
     }
 
-    async getSettingFromDB(key: string): Promise<any> {
+    async getSettingFromStorage(key: string): Promise<any> {
         try {
-            const record = await db.table('settings').get(key);
-            return record?.value;
+            return new Promise((resolve) => {
+                chrome.storage.local.get([`robot.${key}`], (result) => {
+                    resolve(result[`robot.${key}`] || null);
+                });
+            });
         } catch (error) {
             this.logger.error(`Failed to get setting ${key}:`, error);
             return null;
@@ -148,10 +159,10 @@ export class RobotDB {
 
         this.selectedRobot = robot;
 
-        await this.saveSettingToDB(SELECTED_ROBOT_KEY, robot.id);
+        await this.saveSettingToStorage(SELECTED_ROBOT_KEY, robot.id);
 
         if (robot.selectedTopicId) {
-            await this.saveSettingToDB(SELECTED_TOPIC_KEY, robot.selectedTopicId);
+            await this.saveSettingToStorage(SELECTED_TOPIC_KEY, robot.selectedTopicId);
         }
 
         await this.updateRobot(robot);
@@ -181,7 +192,7 @@ export class RobotDB {
                 selectedTopicId: topicId,
             };
 
-            await this.saveSettingToDB(SELECTED_TOPIC_KEY, topicId);
+            await this.saveSettingToStorage(SELECTED_TOPIC_KEY, topicId);
 
             await this.updateRobot(this.selectedRobot);
         } catch (error) {

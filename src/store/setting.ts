@@ -1,5 +1,4 @@
 import { makeAutoObservable } from 'mobx';
-import { db } from '@/db';
 import { FILTERED_DOMAINS, SEARCH_ENGINES } from '@/utils/constant';
 import { Logger } from '@/utils/logger';
 
@@ -19,15 +18,15 @@ export interface SettingsState {
     filteredDomains: string[];
 }
 
-// Setting keys
-const IS_CHAT_BOX_ICON_KEY = 'isChatBoxIcon';
-const USE_WEBPAGE_CONTEXT_KEY = 'useWebpageContext';
-const WEB_SEARCH_ENABLED_KEY = 'webSearchEnabled';
-const ENABLED_SEARCH_ENGINES_KEY = 'enabledSearchEngines';
-const TAVILY_API_KEY = 'tavilyApiKey';
-const EXA_API_KEY = 'exaApiKey';
-const BOCHA_API_KEY = 'bochaApiKey';
-const FILTERED_DOMAINS_KEY = 'filteredDomains';
+// Setting keys for Chrome storage
+const IS_CHAT_BOX_ICON_KEY = 'settings.isChatBoxIcon';
+const USE_WEBPAGE_CONTEXT_KEY = 'settings.useWebpageContext';
+const WEB_SEARCH_ENABLED_KEY = 'settings.webSearchEnabled';
+const ENABLED_SEARCH_ENGINES_KEY = 'settings.enabledSearchEngines';
+const TAVILY_API_KEY = 'settings.tavilyApiKey';
+const EXA_API_KEY = 'settings.exaApiKey';
+const BOCHA_API_KEY = 'settings.bochaApiKey';
+const FILTERED_DOMAINS_KEY = 'settings.filteredDomains';
 
 class SettingStore {
     // Interface settings
@@ -47,28 +46,57 @@ class SettingStore {
         this.loadSettings();
     }
 
+    private async getChromeStorageValue<T>(key: string, defaultValue: T): Promise<T> {
+        return new Promise((resolve) => {
+            chrome.storage.local.get([key], (result) => {
+                resolve(result[key] !== undefined ? result[key] : defaultValue);
+            });
+        });
+    }
+
+    private async setChromeStorageValue(key: string, value: any): Promise<void> {
+        return new Promise((resolve) => {
+            chrome.storage.local.set({ [key]: value }, () => resolve());
+        });
+    }
+
     async loadSettings() {
         try {
-            // Load individual settings
-            const isChatBoxIcon = await db.settings.get(IS_CHAT_BOX_ICON_KEY);
-            const useWebpageContext = await db.settings.get(USE_WEBPAGE_CONTEXT_KEY);
-            const webSearchEnabled = await db.settings.get(WEB_SEARCH_ENABLED_KEY);
-            const enabledSearchEngines = await db.settings.get(ENABLED_SEARCH_ENGINES_KEY);
-            const tavilyApiKey = await db.settings.get(TAVILY_API_KEY);
-            const exaApiKey = await db.settings.get(EXA_API_KEY);
-            const bochaApiKey = await db.settings.get(BOCHA_API_KEY);
-            const filteredDomains = await db.settings.get(FILTERED_DOMAINS_KEY);
+            // Load individual settings from Chrome storage
+            const [
+                isChatBoxIcon,
+                useWebpageContext,
+                webSearchEnabled,
+                enabledSearchEngines,
+                tavilyApiKey,
+                exaApiKey,
+                bochaApiKey,
+                filteredDomains,
+            ] = await Promise.all([
+                this.getChromeStorageValue(IS_CHAT_BOX_ICON_KEY, true),
+                this.getChromeStorageValue(USE_WEBPAGE_CONTEXT_KEY, true),
+                this.getChromeStorageValue(WEB_SEARCH_ENABLED_KEY, false),
+                this.getChromeStorageValue(ENABLED_SEARCH_ENGINES_KEY, [
+                    SEARCH_ENGINES.GOOGLE,
+                    SEARCH_ENGINES.BAIDU,
+                ]),
+                this.getChromeStorageValue(TAVILY_API_KEY, ''),
+                this.getChromeStorageValue(EXA_API_KEY, ''),
+                this.getChromeStorageValue(BOCHA_API_KEY, ''),
+                this.getChromeStorageValue(FILTERED_DOMAINS_KEY, FILTERED_DOMAINS),
+            ]);
 
-            // Apply settings if they exist
-            if (isChatBoxIcon !== undefined) this.isChatBoxIcon = isChatBoxIcon.value;
-            if (useWebpageContext !== undefined) this.useWebpageContext = useWebpageContext.value;
-            if (webSearchEnabled !== undefined) this.webSearchEnabled = webSearchEnabled.value;
-            if (enabledSearchEngines !== undefined)
-                this.enabledSearchEngines = enabledSearchEngines.value;
-            if (tavilyApiKey !== undefined) this.tavilyApiKey = tavilyApiKey.value;
-            if (exaApiKey !== undefined) this.exaApiKey = exaApiKey.value;
-            if (bochaApiKey !== undefined) this.bochaApiKey = bochaApiKey.value;
-            if (filteredDomains !== undefined) this.filteredDomains = filteredDomains.value;
+            // Apply settings
+            this.isChatBoxIcon = isChatBoxIcon;
+            this.useWebpageContext = useWebpageContext;
+            this.webSearchEnabled = webSearchEnabled;
+            this.enabledSearchEngines = enabledSearchEngines;
+            this.tavilyApiKey = tavilyApiKey;
+            this.exaApiKey = exaApiKey;
+            this.bochaApiKey = bochaApiKey;
+            this.filteredDomains = filteredDomains;
+
+            logger.info('Settings loaded successfully from Chrome storage');
         } catch (error) {
             logger.error('Failed to load settings:', error);
             // Save default settings if loading fails
@@ -78,27 +106,19 @@ class SettingStore {
 
     async saveSettings() {
         try {
-            // Save each setting individually
-            await db.settings.put({ key: IS_CHAT_BOX_ICON_KEY, value: this.isChatBoxIcon });
-            await db.settings.put({ key: USE_WEBPAGE_CONTEXT_KEY, value: this.useWebpageContext });
-            await db.settings.put({ key: WEB_SEARCH_ENABLED_KEY, value: this.webSearchEnabled });
-            await db.settings.put({
-                key: ENABLED_SEARCH_ENGINES_KEY,
-                value: JSON.parse(JSON.stringify(this.enabledSearchEngines)),
-            });
-            if (this.tavilyApiKey) {
-                await db.settings.put({ key: TAVILY_API_KEY, value: this.tavilyApiKey });
-            }
-            if (this.exaApiKey) {
-                await db.settings.put({ key: EXA_API_KEY, value: this.exaApiKey });
-            }
-            if (this.bochaApiKey) {
-                await db.settings.put({ key: BOCHA_API_KEY, value: this.bochaApiKey });
-            }
-            await db.settings.put({
-                key: FILTERED_DOMAINS_KEY,
-                value: JSON.parse(JSON.stringify(this.filteredDomains)),
-            });
+            // Save each setting individually to Chrome storage
+            await Promise.all([
+                this.setChromeStorageValue(IS_CHAT_BOX_ICON_KEY, this.isChatBoxIcon),
+                this.setChromeStorageValue(USE_WEBPAGE_CONTEXT_KEY, this.useWebpageContext),
+                this.setChromeStorageValue(WEB_SEARCH_ENABLED_KEY, this.webSearchEnabled),
+                this.setChromeStorageValue(ENABLED_SEARCH_ENGINES_KEY, this.enabledSearchEngines),
+                this.setChromeStorageValue(TAVILY_API_KEY, this.tavilyApiKey),
+                this.setChromeStorageValue(EXA_API_KEY, this.exaApiKey),
+                this.setChromeStorageValue(BOCHA_API_KEY, this.bochaApiKey),
+                this.setChromeStorageValue(FILTERED_DOMAINS_KEY, this.filteredDomains),
+            ]);
+
+            logger.info('Settings saved successfully to Chrome storage');
         } catch (error) {
             logger.error('Failed to save settings:', error);
         }
@@ -213,4 +233,5 @@ class SettingStore {
 }
 
 const settingStore = new SettingStore();
+
 export default settingStore;
