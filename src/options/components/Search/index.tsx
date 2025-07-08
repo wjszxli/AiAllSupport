@@ -31,6 +31,8 @@ const Search: React.FC<SearchProps> = observer(({ form, onValuesChange }) => {
         settingStore.enabledSearchEngines,
     );
 
+    console.log('selectedEngines', settingStore.enabledSearchEngines);
+
     // Group search engines
     const freeSearchEngines = Object.entries(SEARCH_ENGINES).filter(([_, value]) =>
         SEARCH_ENGINE_NAMES[value]?.includes('免费'),
@@ -109,11 +111,6 @@ const Search: React.FC<SearchProps> = observer(({ form, onValuesChange }) => {
     };
 
     const handleWebSearchChange = (checked: boolean) => {
-        if (checked && settingStore.useWebpageContext) {
-            messageApi.warning(t('exclusiveFeatureWarning'));
-            form.setFieldsValue({ webSearchEnabled: false });
-            return;
-        }
         settingStore.setWebSearchEnabled(checked);
     };
 

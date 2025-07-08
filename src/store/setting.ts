@@ -35,11 +35,11 @@ class SettingStore {
 
     // Search settings
     webSearchEnabled = false;
-    enabledSearchEngines: string[] = [SEARCH_ENGINES.GOOGLE, SEARCH_ENGINES.BAIDU];
+    enabledSearchEngines: string[] = [];
     tavilyApiKey = '';
     exaApiKey = '';
     bochaApiKey = '';
-    filteredDomains: string[] = FILTERED_DOMAINS;
+    filteredDomains: string[] = [];
 
     constructor() {
         makeAutoObservable(this);
@@ -90,11 +90,22 @@ class SettingStore {
             this.isChatBoxIcon = isChatBoxIcon;
             this.useWebpageContext = useWebpageContext;
             this.webSearchEnabled = webSearchEnabled;
-            this.enabledSearchEngines = enabledSearchEngines;
+            if (Object.keys(enabledSearchEngines).length > 0) {
+                this.enabledSearchEngines = Object.keys(enabledSearchEngines).map(
+                    // @ts-ignore
+                    (key) => enabledSearchEngines[key],
+                );
+            }
+
             this.tavilyApiKey = tavilyApiKey;
             this.exaApiKey = exaApiKey;
             this.bochaApiKey = bochaApiKey;
-            this.filteredDomains = filteredDomains;
+            if (Object.keys(filteredDomains).length > 0) {
+                this.filteredDomains = Object.keys(filteredDomains).map(
+                    // @ts-ignore
+                    (key) => filteredDomains[key],
+                );
+            }
 
             logger.info('Settings loaded successfully from Chrome storage');
         } catch (error) {
@@ -156,12 +167,6 @@ class SettingStore {
         // Save the imported settings
         await this.saveSettings();
 
-        // Handle mutually exclusive settings
-        if (this.webSearchEnabled && this.useWebpageContext) {
-            this.useWebpageContext = false;
-            await this.saveSettings();
-        }
-
         logger.info('Settings imported successfully');
     }
 
@@ -173,24 +178,12 @@ class SettingStore {
 
     setUseWebpageContext(value: boolean) {
         this.useWebpageContext = value;
-
-        // If enabling webpage context, disable web search (they are mutually exclusive)
-        if (value && this.webSearchEnabled) {
-            this.webSearchEnabled = false;
-        }
-
         this.saveSettings();
     }
 
     // Search settings methods
     setWebSearchEnabled(value: boolean) {
         this.webSearchEnabled = value;
-
-        // If enabling web search, disable webpage context (they are mutually exclusive)
-        if (value && this.useWebpageContext) {
-            this.useWebpageContext = false;
-        }
-
         this.saveSettings();
     }
 

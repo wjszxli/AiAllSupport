@@ -101,7 +101,7 @@ export const zhCN = {
     languageKo: '한국어',
     languageChanged: '语言切换成功',
     includeWebpage: '提问中包含网页上下文',
-    includeWebpageTooltip: '开启此功能，允许 AI 使用当前网页内容辅助回答',
+    includeWebpageTooltip: '开启此功能，允许 AI 使用当前网页内容辅助回答,只在网页弹窗模式下生效',
     translate: '翻译',
     translatePrompt: '将以下文本翻译成中文：',
     summarize: '总结',

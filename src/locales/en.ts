@@ -119,11 +119,6 @@ export const en = {
     searchingWeb: 'Searching the web for information...',
     searchComplete: 'Search complete. Processing results with AI...',
     noSearchResults: 'No search results found. Using AI knowledge only...',
-    exclusiveFeatureError:
-        'Web search and webpage context cannot be enabled at the same time. Please enable only one of them.',
-    exclusiveFeatureWarning:
-        'Web search and webpage context cannot be enabled at the same time. Please enable only one of them.',
-
     // Quick actions
     think: 'Thinking content',
     translate: 'Translate',
