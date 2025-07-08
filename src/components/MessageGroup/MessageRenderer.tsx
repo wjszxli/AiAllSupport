@@ -1,10 +1,10 @@
 import React, { useMemo, useCallback } from 'react';
 import { md } from '@/utils/markdownRenderer';
 import DOMPurify from 'dompurify';
-import CodeBlockView from '@/chat/components/Blocks/Code';
-import MermaidView from '@/chat/components/Blocks/Mermaid';
-import ThinkingView from '@/chat/components/Blocks/Think';
-import InterruptedView from '@/chat/components/Blocks/Interrupted';
+import CodeBlockView from '@/components/Blocks/Code';
+import MermaidView from '@/components/Blocks/Mermaid';
+import ThinkingView from '@/components/Blocks/Think';
+import InterruptedView from '@/components/Blocks/Interrupted';
 import { useStore } from '@/store';
 import { observer } from 'mobx-react-lite';
 import {
@@ -14,7 +14,7 @@ import {
     type InterruptedMessageBlock,
     ErrorMessageBlock,
 } from '@/types/messageBlock';
-import ErrorBlock from '@/chat/components/Blocks/Error';
+import ErrorBlock from '@/components/Blocks/Error';
 
 interface MessageRendererProps {
     content: string;

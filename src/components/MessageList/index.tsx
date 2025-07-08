@@ -3,7 +3,7 @@ import { Empty, Typography, Button } from 'antd';
 import { RocketOutlined, BulbOutlined, ReloadOutlined } from '@ant-design/icons';
 import { Message } from '@/types/message';
 import { t } from '@/locales/i18n';
-import MessageGroup from '../MessageGroup';
+import MessageGroup from '@/components/MessageGroup';
 import { getGroupedMessages } from '@/utils/message/filters';
 import { usePromptSuggestions } from '@/chat/hooks/usePromptSuggestions';
 import rootStore from '@/store';

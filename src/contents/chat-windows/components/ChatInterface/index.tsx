@@ -14,7 +14,7 @@ import './index.scss';
 import { useMessageSender } from '@/chat/hooks/useMessageSender';
 import { ConfigModelType } from '@/types';
 import { Message } from '@/types/message';
-import MessageList from '@/chat/components/MessageList';
+import MessageList from '@/components/MessageList';
 import getMessageService from '@/services/MessageService';
 import { observer } from 'mobx-react-lite';
 

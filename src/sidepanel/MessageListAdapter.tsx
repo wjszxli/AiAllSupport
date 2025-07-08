@@ -1,7 +1,7 @@
 import React from 'react';
-import MessageList from '@/chat/components/MessageList';
+import MessageList from '@/components/MessageList';
 import { UserMessageStatus, RobotMessageStatus } from '@/types';
-import type { ChatMessage  } from '@/types';
+import type { ChatMessage } from '@/types';
 import type { Message } from '@/types/message';
 
 interface MessageListAdapterProps {

@@ -19,7 +19,7 @@ import robotStore from '@/store/robot';
 
 import rootStore from '@/store';
 import { observer } from 'mobx-react-lite';
-import MessageList from '../MessageList';
+import MessageList from '../../../components/MessageList';
 import { useMessageSender } from '@/chat/hooks/useMessageSender';
 import { getMessageService } from '@/services/MessageService';
 import { md } from '@/utils/markdownRenderer';
