@@ -9,6 +9,7 @@ import {
     DeleteOutlined,
     ExpandOutlined,
     ShrinkOutlined,
+    SearchOutlined,
 } from '@ant-design/icons';
 
 import { t } from '@/locales/i18n';
@@ -271,6 +272,32 @@ const ChatBody: React.FC<ChatBodyProps> = observer(({ userInput, setUserInput })
                         </div>
                         <div className="input-toolbar">
                             <div className="toolbar-left">
+                                {/* 搜索开关按钮 */}
+                                <Tooltip
+                                    title={
+                                        rootStore.settingStore.webSearchEnabled
+                                            ? '关闭网页搜索'
+                                            : '开启网页搜索'
+                                    }
+                                    overlayStyle={{ zIndex: 10001 }}
+                                >
+                                    <Button
+                                        type={
+                                            rootStore.settingStore.webSearchEnabled
+                                                ? 'primary'
+                                                : 'text'
+                                        }
+                                        size="small"
+                                        icon={<SearchOutlined />}
+                                        onClick={() => {
+                                            rootStore.settingStore.setWebSearchEnabled(
+                                                !rootStore.settingStore.webSearchEnabled,
+                                            );
+                                        }}
+                                        className="search-toggle-button"
+                                    />
+                                </Tooltip>
+
                                 {/* 展开/收起按钮 */}
                                 <Tooltip
                                     title={isInputExpanded ? '收起输入框' : '展开输入框'}

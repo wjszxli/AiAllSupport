@@ -8,6 +8,8 @@ import {
     SendOutlined,
     StopOutlined,
     DeleteOutlined,
+    SearchOutlined,
+    GlobalOutlined,
 } from '@ant-design/icons';
 
 import './index.scss';
@@ -207,6 +209,54 @@ const ChatInterface = observer(({ initialText }: { initialText?: string }) => {
                             className="message-input"
                         />
                         <div className="input-controls">
+                            <Tooltip
+                                title={
+                                    rootStore.settingStore.webSearchEnabled
+                                        ? '关闭网页搜索'
+                                        : '开启网页搜索'
+                                }
+                                overlayStyle={{ zIndex: 10001 }}
+                            >
+                                <Button
+                                    type={
+                                        rootStore.settingStore.webSearchEnabled ? 'primary' : 'text'
+                                    }
+                                    size="small"
+                                    icon={<SearchOutlined />}
+                                    onClick={() => {
+                                        rootStore.settingStore.setWebSearchEnabled(
+                                            !rootStore.settingStore.webSearchEnabled,
+                                        );
+                                    }}
+                                    className="search-toggle-button"
+                                />
+                            </Tooltip>
+
+                            <Tooltip
+                                title={
+                                    rootStore.settingStore.useWebpageContext
+                                        ? '关闭网页上下文'
+                                        : '开启网页上下文'
+                                }
+                                overlayStyle={{ zIndex: 10001 }}
+                            >
+                                <Button
+                                    type={
+                                        rootStore.settingStore.useWebpageContext
+                                            ? 'primary'
+                                            : 'text'
+                                    }
+                                    size="small"
+                                    icon={<GlobalOutlined />}
+                                    onClick={() => {
+                                        rootStore.settingStore.setUseWebpageContext(
+                                            !rootStore.settingStore.useWebpageContext,
+                                        );
+                                    }}
+                                    className="webpage-context-button"
+                                />
+                            </Tooltip>
+
                             <Tooltip
                                 title={isInputExpanded ? '收起输入框' : '展开输入框'}
                                 overlayStyle={{ zIndex: 10001 }}
