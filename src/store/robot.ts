@@ -3,20 +3,35 @@ import { db } from '../db/index';
 import { makeAutoObservable } from 'mobx';
 import { isEmpty, uniqBy } from 'lodash';
 import { getDefaultRobot } from '@/services/RobotService';
-import { Logger } from '@/utils/logger';
 
 const SELECTED_ROBOT_KEY = 'selectedRobotId';
 const SELECTED_TOPIC_KEY = 'selectedTopicId';
 
 export class RobotDB {
-    private logger = new Logger('RobotDB');
+    private logger: any = {
+        info: (msg: string, ...args: any[]) => console.log(`[RobotDB] ${msg}`, ...args),
+        error: (msg: string, ...args: any[]) => console.error(`[RobotDB] ${msg}`, ...args),
+        warn: (msg: string, ...args: any[]) => console.warn(`[RobotDB] ${msg}`, ...args),
+        debug: (msg: string, ...args: any[]) => console.debug(`[RobotDB] ${msg}`, ...args),
+    };
     robotList: Robot[] = [];
     selectedRobot: Robot = {} as Robot;
 
     constructor() {
         makeAutoObservable(this, {}, { autoBind: true });
 
+        // 异步初始化真正的Logger
+        this.initLogger();
         this.initializeFromDB();
+    }
+
+    private async initLogger() {
+        try {
+            const { Logger } = await import('@/utils/logger');
+            this.logger = new Logger('RobotDB');
+        } catch (error) {
+            console.error('Failed to initialize logger in RobotDB:', error);
+        }
     }
 
     async initializeFromDB() {

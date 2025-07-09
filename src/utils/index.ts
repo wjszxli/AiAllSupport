@@ -1,15 +1,29 @@
-import type { Model, Provider, WebsiteMetadata , ConfigModelType } from '@/types';
+import type { Model, Provider, WebsiteMetadata, ConfigModelType } from '@/types';
 import llmStore from '@/store/llm';
 
 import { CHAT_BOX_ID, CHAT_BUTTON_ID, PROVIDERS_DATA, FLOATING_CHAT_BUTTON_ID } from './constant';
-import { Logger } from './logger';
 import storage from './storage';
 
 export * from './logger';
 export * from './i18n';
 
-// Create a logger for this module
-const logger = new Logger('utils');
+// 延迟创建Logger实例，避免循环依赖
+let logger: any = {
+    info: (msg: string, ...args: any[]) => console.log(`[utils] ${msg}`, ...args),
+    error: (msg: string, ...args: any[]) => console.error(`[utils] ${msg}`, ...args),
+    warn: (msg: string, ...args: any[]) => console.warn(`[utils] ${msg}`, ...args),
+    debug: (msg: string, ...args: any[]) => console.debug(`[utils] ${msg}`, ...args),
+};
+
+// 异步初始化真正的Logger
+(async () => {
+    try {
+        const { Logger } = await import('./logger');
+        logger = new Logger('utils');
+    } catch (error) {
+        console.error('Failed to initialize logger in utils:', error);
+    }
+})();
 
 // 移除按钮
 export const removeChatButton = async () => {

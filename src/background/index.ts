@@ -2,9 +2,13 @@ import { initLogger, Logger } from '@/utils';
 import { MODIFY_HEADERS_RULE_ID, PROVIDERS_DATA } from '@/utils/constant';
 import storage from '@/utils/storage';
 
+// 延迟创建Logger实例，避免初始化顺序问题
+let logger: Logger;
+
 // Initialize logger
-const logger = new Logger('background');
 initLogger().then((config) => {
+    // 在initLogger完成后创建Logger实例
+    logger = new Logger('background');
     logger.info('Logger initialized with config', config);
 });
 

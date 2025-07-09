@@ -22,8 +22,8 @@ export interface LoggerConfig {
 
 // Default configuration
 const DEFAULT_CONFIG: LoggerConfig = {
-    enabled: false, // Disabled by default
-    level: LogLevel.INFO,
+    enabled: true, // 启用日志输出
+    level: LogLevel.DEBUG, // 设置为DEBUG级别以显示所有日志
     includeTimestamp: true,
     logToConsole: true,
     persistLogs: false,

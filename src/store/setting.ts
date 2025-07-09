@@ -1,8 +1,23 @@
 import { makeAutoObservable } from 'mobx';
 import { FILTERED_DOMAINS, SEARCH_ENGINES } from '@/utils/constant';
-import { Logger } from '@/utils/logger';
 
-const logger = new Logger('settingStore');
+// 延迟创建Logger实例，避免循环依赖
+let logger: any = {
+    info: (msg: string, ...args: any[]) => console.log(`[settingStore] ${msg}`, ...args),
+    error: (msg: string, ...args: any[]) => console.error(`[settingStore] ${msg}`, ...args),
+    warn: (msg: string, ...args: any[]) => console.warn(`[settingStore] ${msg}`, ...args),
+    debug: (msg: string, ...args: any[]) => console.debug(`[settingStore] ${msg}`, ...args),
+};
+
+// 异步初始化真正的Logger
+(async () => {
+    try {
+        const { Logger } = await import('@/utils/logger');
+        logger = new Logger('settingStore');
+    } catch (error) {
+        console.error('Failed to initialize logger in settingStore:', error);
+    }
+})();
 
 export interface SettingsState {
     // Interface settings

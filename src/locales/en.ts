@@ -138,8 +138,18 @@ export const en = {
     webSearchResultsTips2:
         'Based on this information and your knowledge, please answer this question',
     Source: 'Source',
-    webpageContent: "The following is the content of the webpage I'm currently viewing:",
-    webpagePrompt: 'Given this webpage content, please answer my question',
+    webpageContent: 'Here is the content of the webpage I am currently browsing:',
+    webpagePrompt: `Please answer the question based on the current webpage content.
+
+## Current Webpage Content:
+
+{content}
+
+## User Question:
+
+{question}
+
+Please answer in the same language as the user's question.`,
     fetchWebpageContent: 'Fetching current webpage content...',
     fetchWebpageContentSuccess: 'Successfully fetched webpage content, processing with AI...',
     fetchWebpageContentFailed: 'Failed to fetch webpage content. Using AI knowledge only...',

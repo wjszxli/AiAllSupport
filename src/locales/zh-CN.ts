@@ -126,7 +126,17 @@ export const zhCN = {
     Source: '来源',
     close: '关闭',
     webpageContent: '以下是我当前浏览的网页内容：',
-    webpagePrompt: '根据这个网页内容，请回答我的问题',
+    webpagePrompt: `请基于当前网页内容回答问题。
+
+## 当前网页内容：
+
+{content}
+
+## 用户问题：
+
+{question}
+
+请用与用户问题相同的语言回答。`,
     fetchWebpageContent: '正在获取当前网页内容...',
     fetchWebpageContentSuccess: '成功获取网页内容，正在使用AI处理...',
     fetchWebpageContentFailed: '获取网页内容失败。仅使用AI知识库...',

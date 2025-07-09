@@ -1,9 +1,15 @@
 import type { MessageBlock } from '@/types/messageBlock';
 import { computed, makeAutoObservable } from 'mobx';
-import { Logger } from '@/utils/logger';
 
 export class MessageBlockStore {
-    private logger = new Logger('MessageBlockStore');
+    private logger: any = {
+        info: (msg: string, ...args: any[]) => console.log(`[MessageBlockStore] ${msg}`, ...args),
+        error: (msg: string, ...args: any[]) =>
+            console.error(`[MessageBlockStore] ${msg}`, ...args),
+        warn: (msg: string, ...args: any[]) => console.warn(`[MessageBlockStore] ${msg}`, ...args),
+        debug: (msg: string, ...args: any[]) =>
+            console.debug(`[MessageBlockStore] ${msg}`, ...args),
+    };
     // 可观察状态
     blocks = new Map<string, MessageBlock>();
 
@@ -13,6 +19,18 @@ export class MessageBlockStore {
             allBlocks: computed,
             blocksByMessage: computed,
         });
+
+        // 异步初始化真正的Logger
+        this.initLogger();
+    }
+
+    private async initLogger() {
+        try {
+            const { Logger } = await import('@/utils/logger');
+            this.logger = new Logger('MessageBlockStore');
+        } catch (error) {
+            console.error('Failed to initialize logger in MessageBlockStore:', error);
+        }
     }
 
     // Actions - 状态修改方法

@@ -6,12 +6,27 @@ import storage from '@/utils/storage';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { setLocale } from '@/locales/i18n';
 import type { LocaleType } from '@/locales';
+import { initLogger, Logger } from '@/utils/logger';
 
 import ChatWindow from '@/contents/chat-windows';
 import { IframeSidePanelManager } from './components/IframeSidePanel/index';
 import FloatingChatButton from './components/FloatingChatButton';
 import './styles/animations.css';
 import './styles/highlight.css';
+
+// 延迟创建Logger实例，避免初始化顺序问题
+let logger: Logger;
+
+// 初始化Logger
+initLogger()
+    .then((config) => {
+        // 在initLogger完成后创建Logger实例
+        logger = new Logger('content-script');
+        logger.info('Content script logger initialized', config);
+    })
+    .catch((error) => {
+        console.error('Failed to initialize logger in content script:', error);
+    });
 
 // Add debounce utility at the top of the file
 const debounce = <F extends (...args: any[]) => any>(

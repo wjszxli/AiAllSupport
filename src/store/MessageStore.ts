@@ -2,10 +2,14 @@ import { RobotMessageStatus } from '@/types';
 import type { Message } from '@/types/message';
 import { MessageBlockStatus } from '@/types/messageBlock';
 import { computed, makeAutoObservable, runInAction } from 'mobx';
-import { Logger } from '@/utils/logger';
 
 export class MessageStore {
-    private logger = new Logger('MessageStore');
+    private logger: any = {
+        info: (msg: string, ...args: any[]) => console.log(`[MessageStore] ${msg}`, ...args),
+        error: (msg: string, ...args: any[]) => console.error(`[MessageStore] ${msg}`, ...args),
+        warn: (msg: string, ...args: any[]) => console.warn(`[MessageStore] ${msg}`, ...args),
+        debug: (msg: string, ...args: any[]) => console.debug(`[MessageStore] ${msg}`, ...args),
+    };
     // 可观察状态
     messages = new Map<string, Message>();
     messageIdsByTopic = new Map<string, string[]>();
@@ -22,6 +26,18 @@ export class MessageStore {
             allMessages: computed,
             messageEntities: computed,
         });
+
+        // 异步初始化真正的Logger
+        this.initLogger();
+    }
+
+    private async initLogger() {
+        try {
+            const { Logger } = await import('@/utils/logger');
+            this.logger = new Logger('MessageStore');
+        } catch (error) {
+            console.error('Failed to initialize logger in MessageStore:', error);
+        }
     }
 
     // Actions - 状态修改方法
