@@ -338,7 +338,6 @@ const ConfigModal: React.FC<ConfigModalProps> = ({
                         border: '1px solid #b7eb8f',
                     }}
                     size="small"
-                    bordered
                 >
                     <Space>
                         <CheckCircleOutlined style={{ color: '#52c41a' }} />

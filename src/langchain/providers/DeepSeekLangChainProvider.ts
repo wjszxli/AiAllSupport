@@ -1,5 +1,5 @@
-import { ChatOpenAI } from '@langchain/openai';
-import { HumanMessage } from '@langchain/core/messages';
+import { ChatDeepSeek } from '@langchain/deepseek';
+import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import BaseLangChainProvider from './BaseLangChainProvider';
 import { CompletionsParams, Provider } from '@/types';
 import type { RootStore } from '@/store';
@@ -13,23 +13,24 @@ import { Logger } from '@/utils/logger';
 const logger = new Logger('DeepSeekLangChainProvider');
 
 export default class DeepSeekLangChainProvider extends BaseLangChainProvider {
-    private chatModel!: ChatOpenAI;
+    private chatModel!: ChatDeepSeek;
 
     constructor(provider: Provider, rootStore?: RootStore) {
         super(provider, rootStore);
         this.chatModel = this.initialize();
     }
 
-    initialize(stream = true): ChatOpenAI {
-        const baseURL = this.provider.apiHost;
-        return new ChatOpenAI({
-            modelName: this.provider.selectedModel?.id,
+    initialize(stream = true): ChatDeepSeek {
+        return new ChatDeepSeek({
+            model: this.provider.selectedModel?.id || 'deepseek-chat',
             temperature: 0.7,
             streaming: stream,
             apiKey: this.provider.apiKey,
-            configuration: {
-                baseURL: baseURL,
-            },
+            ...(this.provider.apiHost && {
+                configuration: {
+                    baseURL: this.provider.apiHost,
+                },
+            }),
         });
     }
 
@@ -75,29 +76,103 @@ export default class DeepSeekLangChainProvider extends BaseLangChainProvider {
                 type: ChunkType.LLM_RESPONSE_IN_PROGRESS,
             });
 
-            // Use the centralized tool-based completion from BaseLangChainProvider
-            const finalText = await this.handleToolBasedCompletion(
-                filteredMessages,
-                robot,
-                userInput,
-                signal,
-            );
+            // Prepare user input with tools if available
+            const enhancedUserInput = await this.prepareUserInputWithTools(userInput);
 
-            // Stream the final text
-            onChunk({
-                text: finalText,
-                type: ChunkType.TEXT_DELTA,
-            });
+            // Convert messages to LangChain format
+            const langchainMessages = await this.convertToLangChainMessages(filteredMessages);
 
-            onChunk({
-                text: finalText,
-                type: ChunkType.TEXT_COMPLETE,
-            });
+            // Replace the last user message with enhanced input if tools were used
+            if (enhancedUserInput !== userInput && langchainMessages.length > 0) {
+                const lastMsg = langchainMessages[langchainMessages.length - 1];
+                if (lastMsg instanceof HumanMessage) {
+                    langchainMessages[langchainMessages.length - 1] = new HumanMessage(
+                        enhancedUserInput,
+                    );
+                }
+            }
+
+            // Add robot prompt if available
+            if (robot.prompt) {
+                langchainMessages.unshift(new SystemMessage(robot.prompt));
+            }
+
+            // Check if this is an R1 model (reasoning model)
+            const isR1Model =
+                this.provider.selectedModel?.id?.includes('reasoner') ||
+                this.provider.selectedModel?.id?.includes('R1') ||
+                this.provider.selectedModel?.id?.includes('r1');
+
+            let thinkingStartTime = Date.now();
+            let accumulatedThinking = '';
+            let hasEmittedThinkingComplete = false;
+
+            // Stream the response
+            const stream = await this.chatModel.stream(langchainMessages, { signal });
+
+            for await (const chunk of stream) {
+                logger.info('chunk', chunk);
+                if (signal.aborted) {
+                    break;
+                }
+
+                const content = chunk.content;
+                const additionalKwargs = chunk.additional_kwargs || {};
+
+                if (isR1Model && additionalKwargs.reasoning_content) {
+                    const reasoningContent = additionalKwargs.reasoning_content as string;
+                    logger.info('reasoningContent', reasoningContent);
+
+                    if (!reasoningContent.length) {
+                        accumulatedThinking += reasoningContent;
+
+                        onChunk({
+                            text: reasoningContent,
+                            type: ChunkType.THINKING_DELTA,
+                            thinking_millsec: Date.now() - thinkingStartTime,
+                        });
+                    }
+                }
+
+                if (content) {
+                    const text = typeof content === 'string' ? content : content.toString();
+
+                    if (text) {
+                        onChunk({
+                            text: text,
+                            type: ChunkType.TEXT_DELTA,
+                        });
+                    }
+                }
+
+                // if (isR1Model && accumulatedThinking && !hasEmittedThinkingComplete) {
+                //     // We'll emit thinking complete when we reach the end or when no more reasoning content is coming
+                //     const isLastChunk =
+                //         !content || (typeof content === 'string' && content.trim() === '');
+                //     if (isLastChunk || !additionalKwargs.reasoning_content) {
+                //         hasEmittedThinkingComplete = true;
+                //         onChunk({
+                //             text: accumulatedThinking,
+                //             type: ChunkType.THINKING_COMPLETE,
+                //             thinking_millsec: Date.now() - thinkingStartTime,
+                //         });
+                //     }
+                // }
+            }
+
+            // Ensure we emit thinking complete if we haven't already
+            if (isR1Model && accumulatedThinking && !hasEmittedThinkingComplete) {
+                onChunk({
+                    text: accumulatedThinking,
+                    type: ChunkType.THINKING_COMPLETE,
+                    thinking_millsec: Date.now() - thinkingStartTime,
+                });
+            }
 
             onChunk({
                 type: ChunkType.BLOCK_COMPLETE,
                 response: {
-                    text: finalText,
+                    text: '', // The full text is already sent via TEXT_DELTA chunks
                 } as any,
             });
         } catch (error) {
@@ -122,14 +197,6 @@ export default class DeepSeekLangChainProvider extends BaseLangChainProvider {
         await signalPromise?.promise?.catch((error) => {
             throw error;
         });
-    }
-
-    protected async executeDirectCompletion(
-        langchainMessages: any[],
-        signal: AbortSignal,
-    ): Promise<string> {
-        const response = await this.chatModel.invoke(langchainMessages, { signal });
-        return response.content as string;
     }
 
     protected async checkModelAvailability(): Promise<{ valid: boolean; error: Error | null }> {

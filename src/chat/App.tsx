@@ -87,7 +87,6 @@ const App: React.FC = () => {
                 if (savedLocale && Object.keys(locales).includes(savedLocale)) {
                     await setLocale(savedLocale as LocaleType);
                     setCurrentLocale(savedLocale as LocaleType);
-                    console.log('Initialized locale from storage:', savedLocale);
                 }
             } catch (error) {
                 console.error('Failed to initialize locale:', error);
@@ -245,8 +244,8 @@ const App: React.FC = () => {
                             value={currentLocale}
                             onChange={handleLanguageChange}
                             className="language-selector"
-                            dropdownMatchSelectWidth={false}
-                            bordered={false}
+                            popupMatchSelectWidth={false}
+                            variant="borderless"
                             suffixIcon={<GlobalOutlined />}
                             style={{ width: 'auto' }}
                         >
@@ -340,7 +339,8 @@ const App: React.FC = () => {
                     )}
 
                     {/* 折叠状态下的展开按钮 */}
-                    {sidebarCollapsed ? <div className="collapsed-sidebar-trigger">
+                    {sidebarCollapsed ? (
+                        <div className="collapsed-sidebar-trigger">
                             <Button
                                 type="text"
                                 icon={<MenuUnfoldOutlined />}
@@ -348,7 +348,8 @@ const App: React.FC = () => {
                                 className="expand-button"
                                 title={t('expand') || '展开'}
                             />
-                        </div> : null}
+                        </div>
+                    ) : null}
 
                     {/* 右侧聊天区域 */}
                     <ChatBody userInput={userInput} setUserInput={setUserInput} />

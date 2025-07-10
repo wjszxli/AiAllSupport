@@ -165,26 +165,25 @@ export class RobotDB {
     }
 
     async updateSelectedRobot(robot: Robot) {
-        // try {
-        // this.logger.info('updateSelectedRobot', robot);
-        console.log('updateSelectedRobot', robot);
-        if (!robot.selectedTopicId && robot.topics && robot.topics.length > 0) {
-            robot.selectedTopicId = robot.topics[0].id;
+        try {
+            this.logger.info('updateSelectedRobot', robot);
+            if (!robot.selectedTopicId && robot.topics && robot.topics.length > 0) {
+                robot.selectedTopicId = robot.topics[0].id;
+            }
+
+            this.selectedRobot = robot;
+
+            await this.saveSettingToStorage(SELECTED_ROBOT_KEY, robot.id);
+
+            if (robot.selectedTopicId) {
+                await this.saveSettingToStorage(SELECTED_TOPIC_KEY, robot.selectedTopicId);
+            }
+
+            await this.updateRobot(robot);
+        } catch (error) {
+            this.logger.error('Failed to update selected robot:', error);
+            throw error;
         }
-
-        this.selectedRobot = robot;
-
-        await this.saveSettingToStorage(SELECTED_ROBOT_KEY, robot.id);
-
-        if (robot.selectedTopicId) {
-            await this.saveSettingToStorage(SELECTED_TOPIC_KEY, robot.selectedTopicId);
-        }
-
-        await this.updateRobot(robot);
-        // } catch (error) {
-        //     this.logger.error('Failed to update selected robot:', error);
-        //     throw error;
-        // }
     }
 
     async getSelectedRobotFromDB() {

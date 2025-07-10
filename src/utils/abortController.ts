@@ -1,4 +1,8 @@
+import { Logger } from './logger';
+
 export const abortMap = new Map<string, (() => void)[]>();
+
+const logger = new Logger('abortController');
 
 export const addAbortController = (id: string, abortFn: () => void) => {
     abortMap.set(id, [...(abortMap.get(id) || []), abortFn]);
@@ -16,9 +20,9 @@ export const removeAbortController = (id: string, abortFn: () => void) => {
 
 export const abortCompletion = (id: string) => {
     try {
-        console.log('[abortCompletion] abortMap', abortMap);
+        logger.info('[abortCompletion] abortMap', abortMap);
         const abortFns = abortMap.get(id);
-        console.log('[abortCompletion] abortFns', abortFns);
+        logger.info('[abortCompletion] abortFns', abortFns);
         if (abortFns?.length) {
             // Make a copy of the array to avoid issues with concurrent modification
             const fnsToExecute = [...abortFns];
@@ -45,7 +49,7 @@ export function createAbortPromise(signal: AbortSignal, finallyPromise: Promise<
         }
 
         const abortHandler = (e: Event) => {
-            console.log('[createAbortPromise] abortHandler', e);
+            logger.error('[createAbortPromise] abortHandler', e);
             reject(new DOMException('Operation aborted', 'AbortError'));
         };
 

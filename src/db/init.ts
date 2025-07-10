@@ -7,8 +7,6 @@ export const initializeDatabase = async () => {
     try {
         // Open the database
         await db.open();
-        console.log('Database opened successfully');
-
         return true;
     } catch (error) {
         console.error('Failed to initialize database:', error);

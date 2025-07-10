@@ -121,15 +121,11 @@ export default abstract class BaseLangChainProvider {
 
     /**
      * Enhanced completion method that handles tool usage
+     * This method executes tools and returns the enhanced user input for the provider to use
      */
-    protected async handleToolBasedCompletion(
-        messages: Message[],
-        robot: any,
-        userInput: string,
-        signal: AbortSignal,
-    ): Promise<string> {
+    protected async prepareUserInputWithTools(userInput: string): Promise<string> {
         if (!this.hasTools()) {
-            return this.performDirectCompletion(messages, robot, signal);
+            return userInput;
         }
 
         // Execute tools and gather results
@@ -150,13 +146,12 @@ export default abstract class BaseLangChainProvider {
             }
         }
 
-        // Combine tool results with user query
+        // If we have tool results, enhance the user input
         if (toolResults.length > 0) {
-            const enhancedPrompt = this.buildEnhancedPrompt(userInput, toolResults);
-            return this.performDirectCompletion(messages, robot, signal, enhancedPrompt);
+            return this.buildEnhancedPrompt(userInput, toolResults);
         }
 
-        return this.performDirectCompletion(messages, robot, signal);
+        return userInput;
     }
 
     /**
@@ -173,43 +168,6 @@ User Question: ${userInput}
 
 Please provide a helpful response based on the available information. If you use information from the tools, please cite the sources appropriately.`;
     }
-
-    /**
-     * Perform direct completion without tools
-     */
-    protected async performDirectCompletion(
-        messages: Message[],
-        robot: any,
-        signal: AbortSignal,
-        overrideLastMessage?: string,
-    ): Promise<string> {
-        const langchainMessages = await this.convertToLangChainMessages(messages);
-
-        // Override the last message if provided (for tool integration)
-        if (overrideLastMessage && langchainMessages.length > 0) {
-            const lastMsg = langchainMessages[langchainMessages.length - 1];
-            if (lastMsg instanceof HumanMessage) {
-                langchainMessages[langchainMessages.length - 1] = new HumanMessage(
-                    overrideLastMessage,
-                );
-            }
-        }
-
-        if (robot.prompt) {
-            langchainMessages.unshift(new SystemMessage(robot.prompt));
-        }
-
-        // This should be implemented by subclasses
-        return this.executeDirectCompletion(langchainMessages, signal);
-    }
-
-    /**
-     * Abstract method for direct completion - to be implemented by subclasses
-     */
-    protected abstract executeDirectCompletion(
-        langchainMessages: any[],
-        signal: AbortSignal,
-    ): Promise<string>;
 
     async convertToLangChainMessages(messages: Message[]) {
         const langchainMessages = [];

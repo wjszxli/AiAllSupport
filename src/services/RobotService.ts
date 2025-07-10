@@ -36,7 +36,6 @@ export function getWebSummarizerRobot(): Robot | undefined {
 
 export async function existWebSummarizerRobot(): Promise<boolean> {
     const webSummarizerRobot = await robotDB.getRobotFromDB('782');
-    console.log('webSummarizerRobot', webSummarizerRobot);
     return webSummarizerRobot !== undefined;
 }
 

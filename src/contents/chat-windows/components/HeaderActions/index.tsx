@@ -14,7 +14,7 @@ const HighZIndexTooltip: React.FC<React.ComponentProps<typeof Tooltip>> = ({
     children,
     ...props
 }) => (
-    <Tooltip {...props} overlayStyle={{ zIndex: 10001 }}>
+    <Tooltip {...props} styles={{ root: { zIndex: 10001 } }}>
         {children}
     </Tooltip>
 );

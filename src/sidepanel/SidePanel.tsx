@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button, Typography, Tooltip } from 'antd';
 import { ClearOutlined, SettingOutlined } from '@ant-design/icons';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -11,7 +11,7 @@ import robotDB from '@/store/robot';
 import type { Robot } from '@/types';
 import { ConfigModelType } from '@/types';
 import { useMessageSender } from '@/chat/hooks/useMessageSender';
-import rootStore from '@/store';
+// import rootStore from '@/store';
 
 const { Text } = Typography;
 
@@ -25,14 +25,13 @@ md.use(mathjax3);
 
 const SidePanel: React.FC = () => {
     const { t } = useLanguage();
+    // @ts-ignore
     const [tabId, setTabId] = useState<string | undefined>();
+    // @ts-ignore
     const [robot, setRobot] = useState<Robot>();
     const { handleSendMessage } = useMessageSender();
-    console.log('tabId', tabId);
 
     const handleSummarize = useCallback(async () => {
-        console.log('Handling summarize action');
-
         const isExistWebSummarizerRobot = await existWebSummarizerRobot();
         const webSummarizerRobot = (await robotDB.getRobotFromDB('782')) || getWebSummarizerRobot();
         if (!isExistWebSummarizerRobot && webSummarizerRobot) {
@@ -61,7 +60,6 @@ const SidePanel: React.FC = () => {
     useEffect(() => {
         const handleMessage = async (event: MessageEvent) => {
             if (event.data && event.data.action === 'summarize') {
-                console.log('Received summarize action from parent window');
                 handleSummarize();
             }
         };
@@ -91,14 +89,12 @@ const SidePanel: React.FC = () => {
         };
     }, []);
 
-    const { messageStore, messageBlockStore } = rootStore;
+    // const { messageStore, messageBlockStore } = rootStore;
 
-    const messages = useMemo(() => {
-        const data = messageStore.getMessagesForTopic(robot?.selectedTopicId || '');
-        return data;
-    }, [robot?.selectedTopicId, messageStore.messages.size, messageBlockStore.blocks.size]);
-
-    console.log('messages', messages);
+    // const messages = useMemo(() => {
+    //     const data = messageStore.getMessagesForTopic(robot?.selectedTopicId || '');
+    //     return data;
+    // }, [robot?.selectedTopicId, messageStore.messages.size, messageBlockStore.blocks.size]);
 
     const openSettingsPage = () => {
         chrome.runtime.openOptionsPage();

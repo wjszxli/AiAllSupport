@@ -9,6 +9,9 @@ import { findLast } from 'lodash';
 import { getModelForInterface, navigateToSettings, requiresApiKey } from '@/utils';
 import llmStore from '@/store/llm';
 import type { RootStore } from '@/store';
+import { Logger } from '@/utils/logger';
+
+const logger = new Logger('LangChainService');
 
 export default class LangChainService {
     private provider: BaseLangChainProvider;
@@ -39,7 +42,7 @@ export default class LangChainService {
         if (LangChainService.toolRefreshInitialized) return;
 
         const refreshCallback = () => {
-            console.log(
+            logger.info(
                 `[LangChainService] Refreshing tools for ${LangChainService.activeProviders.size} active providers`,
             );
             LangChainService.activeProviders.forEach((provider) => {
@@ -54,7 +57,7 @@ export default class LangChainService {
         rootStore.settingStore.registerToolRefreshCallback(refreshCallback);
         LangChainService.toolRefreshInitialized = true;
 
-        console.log('[LangChainService] Tool refresh system initialized');
+        logger.info('[LangChainService] Tool refresh system initialized');
     }
 
     /**
@@ -68,7 +71,7 @@ export default class LangChainService {
      * Static method to refresh tools for all active providers
      */
     public static refreshAllTools() {
-        console.log(
+        logger.info(
             `[LangChainService] Manually refreshing tools for ${LangChainService.activeProviders.size} active providers`,
         );
         LangChainService.activeProviders.forEach((provider) => {

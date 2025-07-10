@@ -41,7 +41,6 @@ const App: React.FC = () => {
                 if (savedLocale && Object.keys(locales).includes(savedLocale)) {
                     await setLocale(savedLocale as LocaleType);
                     setCurrentLocale(savedLocale as LocaleType);
-                    console.log('Initialized locale from storage:', savedLocale);
                 }
             } catch (error) {
                 console.error('Failed to initialize locale:', error);
@@ -92,7 +91,7 @@ const App: React.FC = () => {
                 });
             }
         } catch (error) {
-            console.log('Failed to notify tabs about language change:', error);
+            console.error('Failed to notify tabs about language change:', error);
         }
     };
 
@@ -192,16 +191,7 @@ const App: React.FC = () => {
                                 }
                                 key="search"
                             >
-                                <Search
-                                    form={form}
-                                    onValuesChange={(changedValues, allValues) => {
-                                        console.log(
-                                            'Search form values changed:',
-                                            changedValues,
-                                            allValues,
-                                        );
-                                    }}
-                                />
+                                <Search form={form} />
                             </TabPane>
                             <TabPane
                                 tab={

@@ -19,6 +19,9 @@ import { Message } from '@/types/message';
 import MessageList from '@/components/MessageList';
 import getMessageService from '@/services/MessageService';
 import { observer } from 'mobx-react-lite';
+import { Logger } from '@/utils/logger';
+
+const logger = new Logger('ChatInterface');
 
 const ChatInterface = observer(({ initialText }: { initialText?: string }) => {
     const [inputMessage, setInputMessage] = useState(initialText || '');
@@ -41,7 +44,7 @@ const ChatInterface = observer(({ initialText }: { initialText?: string }) => {
 
     // 当话题变化时加载消息
     useEffect(() => {
-        console.log('loadTopicMessages', selectedTopicId);
+        logger.info('loadTopicMessages', selectedTopicId);
         if (selectedTopicId) {
             // 只有在没有正在流式处理的消息时才重新加载
             // 避免在流式过程中清理当前的流式块
@@ -61,9 +64,6 @@ const ChatInterface = observer(({ initialText }: { initialText?: string }) => {
         rootStore.messageBlockStore.blocks.size,
     ]);
 
-    console.log('messages', messages);
-    console.log('selectedTopicId', selectedTopicId);
-
     const computeDisplayMessages = useCallback((messages: Message[], displayCount: number) => {
         const orderedMessages = [...messages];
         if (orderedMessages.length <= displayCount) {
@@ -77,8 +77,6 @@ const ChatInterface = observer(({ initialText }: { initialText?: string }) => {
         const newDisplayMessages = computeDisplayMessages(messages, 100);
         setDisplayMessages(newDisplayMessages);
     }, [messages, computeDisplayMessages]);
-
-    console.log('displayMessages', displayMessages);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const newValue = e.target.value;
@@ -95,7 +93,7 @@ const ChatInterface = observer(({ initialText }: { initialText?: string }) => {
     };
 
     const handleSendMessageClick = () => {
-        console.log('handleSendMessageClick', inputMessage);
+        logger.info('handleSendMessageClick', inputMessage);
         if (!inputMessage.trim() || isLoading) return;
 
         if (!selectedRobot) {
@@ -215,7 +213,7 @@ const ChatInterface = observer(({ initialText }: { initialText?: string }) => {
                                         ? '关闭网页搜索'
                                         : '开启网页搜索'
                                 }
-                                overlayStyle={{ zIndex: 10001 }}
+                                styles={{ root: { zIndex: 10001 } }}
                             >
                                 <Button
                                     type={
@@ -238,7 +236,7 @@ const ChatInterface = observer(({ initialText }: { initialText?: string }) => {
                                         ? '关闭网页上下文'
                                         : '开启网页上下文'
                                 }
-                                overlayStyle={{ zIndex: 10001 }}
+                                styles={{ root: { zIndex: 10001 } }}
                             >
                                 <Button
                                     type={
@@ -259,7 +257,7 @@ const ChatInterface = observer(({ initialText }: { initialText?: string }) => {
 
                             <Tooltip
                                 title={isInputExpanded ? '收起输入框' : '展开输入框'}
-                                overlayStyle={{ zIndex: 10001 }}
+                                styles={{ root: { zIndex: 10001 } }}
                             >
                                 <Button
                                     type="text"
@@ -270,7 +268,7 @@ const ChatInterface = observer(({ initialText }: { initialText?: string }) => {
                                 />
                             </Tooltip>
                             {displayMessages.length > 0 && !streamingMessageId && (
-                                <Tooltip title="清空聊天记录" overlayStyle={{ zIndex: 10001 }}>
+                                <Tooltip title="清空聊天记录" styles={{ root: { zIndex: 10001 } }}>
                                     <Button
                                         type="text"
                                         size="small"

@@ -65,7 +65,7 @@ const calculateCenterPosition = () => {
             ['en', 'zh-CN', 'zh-TW', 'ja', 'ko', 'ru', 'es', 'fr', 'de'].includes(savedLocale)
         ) {
             await setLocale(savedLocale as LocaleType);
-            console.log('Initialized locale from storage:', savedLocale);
+            console.info('Initialized locale from storage:', savedLocale);
         }
     } catch (error) {
         console.error('Failed to initialize locale:', error);
@@ -78,7 +78,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         // 更新语言设置
         setLocale(message.locale)
             .then(() => {
-                console.log('Content script locale updated:', message.locale);
+                logger.info('Content script locale updated:', message.locale);
                 sendResponse({ success: true });
             })
             .catch((error) => {
@@ -90,7 +90,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
     // 处理提供商设置更新
     if (message.action === 'providerSettingsUpdated') {
-        console.log('Provider settings updated in content script');
+        logger.info('Provider settings updated in content script');
         // 通知UI组件刷新
         window.dispatchEvent(
             new CustomEvent('providerSettingsUpdated', {
@@ -103,7 +103,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
     if (message.action === 'openChatWindow') {
         const selectedText = message.selectedText || '';
-        console.log('Opening chat window with selected text:', selectedText);
+        logger.info('Opening chat window with selected text:', selectedText);
 
         // 计算真正的居中位置
         const { x: centerX, y: centerY } = calculateCenterPosition();
@@ -120,7 +120,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
     // 处理 iframe 侧边栏创建请求
     if (message.action === 'createIframeSidePanel') {
-        console.log('Creating iframe side panel');
+        logger.info('Creating iframe side panel');
 
         try {
             // 显示 iframe 侧边栏

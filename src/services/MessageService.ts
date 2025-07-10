@@ -27,6 +27,9 @@ import { runInAction } from 'mobx';
 
 import type { RootStore } from '@/store';
 import { abortCompletion } from '@/utils/abortController';
+import { Logger } from '@/utils/logger';
+
+const logger = new Logger('MessageService');
 
 export class MessageService {
     private rootStore: RootStore;
@@ -39,7 +42,6 @@ export class MessageService {
     // 取消当前流式响应
     public cancelCurrentStream(currentTopicId: string) {
         const topicMessages = this.rootStore.messageStore.getMessagesForTopic(currentTopicId);
-        console.log('[MessageService] Topic messages:', topicMessages);
         if (!topicMessages) return;
 
         const streamingMessages = topicMessages.filter(
@@ -48,7 +50,7 @@ export class MessageService {
                 message.status === RobotMessageStatus.PENDING,
         );
 
-        console.log('[MessageService] Streaming message:', streamingMessages);
+        logger.info('[MessageService] Streaming message:', streamingMessages);
 
         if (!streamingMessages) return;
 
@@ -582,17 +584,11 @@ export class MessageService {
                         (block.status === MessageBlockStatus.PROCESSING ||
                             block.status === MessageBlockStatus.STREAMING)
                     ) {
-                        // 只清理确实还在处理中的块
-                        console.log('[finally cleanup] Found block to cleanup:', {
-                            blockId,
-                            type: block.type,
-                            status: block.status,
-                        });
                         blocksToCleanup.push(blockId);
                     }
                 });
                 if (blocksToCleanup.length > 0) {
-                    console.log('[finally cleanup] Cleaning up blocks:', blocksToCleanup);
+                    logger.info('[finally cleanup] Cleaning up blocks:', blocksToCleanup);
                     runInAction(() => {
                         blocksToCleanup.forEach((blockId) => {
                             this.rootStore.messageBlockStore.updateBlock(blockId, {
@@ -747,7 +743,7 @@ export class MessageService {
                         // 处理每个消息的思考块
                         messageIdToThinkingBlocks.forEach((thinkingBlocks, messageId) => {
                             if (thinkingBlocks.length > 1) {
-                                console.log(
+                                logger.info(
                                     `[loadTopicMessages] Found ${thinkingBlocks.length} thinking blocks for message ${messageId}`,
                                 );
 
@@ -802,7 +798,7 @@ export class MessageService {
 
                         // 如果有需要删除的块，从数据库中删除它们
                         if (blocksToDelete.length > 0) {
-                            console.log(
+                            logger.info(
                                 `[loadTopicMessages] Removing ${blocksToDelete.length} duplicate thinking blocks`,
                             );
                             // 从存储中移除多余的块
@@ -866,24 +862,24 @@ export class MessageService {
                                     db.message_blocks.put(JSON.parse(JSON.stringify(block))),
                                 ),
                             ).catch((error) => {
-                                console.error(
+                                logger.error(
                                     '[loadTopicMessages] Failed to save cleaned blocks:',
                                     error,
                                 );
                             });
                         }
                     }
-                    console.log('correctedMessages', correctedMessages);
+                    logger.info('correctedMessages', correctedMessages);
                     this.rootStore.messageStore.messagesReceived(topicId, correctedMessages);
                 });
             } else {
-                console.log(`[loadTopicMessages] No messages found for topic ${topicId}`);
+                logger.info(`[loadTopicMessages] No messages found for topic ${topicId}`);
                 runInAction(() => {
                     this.rootStore.messageStore.messagesReceived(topicId, []);
                 });
             }
         } catch (error: any) {
-            console.error(
+            logger.error(
                 `[loadTopicMessages] Failed to load messages for topic ${topicId}:`,
                 error,
             );
@@ -894,7 +890,7 @@ export class MessageService {
     async deleteSingleMessage(topicId: string, messageId: string) {
         const messageToDelete = this.rootStore.messageStore.getMessageById(messageId);
         if (!messageToDelete || messageToDelete.topicId !== topicId) {
-            console.error(
+            logger.error(
                 `[deleteSingleMessage] Message ${messageId} not found in topic ${topicId}.`,
             );
             return;

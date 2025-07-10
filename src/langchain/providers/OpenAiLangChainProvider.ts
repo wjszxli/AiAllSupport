@@ -1,5 +1,5 @@
 import { ChatOpenAI } from '@langchain/openai';
-import { HumanMessage } from '@langchain/core/messages';
+import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import BaseLangChainProvider from './BaseLangChainProvider';
 import { CompletionsParams, Provider } from '@/types';
 import type { RootStore } from '@/store';
@@ -78,29 +78,48 @@ export default class OpenAiLangChainProvider extends BaseLangChainProvider {
                 type: ChunkType.LLM_RESPONSE_IN_PROGRESS,
             });
 
-            // Use the centralized tool-based completion from BaseLangChainProvider
-            const finalText = await this.handleToolBasedCompletion(
-                filteredMessages,
-                robot,
-                userInput,
-                signal,
-            );
+            // Prepare user input with tools if available
+            const enhancedUserInput = await this.prepareUserInputWithTools(userInput);
 
-            // Stream the final text
-            onChunk({
-                text: finalText,
-                type: ChunkType.TEXT_DELTA,
-            });
+            // Convert messages to LangChain format
+            const langchainMessages = await this.convertToLangChainMessages(filteredMessages);
 
-            onChunk({
-                text: finalText,
-                type: ChunkType.TEXT_COMPLETE,
-            });
+            // Replace the last user message with enhanced input if tools were used
+            if (enhancedUserInput !== userInput && langchainMessages.length > 0) {
+                const lastMsg = langchainMessages[langchainMessages.length - 1];
+                if (lastMsg instanceof HumanMessage) {
+                    langchainMessages[langchainMessages.length - 1] = new HumanMessage(
+                        enhancedUserInput,
+                    );
+                }
+            }
+
+            // Add robot prompt if available
+            if (robot.prompt) {
+                langchainMessages.unshift(new SystemMessage(robot.prompt));
+            }
+
+            // Stream the response
+            const stream = await this.chatModel.stream(langchainMessages, { signal });
+
+            for await (const chunk of stream) {
+                if (signal.aborted) {
+                    break;
+                }
+
+                const content = chunk.content;
+                if (content) {
+                    onChunk({
+                        text: typeof content === 'string' ? content : content.toString(),
+                        type: ChunkType.TEXT_DELTA,
+                    });
+                }
+            }
 
             onChunk({
                 type: ChunkType.BLOCK_COMPLETE,
                 response: {
-                    text: finalText,
+                    text: '', // The full text is already sent via TEXT_DELTA chunks
                 } as any,
             });
         } catch (error) {
@@ -125,14 +144,6 @@ export default class OpenAiLangChainProvider extends BaseLangChainProvider {
         await signalPromise?.promise?.catch((error) => {
             throw error;
         });
-    }
-
-    protected async executeDirectCompletion(
-        langchainMessages: any[],
-        signal: AbortSignal,
-    ): Promise<string> {
-        const response = await this.chatModel.invoke(langchainMessages, { signal });
-        return response.content as string;
     }
 
     protected async checkModelAvailability(): Promise<{ valid: boolean; error: Error | null }> {

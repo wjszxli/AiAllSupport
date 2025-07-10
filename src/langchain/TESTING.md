@@ -26,193 +26,176 @@ The tool refresh system automatically updates tools when user settings change. T
 
 5. **Verify tool refresh**:
    - Check console logs for refresh messages
-   - Look for messages like: `[LangChainService] Refreshing tools for X active providers`
+   - Look for messages like: `[LangChainProvider] Tools refreshed: 0 -> 1`
+   - Verify tool names in logs: `[LangChainProvider] Added tools: [web_search]`
 
-### 2. Manual Refresh Test
+### 2. Streaming Output Test
 
-You can manually trigger tool refresh for testing:
+1. **Enable search tools**:
 
-```javascript
-// Manually refresh all tools
-debugLangChain.refreshAllTools();
+   - Go to Settings → Search
+   - Enable "Web Search"
+   - Configure at least one search engine (e.g., DuckDuckGo)
 
-// Check the result
-debugLangChain.getDebugInfo();
-```
+2. **Test streaming with tools**:
 
-### 3. Setting Changes That Trigger Refresh
+   - Ask a question that would benefit from web search
+   - Example: "What's the latest news about AI?"
+   - Verify that:
+     - Tool execution happens first (check console logs)
+     - Response streams character by character
+     - Search results are included in the response
 
-The following setting changes should trigger tool refresh:
+3. **Test streaming without tools**:
+   - Disable all search tools
+   - Ask a general question
+   - Verify normal streaming behavior
 
-#### Web Search Settings:
+### 3. Tool Integration Test
 
-- `webSearchEnabled` (Enable/disable web search)
-- `enabledSearchEngines` (Change search engines)
-- `tavilyApiKey` (Tavily API key)
-- `exaApiKey` (Exa API key)
-- `bochaApiKey` (Bocha API key)
+1. **Test search tool integration**:
 
-#### Webpage Context Settings:
+   ```javascript
+   // Enable web search
+   rootStore.settingStore.setWebSearchEnabled(true);
+   rootStore.settingStore.setEnabledSearchEngines(['duckduckgo']);
 
-- `useWebpageContext` (Enable/disable webpage context)
+   // Check that tools were added
+   debugLangChain.getDebugInfo();
+   ```
 
-### 4. Expected Tool Behavior
+2. **Test webpage context tool**:
 
-#### When Web Search is Enabled:
+   ```javascript
+   // Enable webpage context
+   rootStore.settingStore.setUseWebpageContext(true);
 
-- Should see `web_search` tool in debug info
-- Tool count should increase by 1
+   // Check tools
+   debugLangChain.getDebugInfo();
+   ```
 
-#### When Web Search is Disabled:
+### 4. Error Handling Test
 
-- Should NOT see `web_search` tool in debug info
-- Tool count should decrease by 1
+1. **Test with invalid API keys**:
 
-#### When Webpage Context is Enabled:
+   - Set invalid API keys for search engines
+   - Verify that tools fail gracefully
+   - Check that streaming still works
 
-- Should see `webpage_context` tool in debug info
-- Tool count should increase by 1
+2. **Test tool execution errors**:
+   - Monitor console for tool error messages
+   - Verify that errors don't break streaming
 
-#### When Webpage Context is Disabled:
+### 5. Performance Test
 
-- Should NOT see `webpage_context` tool in debug info
-- Tool count should decrease by 1
+1. **Test with multiple tools**:
 
-### 5. Console Log Examples
+   - Enable both web search and webpage context
+   - Ask a complex question
+   - Verify that tool execution doesn't significantly delay response
 
-#### Successful Tool Refresh:
+2. **Test tool refresh performance**:
+   - Rapidly toggle settings
+   - Verify that refresh operations complete quickly
 
-```
-[LangChainService] Refreshing tools for 1 active providers
-[BaseLangChainProvider] Tools refreshed: 0 -> 1
-[BaseLangChainProvider] Old tools: []
-[BaseLangChainProvider] New tools: [web_search]
-[BaseLangChainProvider] Added tools: [web_search]
-```
+## Expected Behavior
 
-#### Tool Removal:
+### ✅ Correct Behavior
 
-```
-[LangChainService] Refreshing tools for 1 active providers
-[BaseLangChainProvider] Tools refreshed: 1 -> 0
-[BaseLangChainProvider] Old tools: [web_search]
-[BaseLangChainProvider] New tools: []
-[BaseLangChainProvider] Removed tools: [web_search]
-```
+1. **Tool Refresh**:
 
-### 6. Testing Scenarios
+   - Tools are added/removed immediately when settings change
+   - Console logs show detailed information about tool changes
+   - No page refresh required
 
-#### Scenario 1: Enable Web Search
+2. **Streaming Output**:
 
-1. Ensure web search is disabled
-2. Send a message (to create a LangChain provider)
-3. Check debug info - should have 0 or 1 tools (depending on webpage context)
-4. Enable web search via chat button or settings
-5. Check debug info again - should have +1 tool (`web_search`)
+   - Responses stream character by character
+   - Tool results are integrated into the prompt before streaming
+   - No blocking or delays in streaming
 
-#### Scenario 2: Disable Web Search
+3. **Tool Integration**:
+   - Tools execute before the main response
+   - Tool results are included in the enhanced prompt
+   - Sources are properly cited in responses
 
-1. Ensure web search is enabled
-2. Send a message
-3. Check debug info - should include `web_search` tool
-4. Disable web search
-5. Check debug info - should no longer include `web_search` tool
+### ❌ Incorrect Behavior
 
-#### Scenario 3: Change Search Engines
+1. **Tool Refresh Issues**:
 
-1. Enable web search with some engines
-2. Send a message
-3. Change enabled search engines in settings
-4. Should see tool refresh in console (same tool, but refreshed)
+   - Tools not updating when settings change
+   - Missing console logs about tool changes
+   - Errors in tool refresh callbacks
 
-#### Scenario 4: Multiple Providers
+2. **Streaming Issues**:
 
-1. Send messages with different models/providers
-2. Check debug info - should show multiple providers
-3. Change settings
-4. All providers should refresh their tools
+   - Response appears all at once (not streaming)
+   - Long delays before streaming starts
+   - Streaming stops or stutters
 
-### 7. Troubleshooting
+3. **Tool Integration Issues**:
+   - Tools not executing when enabled
+   - Tool results not appearing in responses
+   - Errors during tool execution break streaming
 
-#### Tools Not Refreshing:
+## Debug Commands
 
-- Check if `rootStore` is passed to LangChainService
-- Verify console logs for error messages
-- Ensure settings are actually changing (check storage)
-
-#### Multiple Refresh Calls:
-
-- This is normal - each active provider refreshes independently
-- Each message creates a new provider instance temporarily
-
-#### Settings Not Persisting:
-
-- Check Chrome storage permissions
-- Verify settings are saved to Chrome storage
-
-### 8. Debug Commands
+Use these commands in the browser console:
 
 ```javascript
-// Get current debug info
+// Check current state
 debugLangChain.getDebugInfo();
 
-// Manual refresh
+// Manual tool refresh
 debugLangChain.refreshAllTools();
 
-// Check current settings
-rootStore.settingStore.getAllSettings();
+// Check active providers
+debugLangChain.getDebugInfo().activeProviders;
 
-// Toggle web search programmatically
-rootStore.settingStore.setWebSearchEnabled(true);
-rootStore.settingStore.setWebSearchEnabled(false);
-
-// Toggle webpage context programmatically
-rootStore.settingStore.setUseWebpageContext(true);
-rootStore.settingStore.setUseWebpageContext(false);
+// Check tool refresh system
+debugLangChain.getDebugInfo().toolRefreshInitialized;
 ```
 
-### 9. Expected Debug Info Structure
+## Common Issues and Solutions
+
+### Issue: Tools not refreshing
+
+**Solution**: Check that the callback system is properly initialized:
 
 ```javascript
-{
-  activeProviders: 1,
-  toolRefreshInitialized: true,
-  providers: [
-    {
-      tools: [
-        {
-          name: "web_search",
-          description: "Search the web for current information. Use this tool when you need to find recent, up-to-date..."
-        },
-        {
-          name: "webpage_context",
-          description: "Get the content of the current webpage that the user is browsing. Use this when the user asks..."
-        }
-      ],
-      toolCount: 2
-    }
-  ]
-}
+// Should return true
+debugLangChain.getDebugInfo().toolRefreshInitialized;
 ```
 
-## Implementation Details
+### Issue: Streaming not working
 
-### Callback Registration
+**Solution**: Verify that the provider is using the new streaming approach:
 
-- LangChainService registers callbacks with SettingStore
-- Callbacks are called when relevant settings change
-- Each setting change method calls `notifyToolRefreshCallbacks()`
+- Check that `prepareUserInputWithTools` is being called
+- Verify that the stream loop is executing properly
 
-### Provider Management
+### Issue: Tool execution errors
 
-- Active providers are tracked in a static Set
-- Providers are added on construction, removed on disposal
-- All active providers are refreshed when settings change
+**Solution**: Check console logs for specific error messages:
 
-### Tool Refresh Logic
+- API key issues
+- Network connectivity problems
+- Tool configuration errors
 
-- `refreshTools()` calls `setupTools()` to reconfigure tools
-- Old tools are completely replaced with new tools
-- Detailed logging shows what changed
+## Performance Expectations
 
-This system ensures that tools are always in sync with user settings without requiring restarts or manual intervention.
+- **Tool refresh**: < 100ms
+- **Tool execution**: 1-5 seconds (depending on search complexity)
+- **Streaming start**: < 500ms after tool execution
+- **Streaming rate**: Smooth, no noticeable delays
+
+## Testing Checklist
+
+- [ ] Tools refresh when settings change
+- [ ] Console logs show tool changes
+- [ ] Streaming works with tools enabled
+- [ ] Streaming works with tools disabled
+- [ ] Tool results appear in responses
+- [ ] Error handling works properly
+- [ ] Performance is acceptable
+- [ ] Debug commands work correctly

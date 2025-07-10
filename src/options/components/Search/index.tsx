@@ -18,10 +18,9 @@ import rootStore from '@/store';
 
 interface SearchProps {
     form: any;
-    onValuesChange: (changedValues: any, allValues: any) => void;
 }
 
-const Search: React.FC<SearchProps> = observer(({ form, onValuesChange }) => {
+const Search: React.FC<SearchProps> = observer(({ form }) => {
     const { settingStore } = rootStore;
     const [newFilterDomain, setNewFilterDomain] = useState<string>('');
     const [tavilyApiKey, setTavilyApiKey] = useState<string>('');
@@ -30,8 +29,6 @@ const Search: React.FC<SearchProps> = observer(({ form, onValuesChange }) => {
     const [selectedEngines, setSelectedEngines] = useState<string[]>(
         settingStore.enabledSearchEngines,
     );
-
-    console.log('selectedEngines', settingStore.enabledSearchEngines);
 
     // Group search engines
     const freeSearchEngines = Object.entries(SEARCH_ENGINES).filter(([_, value]) =>
@@ -122,7 +119,6 @@ const Search: React.FC<SearchProps> = observer(({ form, onValuesChange }) => {
             layout="vertical"
             requiredMark={false}
             size="large"
-            onValuesChange={onValuesChange}
         >
             <Form.Item
                 name="webSearchEnabled"

@@ -267,7 +267,7 @@ const ChatBody: React.FC<ChatBodyProps> = observer(({ userInput, setUserInput })
                                     maxRows: isInputExpanded ? 30 : 8,
                                 }}
                                 disabled={isLoading && streamingMessageId === null}
-                                bordered={false}
+                                variant="borderless"
                             />
                         </div>
                         <div className="input-toolbar">
@@ -279,7 +279,7 @@ const ChatBody: React.FC<ChatBodyProps> = observer(({ userInput, setUserInput })
                                             ? '关闭网页搜索'
                                             : '开启网页搜索'
                                     }
-                                    overlayStyle={{ zIndex: 10001 }}
+                                    styles={{ root: { zIndex: 10001 } }}
                                 >
                                     <Button
                                         type={
@@ -301,7 +301,7 @@ const ChatBody: React.FC<ChatBodyProps> = observer(({ userInput, setUserInput })
                                 {/* 展开/收起按钮 */}
                                 <Tooltip
                                     title={isInputExpanded ? '收起输入框' : '展开输入框'}
-                                    overlayStyle={{ zIndex: 10001 }}
+                                    styles={{ root: { zIndex: 10001 } }}
                                 >
                                     <Button
                                         type="text"
@@ -320,7 +320,10 @@ const ChatBody: React.FC<ChatBodyProps> = observer(({ userInput, setUserInput })
 
                                 {/* 清空消息按钮 */}
                                 {displayMessages.length > 0 && !streamingMessageId && (
-                                    <Tooltip title="清空聊天记录" overlayStyle={{ zIndex: 10001 }}>
+                                    <Tooltip
+                                        title="清空聊天记录"
+                                        styles={{ root: { zIndex: 10001 } }}
+                                    >
                                         <Button
                                             type="text"
                                             size="small"
@@ -342,7 +345,7 @@ const ChatBody: React.FC<ChatBodyProps> = observer(({ userInput, setUserInput })
                                             ? t('sendMessage') || '发送'
                                             : t('enterQuestion') || '请输入问题'
                                     }
-                                    overlayStyle={{ zIndex: 10001 }}
+                                    styles={{ root: { zIndex: 10001 } }}
                                 >
                                     <Button
                                         className={

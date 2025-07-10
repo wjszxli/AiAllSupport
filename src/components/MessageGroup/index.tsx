@@ -292,7 +292,7 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
                             <>
                                 <Tooltip
                                     title={t('copy') || '复制'}
-                                    overlayStyle={{ zIndex: 10001 }}
+                                    styles={{ root: { zIndex: 10001 } }}
                                 >
                                     <Button
                                         type="text"
@@ -306,7 +306,7 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
                                 </Tooltip>
                                 <Tooltip
                                     title={t('regenerate') || '重新生成'}
-                                    overlayStyle={{ zIndex: 10001 }}
+                                    styles={{ root: { zIndex: 10001 } }}
                                 >
                                     <Button
                                         type="text"
@@ -318,7 +318,7 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
                                 </Tooltip>
                                 <Tooltip
                                     title={t('delete') || '删除'}
-                                    overlayStyle={{ zIndex: 10001 }}
+                                    styles={{ root: { zIndex: 10001 } }}
                                 >
                                     <Button
                                         type="text"
@@ -335,7 +335,7 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
                             <>
                                 <Tooltip
                                     title={t('edit') || '编辑'}
-                                    overlayStyle={{ zIndex: 10001 }}
+                                    styles={{ root: { zIndex: 10001 } }}
                                 >
                                     <Button
                                         type="text"
@@ -349,7 +349,7 @@ const MessageGroup: React.FC<MessageGroupProps> = observer(
                                 </Tooltip>
                                 <Tooltip
                                     title={t('delete') || '删除'}
-                                    overlayStyle={{ zIndex: 10001 }}
+                                    styles={{ root: { zIndex: 10001 } }}
                                 >
                                     <Button
                                         type="text"

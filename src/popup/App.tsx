@@ -29,7 +29,6 @@ const App: React.FC = () => {
                 if (savedLocale && Object.keys(locales).includes(savedLocale)) {
                     await setLocale(savedLocale as LocaleType);
                     setCurrentLocale(savedLocale as LocaleType);
-                    console.log('Initialized locale from storage:', savedLocale);
                 }
             } catch (error) {
                 console.error('Failed to initialize locale:', error);
@@ -68,7 +67,7 @@ const App: React.FC = () => {
                 });
             }
         } catch (error) {
-            console.log('Failed to notify tabs about language change:', error);
+            console.error('Failed to notify tabs about language change:', error);
         }
     };
 
@@ -86,84 +85,6 @@ const App: React.FC = () => {
         });
     };
 
-    // const openSidePanel = () => {
-    //     // 向当前活动标签页发送消息，要求总结当前页面
-    //     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    //         if (tabs[0]?.id) {
-    //             console.log('Sending summarizeCurrentPage message to tab', tabs[0].id);
-    //             chrome.tabs
-    //                 .sendMessage(tabs[0].id, { action: 'summarizeCurrentPage' })
-    //                 .then(() => {
-    //                     // Add smooth fade-out animation before closing
-    //                     setIsFadingOut(true);
-    //                     setTimeout(() => {
-    //                         window.close();
-    //                     }, 300); // Wait for animation to complete
-    //                 })
-    //                 .catch((error) => {
-    //                     console.error('Failed to send summarizeCurrentPage message:', error);
-    //                     // 如果消息发送失败，可能内容脚本未加载，尝试使用原生侧边栏
-    //                     tryNativeSidePanel();
-    //                 });
-    //         }
-    //     });
-    // };
-
-    // 尝试使用原生侧边栏
-    // const tryNativeSidePanel = () => {
-    //     chrome.windows.getCurrent({ populate: true }, (chromeWindow) => {
-    //         if (chromeWindow.id) {
-    //             chrome.sidePanel.setOptions({
-    //                 enabled: true,
-    //             });
-    //             chrome.sidePanel
-    //                 .open({ windowId: chromeWindow.id })
-    //                 .then(() => {
-    //                     // Add smooth fade-out animation before closing
-    //                     setIsFadingOut(true);
-    //                     setTimeout(() => {
-    //                         window.close();
-    //                     }, 300); // Wait for animation to complete
-    //                 })
-    //                 .catch((error) => {
-    //                     console.error('Failed to open side panel:', error);
-    //                     // 回退到 iframe 解决方案
-    //                     createIframeSidePanel();
-    //                 });
-    //         }
-    //     });
-    // };
-
-    // 创建基于 iframe 的替代侧边栏
-    // const createIframeSidePanel = () => {
-    //     // 向当前活动标签页发送消息，要求创建 iframe 侧边栏
-    //     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    //         if (tabs[0]?.id) {
-    //             chrome.tabs
-    //                 .sendMessage(tabs[0].id, { action: 'createIframeSidePanel' })
-    //                 .then(() => {
-    //                     // Add smooth fade-out animation before closing
-    //                     setIsFadingOut(true);
-    //                     setTimeout(() => {
-    //                         window.close();
-    //                     }, 300); // Wait for animation to complete
-    //                 })
-    //                 .catch((error) => {
-    //                     console.error('Failed to send iframe side panel creation message:', error);
-    //                     // 如果消息发送失败，可能内容脚本未加载，直接创建一个新标签页作为替代
-    //                     openSidePanelInNewTab();
-    //                 });
-    //         }
-    //     });
-    // };
-
-    // 在新标签页中打开侧边栏
-    // const openSidePanelInNewTab = () => {
-    //     chrome.tabs.create({
-    //         url: chrome.runtime.getURL('sidepanel.html?action=summarize'),
-    //     });
-    // };
-
     return (
         <div className={`app`}>
             <Card className="app-container">
@@ -175,8 +96,8 @@ const App: React.FC = () => {
                         value={currentLocale}
                         onChange={handleLanguageChange}
                         className="language-selector"
-                        dropdownMatchSelectWidth={false}
-                        bordered={true}
+                        popupMatchSelectWidth={false}
+                        variant="outlined"
                         suffixIcon={<GlobalOutlined />}
                         style={{ width: '150px' }}
                     >

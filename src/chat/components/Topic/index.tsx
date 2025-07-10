@@ -283,7 +283,7 @@ const Topic: React.FC<TopicProps> = observer(() => {
                                     <Tooltip
                                         title={t('edit') || '编辑'}
                                         key="edit"
-                                        overlayStyle={{ zIndex: 10001 }}
+                                        styles={{ root: { zIndex: 10001 } }}
                                     >
                                         <Button
                                             type="text"
@@ -298,7 +298,7 @@ const Topic: React.FC<TopicProps> = observer(() => {
                                     <Tooltip
                                         title={t('delete') || '删除'}
                                         key="delete"
-                                        overlayStyle={{ zIndex: 10001 }}
+                                        styles={{ root: { zIndex: 10001 } }}
                                     >
                                         <Button
                                             type="text"

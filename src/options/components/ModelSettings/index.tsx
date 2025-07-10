@@ -55,7 +55,6 @@ const ModelSettings: React.FC = observer(() => {
                 // 获取每种界面类型的机器人
                 for (const type of Object.values(ConfigModelType)) {
                     const robot = llmStore.getRobotForType(type);
-                    console.log(`Loading robot for ${type}:`, robot); // 调试日志
                     if (robot?.id) {
                         // 验证机器人是否仍然存在于机器人列表中
                         const robotExists = robotStore.robotList.find((r) => r.id === robot.id);
@@ -74,11 +73,8 @@ const ModelSettings: React.FC = observer(() => {
                     }
                 }
 
-                console.log('newSelectedModels', newSelectedModels);
-                console.log('newSelectedRobots', newSelectedRobots);
                 setSelectedModels(newSelectedModels);
                 setSelectedRobots(newSelectedRobots);
-                console.log('Initialized robot selections:', newSelectedRobots); // 调试日志
             } catch (error) {
                 console.error('Failed to initialize settings:', error);
                 message.error(t('failedToLoadModelSettings'));
@@ -205,7 +201,6 @@ const ModelSettings: React.FC = observer(() => {
 
         // 保存机器人配置到对应的界面类型
         llmStore.setRobotForType(type, robot);
-        console.log(`Setting robot for ${type}:`, robot.name, robot.id);
 
         // 立即验证存储是否成功
         await new Promise((resolve) => setTimeout(resolve, 100));
@@ -213,7 +208,6 @@ const ModelSettings: React.FC = observer(() => {
 
         if (savedRobot?.id === robot.id) {
             message.success(`${robot.name} 已设置为${getTypeLabel(type)}机器人`);
-            console.log(`Successfully saved robot configuration for ${type}`);
         } else {
             console.error('Robot configuration not saved correctly', {
                 expected: robot.id,

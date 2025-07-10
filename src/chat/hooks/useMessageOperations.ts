@@ -18,7 +18,6 @@ export const useMessageOperations = (streamingMessageId: string | null, selected
     // 获取消息的正文内容（不包含思考内容）
     const getMessageContent = useCallback((message: Message): string => {
         if (!message.blocks || message.blocks.length === 0) {
-            // console.log(`[getMessageContent] Message ${message.id} has no blocks`);
             return '';
         }
 
