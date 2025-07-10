@@ -563,6 +563,7 @@ export class MessageService {
                 messages: messagesForContext,
                 robot: robot,
                 onChunkReceived: streamProcessorCallbacks,
+                rootStore: this.rootStore,
             });
         } catch (error: any) {
             console.error('Error fetching chat completion:', error);

@@ -1,0 +1,75 @@
+import { Tool } from '@langchain/core/tools';
+import { getSearchService } from '@/services/SearchService';
+import { Logger } from '@/utils/logger';
+import type { RootStore } from '@/store';
+
+const logger = new Logger('WebSearchTool');
+
+interface WebSearchToolOptions {
+    rootStore: RootStore;
+    maxResults?: number;
+    enableContentFetching?: boolean;
+}
+
+export class WebSearchTool extends Tool {
+    name = 'web_search';
+    description = `Search the web for current information. Use this tool when you need to find recent, up-to-date information that might not be in your training data.
+
+Input should be a search query string.
+
+Examples of when to use:
+- Current events, news, or recent developments
+- Weather information
+- Stock prices or market data
+- Recent product releases or updates
+- Any information that changes frequently
+
+The tool will return search results with titles, URLs, and snippets from multiple sources.`;
+
+    private searchService: ReturnType<typeof getSearchService>;
+    private maxResults: number;
+    private enableContentFetching: boolean;
+
+    constructor(options: WebSearchToolOptions) {
+        super();
+        this.searchService = getSearchService(options.rootStore);
+        this.maxResults = options.maxResults || 5;
+        this.enableContentFetching = options.enableContentFetching || false;
+    }
+
+    protected async _call(query: string): Promise<string> {
+        try {
+            logger.info(`Performing web search for: ${query}`);
+
+            let searchResponse;
+
+            if (this.enableContentFetching) {
+                // Use enhanced search with content fetching
+                searchResponse = await this.searchService.performSearchWithContent(
+                    query,
+                    this.maxResults,
+                );
+
+                const formatted = this.searchService.formatEnhancedSearchResults(searchResponse);
+                logger.info(
+                    `Web search completed with content fetching: ${searchResponse.results.length} results`,
+                );
+                return formatted;
+            } else {
+                // Use regular search
+                searchResponse = await this.searchService.performSearch(query);
+
+                const formatted = this.searchService.formatSearchResults(searchResponse);
+                logger.info(`Web search completed: ${searchResponse.results.length} results`);
+                return formatted;
+            }
+        } catch (error) {
+            logger.error('Web search failed:', error);
+            return `Web search failed: ${
+                error instanceof Error ? error.message : 'Unknown error'
+            }. Please try rephrasing your query or check if web search is properly configured.`;
+        }
+    }
+}
+
+export default WebSearchTool;

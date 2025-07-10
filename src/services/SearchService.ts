@@ -1,4 +1,5 @@
 import { SEARCH_ENGINES } from '@/utils/constant';
+import { load } from 'cheerio';
 import type { RootStore } from '@/store';
 
 // 延迟创建Logger实例，避免循环依赖
@@ -22,14 +23,29 @@ let logger: any = {
 export interface SearchResult {
     title: string;
     url: string;
+    link?: string;
+    source?: string;
     snippet: string;
     domain: string;
+}
+
+export interface EnhancedSearchResult extends SearchResult {
+    content?: string; // Full content fetched from the URL
+    fetchedAt?: string; // Timestamp when content was fetched
+    contentSummary?: string; // Summary of the content
 }
 
 export interface SearchResponse {
     results: SearchResult[];
     query: string;
     engine: string;
+}
+
+export interface EnhancedSearchResponse {
+    results: EnhancedSearchResult[];
+    query: string;
+    engine: string;
+    contentFetched: boolean; // Whether content was successfully fetched
 }
 
 class SearchService {
@@ -68,7 +84,7 @@ class SearchService {
 
         const allResults: SearchResult[] = [];
         const usedEngines: string[] = [];
-        const minResults = 5; // 最少期望的搜索结果数量
+        // const minResults = 5; // 最少期望的搜索结果数量
         const maxResults = 15; // 最多搜索结果数量
 
         // 依次尝试启用的搜索引擎，收集结果直到达到期望数量
@@ -144,65 +160,65 @@ class SearchService {
         }
 
         // 如果结果仍然不够，尝试未启用的免费搜索引擎作为补充
-        if (allResults.length < minResults) {
-            logger.info(
-                `Only ${allResults.length} results found, trying additional engines for supplementation`,
-            );
+        // if (allResults.length < minResults) {
+        //     logger.info(
+        //         `Only ${allResults.length} results found, trying additional engines for supplementation`,
+        //     );
 
-            const additionalEngines = [
-                SEARCH_ENGINES.DUCKDUCKGO,
-                SEARCH_ENGINES.SEARXNG,
-                SEARCH_ENGINES.GOOGLE,
-                SEARCH_ENGINES.BAIDU,
-                SEARCH_ENGINES.BIYING,
-            ].filter((engine) => !settings.enabledSearchEngines.includes(engine));
+        //     const additionalEngines = [
+        //         SEARCH_ENGINES.DUCKDUCKGO,
+        //         SEARCH_ENGINES.SEARXNG,
+        //         SEARCH_ENGINES.GOOGLE,
+        //         SEARCH_ENGINES.BAIDU,
+        //         SEARCH_ENGINES.BIYING,
+        //     ].filter((engine) => !settings.enabledSearchEngines.includes(engine));
 
-            for (const engine of additionalEngines.slice(0, 2)) {
-                // 最多尝试2个额外引擎
-                try {
-                    logger.info(`Trying additional engine: ${engine}`);
+        //     for (const engine of additionalEngines.slice(0, 2)) {
+        //         // 最多尝试2个额外引擎
+        //         try {
+        //             logger.info(`Trying additional engine: ${engine}`);
 
-                    let results: SearchResult[] = [];
-                    switch (engine) {
-                        case SEARCH_ENGINES.GOOGLE:
-                            results = await this.searchWithGoogle(query);
-                            break;
-                        case SEARCH_ENGINES.BAIDU:
-                            results = await this.searchWithBaidu(query);
-                            break;
-                        case SEARCH_ENGINES.BIYING:
-                            results = await this.searchWithBing(query);
-                            break;
-                        case SEARCH_ENGINES.DUCKDUCKGO:
-                            results = await this.searchWithDuckDuckGo(query);
-                            break;
-                        case SEARCH_ENGINES.SEARXNG:
-                            results = await this.searchWithSearXNG(query);
-                            break;
-                    }
+        //             let results: SearchResult[] = [];
+        //             switch (engine) {
+        //                 case SEARCH_ENGINES.GOOGLE:
+        //                     results = await this.searchWithGoogle(query);
+        //                     break;
+        //                 case SEARCH_ENGINES.BAIDU:
+        //                     results = await this.searchWithBaidu(query);
+        //                     break;
+        //                 case SEARCH_ENGINES.BIYING:
+        //                     results = await this.searchWithBing(query);
+        //                     break;
+        //                 case SEARCH_ENGINES.DUCKDUCKGO:
+        //                     results = await this.searchWithDuckDuckGo(query);
+        //                     break;
+        //                 case SEARCH_ENGINES.SEARXNG:
+        //                     results = await this.searchWithSearXNG(query);
+        //                     break;
+        //             }
 
-                    if (results.length > 0) {
-                        const existingUrls = new Set(allResults.map((r) => r.url));
-                        const newResults = results.filter(
-                            (result) => result.url && !existingUrls.has(result.url),
-                        );
+        //             if (results.length > 0) {
+        //                 const existingUrls = new Set(allResults.map((r) => r.url));
+        //                 const newResults = results.filter(
+        //                     (result) => result.url && !existingUrls.has(result.url),
+        //                 );
 
-                        allResults.push(...newResults);
-                        usedEngines.push(engine);
+        //                 allResults.push(...newResults);
+        //                 usedEngines.push(engine);
 
-                        logger.info(
-                            `Additional engine ${engine} added ${newResults.length} results, total: ${allResults.length}`,
-                        );
+        //                 logger.info(
+        //                     `Additional engine ${engine} added ${newResults.length} results, total: ${allResults.length}`,
+        //                 );
 
-                        if (allResults.length >= minResults) {
-                            break;
-                        }
-                    }
-                } catch (error) {
-                    logger.error(`Additional search failed with engine ${engine}:`, error);
-                }
-            }
-        }
+        //                 if (allResults.length >= minResults) {
+        //                     break;
+        //                 }
+        //             }
+        //         } catch (error) {
+        //             logger.error(`Additional search failed with engine ${engine}:`, error);
+        //         }
+        //     }
+        // }
 
         // 检查是否有任何结果
         if (allResults.length === 0) {
@@ -226,6 +242,37 @@ class SearchService {
             query,
             engine: usedEngines.join(', '),
         };
+    }
+
+    /**
+     * 执行搜索并增强结果内容
+     */
+    public async performSearchWithContent(
+        query: string,
+        maxUrlsToFetch: number = 5,
+    ): Promise<EnhancedSearchResponse> {
+        logger.info(`Performing search with content enhancement: ${query}`);
+
+        try {
+            // 首先执行常规搜索
+            const searchResponse = await this.performSearch(query);
+
+            // 然后增强搜索结果，获取URL内容
+            const enhancedResponse = await this.enhanceSearchResultsWithContent(
+                searchResponse,
+                maxUrlsToFetch,
+            );
+
+            logger.info(
+                `Search with content completed: ${enhancedResponse.results.length} results, ` +
+                    `content fetched: ${enhancedResponse.contentFetched}`,
+            );
+
+            return enhancedResponse;
+        } catch (error) {
+            logger.error('Search with content failed:', error);
+            throw error;
+        }
     }
 
     /**
@@ -432,7 +479,80 @@ class SearchService {
     private async searchWithBaidu(query: string): Promise<SearchResult[]> {
         try {
             // 使用百度搜索建议API
-            return await this.scrapeBaiduSearch(query);
+            const suggestionUrl = `https://www.baidu.com/s?wd=${encodeURIComponent(
+                query,
+            )}&ie=utf-8&rn=20`;
+
+            try {
+                const response = await fetch(suggestionUrl, {
+                    method: 'GET',
+                    headers: {
+                        'User-Agent':
+                            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                        'Accept':
+                            'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                        'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+                    },
+                });
+
+                if (response.ok) {
+                    const html = await response.text();
+                    const $ = load(html);
+                    const results: SearchResult[] = [];
+
+                    // 百度搜索结果通常在带有特定class的div中
+                    $('.result, .c-container').each((i, element) => {
+                        if (i >= 5) return false; // 只获取前5个结果
+
+                        const titleElement = $(element).find('.t, .c-title');
+                        const title = titleElement.text().trim();
+
+                        // 获取链接（百度使用重定向链接）
+                        let link = titleElement.find('a').attr('href') || '';
+
+                        // 获取摘要
+                        const snippet = $(element)
+                            .find('.c-abstract, .content-abstract')
+                            .text()
+                            .trim();
+
+                        // Only add result when title and link exist
+                        if (title && link) {
+                            results.push({
+                                title,
+                                url: link,
+                                snippet,
+                                domain: this.extractDomain(link || ''),
+                                source: 'Baidu',
+                            });
+                        }
+
+                        // Return true to continue iteration
+                        return true;
+                    });
+
+                    if (results.length === 0) {
+                        logger.warn('未能从百度搜索结果中提取数据，可能选择器需要更新');
+                    }
+
+                    return results;
+                }
+            } catch (suggestionError) {
+                logger.warn('Baidu suggestion API failed:', suggestionError);
+            }
+
+            // 备选方案：生成静态百度搜索结果
+            const staticResults = [
+                {
+                    title: `百度搜索: ${query}`,
+                    url: `https://www.baidu.com/s?wd=${encodeURIComponent(query)}`,
+                    snippet: `在百度上搜索"${query}"的结果`,
+                    domain: 'baidu.com',
+                },
+            ];
+
+            logger.info('Baidu search using static result');
+            return staticResults;
         } catch (error) {
             logger.error('Baidu search failed:', error);
             return [];
@@ -620,70 +740,6 @@ class SearchService {
             return [];
         } catch (error) {
             logger.error('Google web scraping failed:', error);
-            return [];
-        }
-    }
-
-    /**
-     * 网页抓取百度搜索结果
-     */
-    private async scrapeBaiduSearch(query: string): Promise<SearchResult[]> {
-        try {
-            // 使用百度搜索建议API
-            const suggestionUrl = `https://suggestion.baidu.com/su?wd=${encodeURIComponent(
-                query,
-            )}&cb=callback`;
-
-            try {
-                const response = await fetch(suggestionUrl, {
-                    method: 'GET',
-                    headers: {
-                        Accept: '*/*',
-                    },
-                });
-
-                if (response.ok) {
-                    const text = await response.text();
-                    // 解析JSONP响应
-                    const match = text.match(/callback\((.*)\)/);
-                    if (match) {
-                        const data = JSON.parse(match[1]);
-                        const suggestions = data.s || [];
-
-                        // 将建议转换为搜索结果
-                        const results = suggestions
-                            .slice(0, 5)
-                            .map((suggestion: string, index: number) => ({
-                                title: `百度搜索建议: ${suggestion}`,
-                                url: `https://www.baidu.com/s?wd=${encodeURIComponent(suggestion)}`,
-                                snippet: `相关搜索建议: ${suggestion}`,
-                                domain: 'baidu.com',
-                            }));
-
-                        if (results.length > 0) {
-                            logger.info('Baidu search successful with suggestion API');
-                            return results;
-                        }
-                    }
-                }
-            } catch (suggestionError) {
-                logger.warn('Baidu suggestion API failed:', suggestionError);
-            }
-
-            // 备选方案：生成静态百度搜索结果
-            const staticResults = [
-                {
-                    title: `百度搜索: ${query}`,
-                    url: `https://www.baidu.com/s?wd=${encodeURIComponent(query)}`,
-                    snippet: `在百度上搜索"${query}"的结果`,
-                    domain: 'baidu.com',
-                },
-            ];
-
-            logger.info('Baidu search using static result');
-            return staticResults;
-        } catch (error) {
-            logger.error('Baidu search failed:', error);
             return [];
         }
     }
@@ -951,6 +1007,254 @@ class SearchService {
             formatted += `[${index + 1}] **${result.title}**\n`;
             formatted += `   ${result.snippet}\n`;
             formatted += `   来源: ${result.url}\n\n`;
+        });
+
+        return formatted;
+    }
+
+    /**
+     * 从URL获取网页内容
+     */
+    private async fetchUrlContent(url: string): Promise<string> {
+        try {
+            logger.info(`Fetching content from URL: ${url}`);
+
+            // 使用代理服务获取网页内容，避免CORS问题
+            const proxyUrls = [
+                `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+                `https://cors-anywhere.herokuapp.com/${url}`,
+                `https://thingproxy.freeboard.io/fetch/${url}`,
+            ];
+
+            let content = '';
+
+            for (const proxyUrl of proxyUrls) {
+                try {
+                    // 创建AbortController用于超时控制
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15秒超时
+
+                    const response = await fetch(proxyUrl, {
+                        method: 'GET',
+                        headers: {
+                            'Accept':
+                                'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                            'User-Agent':
+                                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                        },
+                        signal: controller.signal,
+                    });
+
+                    clearTimeout(timeoutId);
+
+                    if (response.ok) {
+                        let responseText = '';
+
+                        if (proxyUrl.includes('allorigins.win')) {
+                            const data = await response.json();
+                            responseText = data.contents || '';
+                        } else {
+                            responseText = await response.text();
+                        }
+
+                        if (responseText) {
+                            content = this.extractTextFromHtml(responseText);
+                            if (content.length > 100) {
+                                // 确保获取到了有效内容
+                                logger.info(
+                                    `Successfully fetched content from ${url} using ${proxyUrl}`,
+                                );
+                                break;
+                            }
+                        }
+                    }
+                } catch (proxyError) {
+                    logger.warn(`Proxy ${proxyUrl} failed for ${url}:`, proxyError);
+                    continue;
+                }
+            }
+
+            // 如果代理失败，尝试直接请求
+            if (!content) {
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        headers: {
+                            'Accept':
+                                'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                            'User-Agent':
+                                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                        },
+                        signal: controller.signal,
+                    });
+
+                    clearTimeout(timeoutId);
+
+                    if (response.ok) {
+                        const html = await response.text();
+                        content = this.extractTextFromHtml(html);
+                        logger.info(`Successfully fetched content directly from ${url}`);
+                    }
+                } catch (directError) {
+                    logger.warn(`Direct fetch failed for ${url}:`, directError);
+                }
+            }
+
+            return content || '';
+        } catch (error) {
+            logger.error(`Failed to fetch content from ${url}:`, error);
+            return '';
+        }
+    }
+
+    /**
+     * 从HTML中提取纯文本内容
+     */
+    private extractTextFromHtml(html: string): string {
+        try {
+            // 移除脚本和样式标签
+            let cleanHtml = html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+            cleanHtml = cleanHtml.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+            cleanHtml = cleanHtml.replace(/<noscript[^>]*>[\s\S]*?<\/noscript>/gi, '');
+
+            // 移除HTML标签
+            cleanHtml = cleanHtml.replace(/<[^>]+>/g, ' ');
+
+            // 解码HTML实体
+            cleanHtml = cleanHtml.replace(/&nbsp;/g, ' ');
+            cleanHtml = cleanHtml.replace(/&amp;/g, '&');
+            cleanHtml = cleanHtml.replace(/&lt;/g, '<');
+            cleanHtml = cleanHtml.replace(/&gt;/g, '>');
+            cleanHtml = cleanHtml.replace(/&quot;/g, '"');
+            cleanHtml = cleanHtml.replace(/&#39;/g, "'");
+
+            // 清理多余的空白字符
+            cleanHtml = cleanHtml.replace(/\s+/g, ' ');
+            cleanHtml = cleanHtml.trim();
+
+            // 限制内容长度
+            const maxLength = 8000; // 8KB的文本内容
+            if (cleanHtml.length > maxLength) {
+                cleanHtml = cleanHtml.substring(0, maxLength) + '...';
+            }
+
+            return cleanHtml;
+        } catch (error) {
+            logger.error('Failed to extract text from HTML:', error);
+            return '';
+        }
+    }
+
+    /**
+     * 增强搜索结果，获取URL内容
+     */
+    public async enhanceSearchResultsWithContent(
+        searchResponse: SearchResponse,
+        maxUrls: number = 10,
+    ): Promise<EnhancedSearchResponse> {
+        logger.info(
+            `Enhancing search results with content for ${searchResponse.results.length} results`,
+        );
+
+        const enhancedResults: EnhancedSearchResult[] = [];
+        let contentFetched = false;
+
+        // 选择前几个结果获取内容
+        const urlsToFetch = searchResponse.results.slice(0, maxUrls);
+
+        for (const result of urlsToFetch) {
+            const enhancedResult: EnhancedSearchResult = {
+                ...result,
+                fetchedAt: new Date().toISOString(),
+            };
+
+            try {
+                const content = await this.fetchUrlContent(result.url);
+                if (content) {
+                    enhancedResult.content = content;
+                    enhancedResult.contentSummary = this.generateContentSummary(content);
+                    contentFetched = true;
+                    logger.info(`Enhanced result with content: ${result.title}`);
+                } else {
+                    logger.warn(`No content fetched for: ${result.title}`);
+                }
+            } catch (error) {
+                logger.error(`Failed to enhance result ${result.title}:`, error);
+            }
+
+            enhancedResults.push(enhancedResult);
+        }
+
+        // 添加剩余的结果（不获取内容）
+        const remainingResults = searchResponse.results.slice(maxUrls);
+        enhancedResults.push(...remainingResults.map((result) => ({ ...result })));
+
+        return {
+            results: enhancedResults,
+            query: searchResponse.query,
+            engine: searchResponse.engine,
+            contentFetched,
+        };
+    }
+
+    /**
+     * 生成内容摘要
+     */
+    private generateContentSummary(content: string): string {
+        // 简单的摘要生成：取前500个字符
+        const maxSummaryLength = 500;
+        if (content.length <= maxSummaryLength) {
+            return content;
+        }
+
+        // 尝试在句号处截断
+        const truncated = content.substring(0, maxSummaryLength);
+        const lastSentenceEnd = Math.max(
+            truncated.lastIndexOf('.'),
+            truncated.lastIndexOf('。'),
+            truncated.lastIndexOf('!'),
+            truncated.lastIndexOf('？'),
+        );
+
+        if (lastSentenceEnd > 200) {
+            return truncated.substring(0, lastSentenceEnd + 1);
+        }
+
+        return truncated + '...';
+    }
+
+    /**
+     * 格式化增强搜索结果为引用文本
+     */
+    public formatEnhancedSearchResults(searchResponse: EnhancedSearchResponse): string {
+        const { results, query, contentFetched } = searchResponse;
+
+        if (!results || results.length === 0) {
+            return '';
+        }
+
+        let formatted = `## 搜索结果 (查询: "${query}")\n\n`;
+
+        if (contentFetched) {
+            formatted += `*已获取部分网页内容进行详细分析*\n\n`;
+        }
+
+        results.forEach((result, index) => {
+            formatted += `[${index + 1}] **${result.title}**\n`;
+            formatted += `   ${result.snippet}\n`;
+            formatted += `   来源: ${result.url}\n`;
+
+            if (result.content) {
+                formatted += `   \n**网页内容摘要:**\n`;
+                formatted += `   ${
+                    result.contentSummary || result.content.substring(0, 300) + '...'
+                }\n`;
+            }
+
+            formatted += `\n`;
         });
 
         return formatted;

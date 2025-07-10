@@ -1,20 +1,215 @@
 import { BaseLanguageModel } from '@langchain/core/language_models/base';
+import { Tool } from '@langchain/core/tools';
 import { CompletionsParams, Model, Provider } from '@/types';
 import { addAbortController, removeAbortController } from '@/utils/abortController';
 import { Logger } from '@/utils';
 import { Message } from '@/types/message';
 import { getMainTextContent } from '@/utils/message/find';
 import { AIMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
+import WebSearchTool from '../tools/WebSearchTool';
+import WebPageContextTool from '../tools/WebPageContextTool';
+import type { RootStore } from '@/store';
 
 const logger = new Logger('BaseLangChainProvider');
 
 export default abstract class BaseLangChainProvider {
     protected provider: Provider;
     protected model: BaseLanguageModel | null = null;
+    protected tools: Tool[] = [];
+    protected rootStore?: RootStore;
 
-    constructor(provider: Provider) {
+    constructor(provider: Provider, rootStore?: RootStore) {
         this.provider = provider;
+        this.rootStore = rootStore;
+        this.setupTools();
     }
+
+    /**
+     * Setup available tools based on user settings
+     */
+    protected setupTools() {
+        if (!this.rootStore) return;
+
+        const settings = this.rootStore.settingStore;
+        this.tools = []; // Reset tools
+
+        // Add web search tool if enabled
+        if (settings.webSearchEnabled && settings.enabledSearchEngines.length > 0) {
+            const webSearchTool = new WebSearchTool({
+                rootStore: this.rootStore,
+                maxResults: 5,
+                enableContentFetching: true,
+            });
+            this.tools.push(webSearchTool);
+            logger.info('Web search tool added');
+        }
+
+        // Add webpage context tool if enabled
+        if (settings.useWebpageContext) {
+            const webPageContextTool = new WebPageContextTool();
+            this.tools.push(webPageContextTool);
+            logger.info('Webpage context tool added');
+        }
+
+        logger.info(`Total tools available: ${this.tools.length}`);
+    }
+
+    /**
+     * Refresh tools based on current settings
+     * This method should be called when settings change
+     */
+    public refreshTools() {
+        const oldToolsCount = this.tools.length;
+        const oldToolNames = this.tools.map((tool) => tool.name);
+
+        this.setupTools();
+
+        const newToolsCount = this.tools.length;
+        const newToolNames = this.tools.map((tool) => tool.name);
+
+        logger.info(`Tools refreshed: ${oldToolsCount} -> ${newToolsCount}`);
+        logger.info(`Old tools: [${oldToolNames.join(', ')}]`);
+        logger.info(`New tools: [${newToolNames.join(', ')}]`);
+
+        // Log specific changes
+        const addedTools = newToolNames.filter((name) => !oldToolNames.includes(name));
+        const removedTools = oldToolNames.filter((name) => !newToolNames.includes(name));
+
+        if (addedTools.length > 0) {
+            logger.info(`Added tools: [${addedTools.join(', ')}]`);
+        }
+        if (removedTools.length > 0) {
+            logger.info(`Removed tools: [${removedTools.join(', ')}]`);
+        }
+    }
+
+    /**
+     * Remove a specific tool by name
+     */
+    public removeTool(toolName: string) {
+        const initialLength = this.tools.length;
+        this.tools = this.tools.filter((tool) => tool.name !== toolName);
+        const removed = initialLength - this.tools.length;
+
+        if (removed > 0) {
+            logger.info(`Removed ${removed} tool(s) with name: ${toolName}`);
+        }
+    }
+
+    /**
+     * Remove all tools
+     */
+    public removeAllTools() {
+        const removedCount = this.tools.length;
+        this.tools = [];
+        logger.info(`Removed all ${removedCount} tools`);
+    }
+
+    /**
+     * Get available tools
+     */
+    public getTools(): Tool[] {
+        return this.tools;
+    }
+
+    /**
+     * Check if tools are available
+     */
+    public hasTools(): boolean {
+        return this.tools.length > 0;
+    }
+
+    /**
+     * Enhanced completion method that handles tool usage
+     */
+    protected async handleToolBasedCompletion(
+        messages: Message[],
+        robot: any,
+        userInput: string,
+        signal: AbortSignal,
+    ): Promise<string> {
+        if (!this.hasTools()) {
+            return this.performDirectCompletion(messages, robot, signal);
+        }
+
+        // Execute tools and gather results
+        const toolResults: string[] = [];
+
+        for (const tool of this.tools) {
+            try {
+                logger.info(`Executing tool: ${tool.name}`);
+                const result = await tool.call(userInput);
+                toolResults.push(`## ${tool.name} Results:\n${result}\n`);
+            } catch (error) {
+                logger.error(`Tool ${tool.name} failed:`, error);
+                toolResults.push(
+                    `## ${tool.name} Error:\nTool execution failed: ${
+                        error instanceof Error ? error.message : 'Unknown error'
+                    }\n`,
+                );
+            }
+        }
+
+        // Combine tool results with user query
+        if (toolResults.length > 0) {
+            const enhancedPrompt = this.buildEnhancedPrompt(userInput, toolResults);
+            return this.performDirectCompletion(messages, robot, signal, enhancedPrompt);
+        }
+
+        return this.performDirectCompletion(messages, robot, signal);
+    }
+
+    /**
+     * Build enhanced prompt with tool results
+     */
+    private buildEnhancedPrompt(userInput: string, toolResults: string[]): string {
+        const toolContext = toolResults.join('\n');
+
+        return `You have access to additional context from various tools. Use this information to provide a comprehensive and accurate response.
+
+${toolContext}
+
+User Question: ${userInput}
+
+Please provide a helpful response based on the available information. If you use information from the tools, please cite the sources appropriately.`;
+    }
+
+    /**
+     * Perform direct completion without tools
+     */
+    protected async performDirectCompletion(
+        messages: Message[],
+        robot: any,
+        signal: AbortSignal,
+        overrideLastMessage?: string,
+    ): Promise<string> {
+        const langchainMessages = await this.convertToLangChainMessages(messages);
+
+        // Override the last message if provided (for tool integration)
+        if (overrideLastMessage && langchainMessages.length > 0) {
+            const lastMsg = langchainMessages[langchainMessages.length - 1];
+            if (lastMsg instanceof HumanMessage) {
+                langchainMessages[langchainMessages.length - 1] = new HumanMessage(
+                    overrideLastMessage,
+                );
+            }
+        }
+
+        if (robot.prompt) {
+            langchainMessages.unshift(new SystemMessage(robot.prompt));
+        }
+
+        // This should be implemented by subclasses
+        return this.executeDirectCompletion(langchainMessages, signal);
+    }
+
+    /**
+     * Abstract method for direct completion - to be implemented by subclasses
+     */
+    protected abstract executeDirectCompletion(
+        langchainMessages: any[],
+        signal: AbortSignal,
+    ): Promise<string>;
 
     async convertToLangChainMessages(messages: Message[]) {
         const langchainMessages = [];

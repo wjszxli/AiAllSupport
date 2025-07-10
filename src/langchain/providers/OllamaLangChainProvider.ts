@@ -1,8 +1,10 @@
 import { ChatOllama } from '@langchain/ollama';
-import { HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { HumanMessage } from '@langchain/core/messages';
 import BaseLangChainProvider from './BaseLangChainProvider';
 import { CompletionsParams, Provider } from '@/types';
+import type { RootStore } from '@/store';
 import { filterContextMessages, filterEmptyMessages } from '@/utils/message/filters';
+import { getMainTextContent } from '@/utils/message/find';
 import { takeRight } from 'lodash';
 import { Message } from '@/types/message';
 import { ChunkType } from '@/types/chunk';
@@ -13,14 +15,14 @@ const logger = new Logger('OllamaLangChainProvider');
 export default class OllamaLangChainProvider extends BaseLangChainProvider {
     private chatModel!: ChatOllama;
 
-    constructor(provider: Provider) {
-        super(provider);
+    constructor(provider: Provider, rootStore?: RootStore) {
+        super(provider, rootStore);
         this.chatModel = this.initialize();
     }
 
     initialize(stream = true): ChatOllama {
         return new ChatOllama({
-            model: this.provider.selectedModel?.id,
+            model: this.provider.selectedModel?.id || 'llama2',
             temperature: 0.7,
             streaming: stream,
             baseUrl: this.provider.apiHost,
@@ -40,23 +42,23 @@ export default class OllamaLangChainProvider extends BaseLangChainProvider {
 
         onFilterMessages?.(filteredMessages);
 
-        const langchainMessages = await this.convertToLangChainMessages(filteredMessages);
-
-        if (robot.prompt) {
-            langchainMessages.unshift(new SystemMessage(robot.prompt));
-        }
-
-        onChunk({
-            type: ChunkType.LLM_RESPONSE_CREATED,
-        });
-
-        // 获取最后一条用户消息，用于中止控制
+        // Get the last user message
         const lastUserMessage = filteredMessages
             .slice()
             .reverse()
             .find((m: Message) => m.role === 'user');
 
-        // 创建中止控制器
+        if (!lastUserMessage) {
+            throw new Error('No user message found');
+        }
+
+        const userInput = getMainTextContent(lastUserMessage);
+
+        onChunk({
+            type: ChunkType.LLM_RESPONSE_CREATED,
+        });
+
+        // Create abort controller
         const { abortController, cleanup, signalPromise } = this.createAbortController(
             lastUserMessage?.id,
             true,
@@ -69,70 +71,34 @@ export default class OllamaLangChainProvider extends BaseLangChainProvider {
                 type: ChunkType.LLM_RESPONSE_IN_PROGRESS,
             });
 
-            // 将 signal 传递给 LangChain
-            const stream = await this.chatModel.stream(langchainMessages, {
-                signal: signal,
+            // Use the centralized tool-based completion from BaseLangChainProvider
+            const finalText = await this.handleToolBasedCompletion(
+                filteredMessages,
+                robot,
+                userInput,
+                signal,
+            );
+
+            // Stream the final text
+            onChunk({
+                text: finalText,
+                type: ChunkType.TEXT_DELTA,
             });
 
-            let thinking = '';
-            let text = '';
-            let hasThinking = false;
-            let time_first_token_millsec = 0;
-
-            for await (const chunk of stream) {
-                const {
-                    content,
-                    additional_kwargs: { reasoning_content },
-                } = chunk;
-
-                if (reasoning_content) {
-                    if (!time_first_token_millsec) {
-                        time_first_token_millsec = new Date().getTime();
-                    }
-
-                    thinking += reasoning_content;
-                    hasThinking = true;
-                    onChunk({
-                        text: reasoning_content as string,
-                        type: ChunkType.THINKING_DELTA,
-                        thinking_millsec: new Date().getTime() - time_first_token_millsec,
-                    });
-                }
-
-                if (content) {
-                    if (hasThinking) {
-                        onChunk({
-                            text: thinking,
-                            type: ChunkType.THINKING_COMPLETE,
-                            thinking_millsec: new Date().getTime() - time_first_token_millsec,
-                        });
-                        hasThinking = false;
-                    }
-
-                    text += content;
-                    onChunk({
-                        text: content as string,
-                        type: ChunkType.TEXT_DELTA,
-                    });
-                }
-            }
-
             onChunk({
-                text: text,
+                text: finalText,
                 type: ChunkType.TEXT_COMPLETE,
             });
 
-            // Signal that the entire response is complete
             onChunk({
                 type: ChunkType.BLOCK_COMPLETE,
                 response: {
-                    text,
-                    thinking,
+                    text: finalText,
                 } as any,
             });
         } catch (error) {
             logger.error('Error in completions:', error);
-            // 检查是否是中止错误
+
             if (signal.aborted) {
                 logger.info('Request aborted by user');
                 onChunk({
@@ -154,15 +120,18 @@ export default class OllamaLangChainProvider extends BaseLangChainProvider {
         });
     }
 
-    /**
-     * 实现特定于 DeepSeek 的模型可用性检查
-     */
+    protected async executeDirectCompletion(
+        langchainMessages: any[],
+        signal: AbortSignal,
+    ): Promise<string> {
+        const response = await this.chatModel.invoke(langchainMessages, { signal });
+        return response.content as string;
+    }
+
     protected async checkModelAvailability(): Promise<{ valid: boolean; error: Error | null }> {
         try {
             const checkModel = this.initialize(false);
-
             await checkModel.invoke([new HumanMessage('test')]);
-
             return { valid: true, error: null };
         } catch (error) {
             return {

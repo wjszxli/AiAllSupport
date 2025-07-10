@@ -1,8 +1,10 @@
 import { ChatOpenAI } from '@langchain/openai';
-import { HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { HumanMessage } from '@langchain/core/messages';
 import BaseLangChainProvider from './BaseLangChainProvider';
 import { CompletionsParams, Provider } from '@/types';
+import type { RootStore } from '@/store';
 import { filterContextMessages, filterEmptyMessages } from '@/utils/message/filters';
+import { getMainTextContent } from '@/utils/message/find';
 import { takeRight } from 'lodash';
 import { Message } from '@/types/message';
 import { ChunkType } from '@/types/chunk';
@@ -13,8 +15,8 @@ const logger = new Logger('OpenAiLangChainProvider');
 export default class OpenAiLangChainProvider extends BaseLangChainProvider {
     private chatModel!: ChatOpenAI;
 
-    constructor(provider: Provider) {
-        super(provider);
+    constructor(provider: Provider, rootStore?: RootStore) {
+        super(provider, rootStore);
         this.chatModel = this.initialize();
     }
 
@@ -47,23 +49,23 @@ export default class OpenAiLangChainProvider extends BaseLangChainProvider {
 
         onFilterMessages?.(filteredMessages);
 
-        const langchainMessages = await this.convertToLangChainMessages(filteredMessages);
-
-        if (robot.prompt) {
-            langchainMessages.unshift(new SystemMessage(robot.prompt));
-        }
-
-        onChunk({
-            type: ChunkType.LLM_RESPONSE_CREATED,
-        });
-
-        // 获取最后一条用户消息，用于中止控制
+        // Get the last user message
         const lastUserMessage = filteredMessages
             .slice()
             .reverse()
             .find((m: Message) => m.role === 'user');
 
-        // 创建中止控制器
+        if (!lastUserMessage) {
+            throw new Error('No user message found');
+        }
+
+        const userInput = getMainTextContent(lastUserMessage);
+
+        onChunk({
+            type: ChunkType.LLM_RESPONSE_CREATED,
+        });
+
+        // Create abort controller
         const { abortController, cleanup, signalPromise } = this.createAbortController(
             lastUserMessage?.id,
             true,
@@ -76,40 +78,34 @@ export default class OpenAiLangChainProvider extends BaseLangChainProvider {
                 type: ChunkType.LLM_RESPONSE_IN_PROGRESS,
             });
 
-            // 将 signal 传递给 LangChain
-            const stream = await this.chatModel.stream(langchainMessages, {
-                signal: signal,
+            // Use the centralized tool-based completion from BaseLangChainProvider
+            const finalText = await this.handleToolBasedCompletion(
+                filteredMessages,
+                robot,
+                userInput,
+                signal,
+            );
+
+            // Stream the final text
+            onChunk({
+                text: finalText,
+                type: ChunkType.TEXT_DELTA,
             });
 
-            let text = '';
-
-            for await (const chunk of stream) {
-                const { content } = chunk;
-
-                // 处理正常内容
-                if (content) {
-                    text += content;
-                    onChunk({
-                        text: content as string,
-                        type: ChunkType.TEXT_DELTA,
-                    });
-                }
-            }
-
             onChunk({
-                text: text,
+                text: finalText,
                 type: ChunkType.TEXT_COMPLETE,
             });
 
             onChunk({
                 type: ChunkType.BLOCK_COMPLETE,
                 response: {
-                    text,
+                    text: finalText,
                 } as any,
             });
         } catch (error) {
             logger.error('Error in completions:', error);
-            // 检查是否是中止错误
+
             if (signal.aborted) {
                 logger.info('Request aborted by user');
                 onChunk({
@@ -131,16 +127,18 @@ export default class OpenAiLangChainProvider extends BaseLangChainProvider {
         });
     }
 
-    /**
-     * 实现特定于 OpenAI 的模型可用性检查
-     */
+    protected async executeDirectCompletion(
+        langchainMessages: any[],
+        signal: AbortSignal,
+    ): Promise<string> {
+        const response = await this.chatModel.invoke(langchainMessages, { signal });
+        return response.content as string;
+    }
+
     protected async checkModelAvailability(): Promise<{ valid: boolean; error: Error | null }> {
         try {
             const checkModel = this.initialize(false);
-
-            // 使用现有的 chatModel 实例进行测试
             await checkModel.invoke([new HumanMessage('test')]);
-
             return { valid: true, error: null };
         } catch (error) {
             return {

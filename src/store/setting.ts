@@ -56,9 +56,45 @@ class SettingStore {
     bochaApiKey = '';
     filteredDomains: string[] = [];
 
+    // Callback system for tool refresh
+    private toolRefreshCallbacks: (() => void)[] = [];
+
     constructor() {
         makeAutoObservable(this);
         this.loadSettings();
+    }
+
+    /**
+     * Register a callback to be called when search/tool settings change
+     */
+    public registerToolRefreshCallback(callback: () => void) {
+        this.toolRefreshCallbacks.push(callback);
+        logger.info('Tool refresh callback registered');
+    }
+
+    /**
+     * Unregister a tool refresh callback
+     */
+    public unregisterToolRefreshCallback(callback: () => void) {
+        const index = this.toolRefreshCallbacks.indexOf(callback);
+        if (index > -1) {
+            this.toolRefreshCallbacks.splice(index, 1);
+            logger.info('Tool refresh callback unregistered');
+        }
+    }
+
+    /**
+     * Notify all registered callbacks that tool settings have changed
+     */
+    private notifyToolRefreshCallbacks() {
+        logger.info(`Notifying ${this.toolRefreshCallbacks.length} tool refresh callbacks`);
+        this.toolRefreshCallbacks.forEach((callback) => {
+            try {
+                callback();
+            } catch (error) {
+                logger.error('Error in tool refresh callback:', error);
+            }
+        });
     }
 
     private async getChromeStorageValue<T>(key: string, defaultValue: T): Promise<T> {
@@ -194,32 +230,38 @@ class SettingStore {
     setUseWebpageContext(value: boolean) {
         this.useWebpageContext = value;
         this.saveSettings();
+        this.notifyToolRefreshCallbacks();
     }
 
     // Search settings methods
     setWebSearchEnabled(value: boolean) {
         this.webSearchEnabled = value;
         this.saveSettings();
+        this.notifyToolRefreshCallbacks();
     }
 
     setEnabledSearchEngines(engines: string[]) {
         this.enabledSearchEngines = engines;
         this.saveSettings();
+        this.notifyToolRefreshCallbacks();
     }
 
     setTavilyApiKey(key: string) {
         this.tavilyApiKey = key;
         this.saveSettings();
+        this.notifyToolRefreshCallbacks();
     }
 
     setExaApiKey(key: string) {
         this.exaApiKey = key;
         this.saveSettings();
+        this.notifyToolRefreshCallbacks();
     }
 
     setBochaApiKey(key: string) {
         this.bochaApiKey = key;
         this.saveSettings();
+        this.notifyToolRefreshCallbacks();
     }
 
     setFilteredDomains(domains: string[]) {
