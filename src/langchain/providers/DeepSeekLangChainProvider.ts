@@ -103,15 +103,15 @@ export default class DeepSeekLangChainProvider extends BaseLangChainProvider {
                 this.provider.selectedModel?.id?.includes('R1') ||
                 this.provider.selectedModel?.id?.includes('r1');
 
-            let thinkingStartTime = Date.now();
+            let time_first_token_millsec = 0;
             let accumulatedThinking = '';
+            let accumulatedText = '';
             let hasEmittedThinkingComplete = false;
 
             // Stream the response
             const stream = await this.chatModel.stream(langchainMessages, { signal });
 
             for await (const chunk of stream) {
-                logger.info('chunk', chunk);
                 if (signal.aborted) {
                     break;
                 }
@@ -120,16 +120,19 @@ export default class DeepSeekLangChainProvider extends BaseLangChainProvider {
                 const additionalKwargs = chunk.additional_kwargs || {};
 
                 if (isR1Model && additionalKwargs.reasoning_content) {
+                    if (!time_first_token_millsec) {
+                        time_first_token_millsec = new Date().getTime();
+                    }
                     const reasoningContent = additionalKwargs.reasoning_content as string;
                     logger.info('reasoningContent', reasoningContent);
 
-                    if (!reasoningContent.length) {
+                    if (reasoningContent.length) {
                         accumulatedThinking += reasoningContent;
 
                         onChunk({
                             text: reasoningContent,
                             type: ChunkType.THINKING_DELTA,
-                            thinking_millsec: Date.now() - thinkingStartTime,
+                            thinking_millsec: new Date().getTime() - time_first_token_millsec,
                         });
                     }
                 }
@@ -138,41 +141,33 @@ export default class DeepSeekLangChainProvider extends BaseLangChainProvider {
                     const text = typeof content === 'string' ? content : content.toString();
 
                     if (text) {
+                        if (!hasEmittedThinkingComplete && isR1Model) {
+                            onChunk({
+                                text: accumulatedThinking,
+                                type: ChunkType.THINKING_COMPLETE,
+                                thinking_millsec: new Date().getTime() - time_first_token_millsec,
+                            });
+                            hasEmittedThinkingComplete = true;
+                        }
+
+                        accumulatedText += text;
                         onChunk({
                             text: text,
                             type: ChunkType.TEXT_DELTA,
                         });
                     }
                 }
-
-                // if (isR1Model && accumulatedThinking && !hasEmittedThinkingComplete) {
-                //     // We'll emit thinking complete when we reach the end or when no more reasoning content is coming
-                //     const isLastChunk =
-                //         !content || (typeof content === 'string' && content.trim() === '');
-                //     if (isLastChunk || !additionalKwargs.reasoning_content) {
-                //         hasEmittedThinkingComplete = true;
-                //         onChunk({
-                //             text: accumulatedThinking,
-                //             type: ChunkType.THINKING_COMPLETE,
-                //             thinking_millsec: Date.now() - thinkingStartTime,
-                //         });
-                //     }
-                // }
             }
-
-            // Ensure we emit thinking complete if we haven't already
-            if (isR1Model && accumulatedThinking && !hasEmittedThinkingComplete) {
-                onChunk({
-                    text: accumulatedThinking,
-                    type: ChunkType.THINKING_COMPLETE,
-                    thinking_millsec: Date.now() - thinkingStartTime,
-                });
-            }
+            onChunk({
+                text: accumulatedText,
+                type: ChunkType.TEXT_COMPLETE,
+            });
 
             onChunk({
                 type: ChunkType.BLOCK_COMPLETE,
                 response: {
-                    text: '', // The full text is already sent via TEXT_DELTA chunks
+                    text: accumulatedText,
+                    thinking: accumulatedThinking,
                 } as any,
             });
         } catch (error) {
