@@ -1,5 +1,5 @@
 import { RobotMessageStatus } from '@/types';
-import type { Chunk} from '@/types/chunk';
+import type { Chunk } from '@/types/chunk';
 import { ChunkType } from '@/types/chunk';
 import { Logger } from '@/utils/logger';
 
@@ -16,6 +16,20 @@ export interface StreamProcessorCallbacks {
     // Thinking/reasoning content chunk received (e.g., from Claude)
     onThinkingChunk?: (text: string, thinking_millsec?: number) => void;
     onThinkingComplete?: (text: string, thinking_millsec?: number) => void;
+    // Search status received
+    onSearchInProgress?: (query: string, engine?: string) => void;
+    // Search results received
+    onSearchResultsComplete?: (
+        query: string,
+        results: Array<{
+            title: string;
+            url: string;
+            snippet: string;
+            domain: string;
+        }>,
+        engine: string,
+        contentFetched?: boolean,
+    ) => void;
     // Called when an error occurs during chunk processing
     onError?: (error: any) => void;
     // Called when the entire stream processing is signaled as complete (success or failure)
@@ -49,6 +63,20 @@ export function createStreamProcessor(callbacks: StreamProcessorCallbacks = {}) 
             }
             if (data.type === ChunkType.THINKING_COMPLETE && callbacks.onThinkingComplete) {
                 callbacks.onThinkingComplete(data.text, data.thinking_millsec);
+            }
+            if (data.type === ChunkType.SEARCH_IN_PROGRESS && callbacks.onSearchInProgress) {
+                callbacks.onSearchInProgress(data.query, data.engine);
+            }
+            if (
+                data.type === ChunkType.SEARCH_RESULTS_COMPLETE &&
+                callbacks.onSearchResultsComplete
+            ) {
+                callbacks.onSearchResultsComplete(
+                    data.query,
+                    data.results,
+                    data.engine,
+                    data.contentFetched,
+                );
             }
         } catch (error) {
             logger.error('Error processing stream chunk:', error);

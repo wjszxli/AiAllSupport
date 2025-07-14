@@ -22,7 +22,7 @@ initLogger()
     .then((config) => {
         // 在initLogger完成后创建Logger实例
         logger = new Logger('content-script');
-        logger.info('Content script logger initialized', config);
+        logger.debug('Content script logger initialized', config);
     })
     .catch((error) => {
         console.error('Failed to initialize logger in content script:', error);
@@ -78,7 +78,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         // 更新语言设置
         setLocale(message.locale)
             .then(() => {
-                logger.info('Content script locale updated:', message.locale);
+                logger.debug('Content script locale updated:', message.locale);
                 sendResponse({ success: true });
             })
             .catch((error) => {
@@ -90,7 +90,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
     // 处理提供商设置更新
     if (message.action === 'providerSettingsUpdated') {
-        logger.info('Provider settings updated in content script');
+        logger.debug('Provider settings updated in content script');
         // 通知UI组件刷新
         window.dispatchEvent(
             new CustomEvent('providerSettingsUpdated', {
@@ -103,7 +103,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
     if (message.action === 'openChatWindow') {
         const selectedText = message.selectedText || '';
-        logger.info('Opening chat window with selected text:', selectedText);
+        logger.debug('Opening chat window with selected text:', selectedText);
 
         // 计算真正的居中位置
         const { x: centerX, y: centerY } = calculateCenterPosition();
@@ -120,7 +120,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
     // 处理 iframe 侧边栏创建请求
     if (message.action === 'createIframeSidePanel') {
-        logger.info('Creating iframe side panel');
+        logger.debug('Creating iframe side panel');
 
         try {
             // 显示 iframe 侧边栏

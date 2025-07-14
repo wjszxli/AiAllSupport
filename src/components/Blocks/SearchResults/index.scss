@@ -1,0 +1,190 @@
+.search-results-view {
+    margin: 16px 0;
+    border: 1px solid #e8e8e8;
+    border-radius: 8px;
+    background: #fafafa;
+    overflow: hidden;
+    transition: all 0.3s ease;
+
+    &:hover {
+        border-color: #d9d9d9;
+    }
+
+    .search-results-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+        border-bottom: 1px solid #e8e8e8;
+        background: #f5f5f5;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+
+        &:hover {
+            background: #f0f0f0;
+        }
+
+        .search-results-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #262626;
+            font-size: 14px;
+            font-weight: 500;
+
+            .search-results-icon {
+                color: #1890ff;
+                font-size: 16px;
+            }
+
+            .search-results-label {
+                font-weight: 600;
+            }
+
+            .search-results-info {
+                color: #8c8c8c;
+                font-weight: 400;
+            }
+
+            .search-results-enhanced {
+                color: #52c41a;
+                font-weight: 500;
+            }
+        }
+
+        .search-results-toggle {
+            padding: 4px;
+            border: none;
+            border-radius: 4px;
+            background: none;
+            color: #595959;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+
+            &:hover {
+                background: #e6f7ff;
+                color: #1890ff;
+            }
+        }
+    }
+
+    .search-results-content {
+        padding: 16px;
+        background: #ffffff;
+
+        .search-query {
+            margin-bottom: 16px;
+            padding: 8px 12px;
+            border-left: 3px solid #1890ff;
+            border-radius: 6px;
+            background: #f9f9f9;
+
+            .search-query-label {
+                margin-right: 8px;
+                color: #595959;
+                font-weight: 500;
+            }
+
+            .search-query-text {
+                color: #262626;
+                font-weight: 500;
+            }
+        }
+
+        .search-results-list {
+            margin-bottom: 12px;
+
+            .search-result-item {
+                display: flex;
+                align-items: center;
+                padding: 10px 12px;
+                margin-bottom: 4px;
+                border: 1px solid #f0f0f0;
+                border-radius: 6px;
+                background: #fafafa;
+                cursor: pointer;
+                transition: all 0.2s ease;
+
+                &:hover {
+                    background: #e6f7ff;
+                    border-color: #1890ff;
+                    transform: translateX(2px);
+                }
+
+                &:last-child {
+                    margin-bottom: 0;
+                }
+
+                .search-result-title {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    width: 100%;
+
+                    .search-result-link-icon {
+                        color: #1890ff;
+                        font-size: 14px;
+                        flex-shrink: 0;
+                    }
+
+                    .search-result-title-text {
+                        color: #262626;
+                        font-size: 14px;
+                        font-weight: 500;
+                        line-height: 1.4;
+                        flex: 1;
+                    }
+                }
+            }
+        }
+
+        .search-results-footer {
+            padding: 8px 12px;
+            border-top: 1px solid #f0f0f0;
+            background: #f9f9f9;
+            border-radius: 6px;
+            text-align: center;
+
+            .search-results-hint {
+                color: #8c8c8c;
+                font-size: 12px;
+                font-style: italic;
+            }
+        }
+    }
+}
+
+// 响应式设计
+@media (max-width: 768px) {
+    .search-results-view {
+        margin: 12px 0;
+
+        .search-results-header {
+            padding: 10px 12px;
+
+            .search-results-title {
+                gap: 6px;
+                font-size: 13px;
+            }
+        }
+
+        .search-results-content {
+            padding: 12px;
+
+            .search-results-list {
+                .search-result-item {
+                    padding: 8px 10px;
+
+                    .search-result-title {
+                        gap: 6px;
+
+                        .search-result-title-text {
+                            font-size: 13px;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

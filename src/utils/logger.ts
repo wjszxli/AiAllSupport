@@ -202,16 +202,32 @@ function logInternal(level: LogLevel, message: string, data?: any, context?: str
     // Use loglevel for actual logging
     switch (level) {
         case LogLevel.DEBUG:
-            rootLogger.debug(formattedMessage, data);
+            if (data !== undefined) {
+                rootLogger.debug(formattedMessage, data);
+            } else {
+                rootLogger.debug(formattedMessage);
+            }
             break;
         case LogLevel.INFO:
-            rootLogger.info(formattedMessage, data);
+            if (data !== undefined) {
+                rootLogger.info(formattedMessage, data);
+            } else {
+                rootLogger.info(formattedMessage);
+            }
             break;
         case LogLevel.WARN:
-            rootLogger.warn(formattedMessage, data);
+            if (data !== undefined) {
+                rootLogger.warn(formattedMessage, data);
+            } else {
+                rootLogger.warn(formattedMessage);
+            }
             break;
         case LogLevel.ERROR:
-            rootLogger.error(formattedMessage, data);
+            if (data !== undefined) {
+                rootLogger.error(formattedMessage, data);
+            } else {
+                rootLogger.error(formattedMessage);
+            }
             break;
     }
 }

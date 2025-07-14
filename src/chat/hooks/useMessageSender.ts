@@ -26,7 +26,7 @@ export const useMessageSender = () => {
             if (!userInput.trim()) return;
 
             const selectedRobot = robot || robotStore?.selectedRobot;
-            logger.info('robot', selectedRobot);
+            logger.debug('robot', selectedRobot);
             const { selectedTopicId } = selectedRobot;
 
             if (!selectedTopicId) {

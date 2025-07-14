@@ -341,4 +341,13 @@ export const zhCN = {
     confirmClearMessages: '确认清空消息',
     clearMessagesDescription: '您确定要清空所有消息吗？此操作无法撤销。',
     confirm: '确认',
+
+    // 搜索相关
+    searchResults: '搜索结果',
+    results: '条结果',
+    searchQuery: '搜索查询',
+    contentFetched: '已获取内容',
+    searching: '正在搜索',
+    using: '使用',
+    clickToOpenAll: '点击任意结果打开所有链接',
 };

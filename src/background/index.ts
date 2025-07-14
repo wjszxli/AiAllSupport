@@ -9,7 +9,7 @@ let logger: Logger;
 initLogger().then((config) => {
     // 在initLogger完成后创建Logger实例
     logger = new Logger('background');
-    logger.info('Logger initialized with config', config);
+    logger.debug('Logger initialized with config', config);
 });
 
 chrome.declarativeNetRequest.updateDynamicRules(
@@ -55,15 +55,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
     // Handle provider settings updates
     if (request.action === 'providerSettingsUpdated') {
-        logger.info('Provider settings updated, broadcasting to all tabs', request.provider);
+        logger.debug('Provider settings updated, broadcasting to all tabs', request.provider);
 
         // 强制更新存储中的数据
         storage.getConfig().then((config) => {
-            logger.info('Current config:', config);
+            logger.debug('Current config:', config);
 
             // 确保所有存储都已更新
             storage.getSelectedProvider().then((provider) => {
-                logger.info('Selected provider:', provider);
+                logger.debug('Selected provider:', provider);
 
                 // 广播到所有标签页
                 chrome.tabs.query({}, (tabs) => {

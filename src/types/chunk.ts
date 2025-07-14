@@ -14,6 +14,8 @@ export enum ChunkType {
     IMAGE_COMPLETE = 'image.complete',
     THINKING_DELTA = 'thinking.delta',
     THINKING_COMPLETE = 'thinking.complete',
+    SEARCH_IN_PROGRESS = 'search.in_progress',
+    SEARCH_RESULTS_COMPLETE = 'search_results.complete',
     LLM_WEB_SEARCH_IN_PROGRESS = 'llm_websearch_in_progress',
     LLM_WEB_SEARCH_COMPLETE = 'llm_websearch_complete',
     LLM_RESPONSE_COMPLETE = 'llm_response_complete',
@@ -130,6 +132,55 @@ export interface ThinkingCompleteChunk {
     type: ChunkType.THINKING_COMPLETE;
 }
 
+export interface SearchInProgressChunk {
+    /**
+     * The search query
+     */
+    query: string;
+
+    /**
+     * The search engine being used
+     */
+    engine?: string;
+
+    /**
+     * The type of the chunk
+     */
+    type: ChunkType.SEARCH_IN_PROGRESS;
+}
+
+export interface SearchResultsCompleteChunk {
+    /**
+     * The search query
+     */
+    query: string;
+
+    /**
+     * The search results
+     */
+    results: Array<{
+        title: string;
+        url: string;
+        snippet: string;
+        domain: string;
+    }>;
+
+    /**
+     * The search engine used
+     */
+    engine: string;
+
+    /**
+     * Whether content was fetched
+     */
+    contentFetched?: boolean;
+
+    /**
+     * The type of the chunk
+     */
+    type: ChunkType.SEARCH_RESULTS_COMPLETE;
+}
+
 export interface BlockCompleteChunk {
     /**
      * The full response
@@ -162,5 +213,7 @@ export type Chunk =
     | TextCompleteChunk // 文本内容生成完成
     | ThinkingDeltaChunk // 思考内容生成中
     | ThinkingCompleteChunk // 思考内容生成完成
+    | SearchInProgressChunk // 搜索进行中
+    | SearchResultsCompleteChunk // 搜索结果生成完成
     | BlockCompleteChunk // 所有块创建完成，通常用于非流式处理；目前没有做区分
     | ErrorChunk; // 错误

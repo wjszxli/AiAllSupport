@@ -14,7 +14,7 @@ initLogger()
     .then((config) => {
         // 在initLogger完成后创建Logger实例
         logger = new Logger('main-app');
-        logger.info('Main app logger initialized', config);
+        logger.debug('Main app logger initialized', config);
     })
     .catch((error) => {
         console.error('Failed to initialize logger in main app:', error);

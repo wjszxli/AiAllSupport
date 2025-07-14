@@ -77,7 +77,7 @@ export default class DeepSeekLangChainProvider extends BaseLangChainProvider {
             });
 
             // Prepare user input with tools if available
-            const enhancedUserInput = await this.prepareUserInputWithTools(userInput);
+            const enhancedUserInput = await this.prepareUserInputWithTools(userInput, onChunk);
 
             // Convert messages to LangChain format
             const langchainMessages = await this.convertToLangChainMessages(filteredMessages);
@@ -124,7 +124,6 @@ export default class DeepSeekLangChainProvider extends BaseLangChainProvider {
                         time_first_token_millsec = new Date().getTime();
                     }
                     const reasoningContent = additionalKwargs.reasoning_content as string;
-                    logger.info('reasoningContent', reasoningContent);
 
                     if (reasoningContent.length) {
                         accumulatedThinking += reasoningContent;
@@ -158,6 +157,10 @@ export default class DeepSeekLangChainProvider extends BaseLangChainProvider {
                     }
                 }
             }
+
+            logger.debug('accumulatedText', accumulatedText);
+            logger.debug('accumulatedThinking', accumulatedThinking);
+
             onChunk({
                 text: accumulatedText,
                 type: ChunkType.TEXT_COMPLETE,

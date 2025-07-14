@@ -5,6 +5,8 @@ import CodeBlockView from '@/components/Blocks/Code';
 import MermaidView from '@/components/Blocks/Mermaid';
 import ThinkingView from '@/components/Blocks/Think';
 import InterruptedView from '@/components/Blocks/Interrupted';
+import SearchResultsView from '@/components/Blocks/SearchResults';
+import SearchStatusView from '@/components/Blocks/SearchStatus';
 import { useStore } from '@/store';
 import { observer } from 'mobx-react-lite';
 import {
@@ -12,6 +14,8 @@ import {
     type MessageBlock,
     type ThinkingMessageBlock,
     type InterruptedMessageBlock,
+    type SearchResultsMessageBlock,
+    type SearchStatusMessageBlock,
     ErrorMessageBlock,
 } from '@/types/messageBlock';
 import ErrorBlock from '@/components/Blocks/Error';
@@ -34,13 +38,17 @@ interface ContentPart {
         | 'thinking'
         | 'mermaid'
         | 'error'
-        | 'interrupted';
+        | 'interrupted'
+        | 'search-results'
+        | 'search-status';
     content?: string;
     language?: string;
     thinking_millsec?: number;
     isStreaming?: boolean;
     thinkingBlock?: ThinkingMessageBlock;
     interruptedBlock?: InterruptedMessageBlock;
+    searchResultsBlock?: SearchResultsMessageBlock;
+    searchStatusBlock?: SearchStatusMessageBlock;
     error?: Record<string, any>;
     id: string;
     forceCollapsed?: boolean;
@@ -235,6 +243,38 @@ const MessageRenderer: React.FC<MessageRendererProps> = observer(
 
             // 首先检查是否有 messageBlocks
             if (messageId && messageBlocks.length > 0) {
+                // 添加SEARCH_STATUS块
+                const searchStatusBlocks = messageBlocks.filter(
+                    (block: MessageBlock) => block.type === MessageBlockType.SEARCH_STATUS,
+                );
+
+                searchStatusBlocks.forEach((block: MessageBlock) => {
+                    if (block.type === MessageBlockType.SEARCH_STATUS && 'query' in block) {
+                        const searchStatusBlock = block as SearchStatusMessageBlock;
+                        parts.push({
+                            type: 'search-status',
+                            searchStatusBlock: searchStatusBlock,
+                            id: `search-status-${searchStatusBlock.id}`,
+                        });
+                    }
+                });
+
+                // 添加SEARCH_RESULTS块
+                const searchResultsBlocks = messageBlocks.filter(
+                    (block: MessageBlock) => block.type === MessageBlockType.SEARCH_RESULTS,
+                );
+
+                searchResultsBlocks.forEach((block: MessageBlock) => {
+                    if (block.type === MessageBlockType.SEARCH_RESULTS && 'results' in block) {
+                        const searchResultsBlock = block as SearchResultsMessageBlock;
+                        parts.push({
+                            type: 'search-results',
+                            searchResultsBlock: searchResultsBlock,
+                            id: `search-results-${searchResultsBlock.id}`,
+                        });
+                    }
+                });
+
                 // 添加THINKING块
                 const thinkingBlocks = messageBlocks.filter(
                     (block: MessageBlock) => block.type === MessageBlockType.THINKING,
@@ -509,6 +549,23 @@ const MessageRenderer: React.FC<MessageRendererProps> = observer(
 
                         case 'interrupted':
                             return part.interruptedBlock ? <InterruptedView key={part.id} /> : null;
+
+                        case 'search-results':
+                            return part.searchResultsBlock ? (
+                                <SearchResultsView
+                                    key={part.id}
+                                    searchBlock={part.searchResultsBlock}
+                                />
+                            ) : null;
+
+                        case 'search-status':
+                            return part.searchStatusBlock ? (
+                                <SearchStatusView
+                                    key={part.id}
+                                    query={part.searchStatusBlock.query}
+                                    engine={part.searchStatusBlock.engine}
+                                />
+                            ) : null;
 
                         default:
                             return null;

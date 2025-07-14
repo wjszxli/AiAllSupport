@@ -1,0 +1,69 @@
+.search-status-view {
+    padding: 8px 12px;
+    margin: 4px 0;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    font-size: 13px;
+    background-color: #f8f9fa;
+
+    .search-status-content {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+
+        .search-status-icon {
+            flex-shrink: 0;
+            font-size: 14px;
+            color: #1890ff;
+        }
+
+        .search-status-text {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            line-height: 1.4;
+
+            .search-status-title {
+                display: flex;
+                gap: 4px;
+                align-items: center;
+                font-weight: 500;
+                color: #333;
+
+                .anticon {
+                    font-size: 12px;
+                }
+            }
+
+            .search-status-engine {
+                font-size: 12px;
+                color: #666;
+
+                &::before {
+                    content: '·';
+                    margin: 0 4px;
+                    color: #ccc;
+                }
+            }
+        }
+    }
+}
+
+// 暗色主题支持
+.dark .search-status-view {
+    border-color: #434343;
+    background-color: #2f3349;
+
+    .search-status-content {
+        .search-status-text {
+            .search-status-title {
+                color: #fff;
+            }
+
+            .search-status-engine {
+                color: #bbb;
+            }
+        }
+    }
+}

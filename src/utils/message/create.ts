@@ -8,6 +8,8 @@ import {
     MessageBlockStatus,
     MessageBlockType,
     ThinkingMessageBlock,
+    SearchResultsMessageBlock,
+    SearchStatusMessageBlock,
 } from '@/types/messageBlock';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -183,5 +185,56 @@ export function createThinkingBlock(
         ...baseBlock,
         content,
         thinking_millsec: overrides.thinking_millsec,
+    };
+}
+
+export function createSearchStatusBlock(
+    messageId: string,
+    query: string,
+    engine?: string,
+    options: {
+        status?: MessageBlockStatus;
+    } = {},
+): SearchStatusMessageBlock {
+    const { status = MessageBlockStatus.STREAMING } = options;
+
+    return {
+        id: uuidv4(),
+        messageId,
+        type: MessageBlockType.SEARCH_STATUS,
+        query,
+        engine,
+        status,
+        createdAt: new Date().toISOString(),
+    };
+}
+
+export function createSearchResultsBlock(
+    messageId: string,
+    query: string,
+    results: Array<{
+        title: string;
+        url: string;
+        snippet: string;
+        domain: string;
+    }>,
+    engine: string,
+    options: {
+        status?: MessageBlockStatus;
+        contentFetched?: boolean;
+    } = {},
+): SearchResultsMessageBlock {
+    const { status = MessageBlockStatus.SUCCESS, contentFetched = false } = options;
+
+    return {
+        id: uuidv4(),
+        messageId,
+        type: MessageBlockType.SEARCH_RESULTS,
+        query,
+        results,
+        engine,
+        contentFetched,
+        status,
+        createdAt: new Date().toISOString(),
     };
 }

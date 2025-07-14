@@ -10,6 +10,8 @@ export enum MessageBlockType {
     ERROR = 'error', // 错误信息
     INTERRUPTED = 'interrupted', // 中断状态
     CITATION = 'citation', // 引用类型 (Now includes web search, grounding, etc.)
+    SEARCH_STATUS = 'search_status', // 搜索状态块
+    SEARCH_RESULTS = 'search_results', // 搜索结果块
 }
 
 export enum MessageBlockStatus {
@@ -64,10 +66,31 @@ export interface InterruptedMessageBlock extends BaseMessageBlock {
     content?: string; // 可选的中断前的内容
 }
 
+export interface SearchStatusMessageBlock extends BaseMessageBlock {
+    type: MessageBlockType.SEARCH_STATUS;
+    query: string; // 搜索查询
+    engine?: string; // 搜索引擎名称
+}
+
+export interface SearchResultsMessageBlock extends BaseMessageBlock {
+    type: MessageBlockType.SEARCH_RESULTS;
+    query: string; // 搜索查询
+    results: Array<{
+        title: string;
+        url: string;
+        snippet: string;
+        domain: string;
+    }>;
+    engine: string; // 搜索引擎名称
+    contentFetched?: boolean; // 是否获取了内容
+}
+
 export type MessageBlock =
     | PlaceholderMessageBlock
     | MainTextMessageBlock
     | ThinkingMessageBlock
     | CodeMessageBlock
     | ErrorMessageBlock
-    | InterruptedMessageBlock;
+    | InterruptedMessageBlock
+    | SearchStatusMessageBlock
+    | SearchResultsMessageBlock;

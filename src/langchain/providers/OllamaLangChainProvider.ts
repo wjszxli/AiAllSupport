@@ -72,7 +72,7 @@ export default class OllamaLangChainProvider extends BaseLangChainProvider {
             });
 
             // Prepare user input with tools if available
-            const enhancedUserInput = await this.prepareUserInputWithTools(userInput);
+            const enhancedUserInput = await this.prepareUserInputWithTools(userInput, onChunk);
 
             // Convert messages to LangChain format
             const langchainMessages = await this.convertToLangChainMessages(filteredMessages);

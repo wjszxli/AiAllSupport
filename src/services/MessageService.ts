@@ -19,6 +19,8 @@ import {
     resetRobotMessage,
     createMainTextBlock,
     createThinkingBlock,
+    createSearchResultsBlock,
+    createSearchStatusBlock,
 } from '@/utils/message/create';
 // import { getTopicQueue, waitForTopicQueue } from '@/utils/queue';
 import { getTopicQueue, waitForTopicQueue } from '@/utils/queue';
@@ -420,6 +422,79 @@ export class MessageService {
                     if (currentBlockType === MessageBlockType.MAIN_TEXT && currentBlockId) {
                         await updateBlockContent(finalText, MessageBlockStatus.SUCCESS);
                     }
+                },
+
+                // 搜索进行中
+                onSearchInProgress: async (query: string, engine?: string) => {
+                    const searchStatusBlock = createSearchStatusBlock(
+                        assistantMsgId,
+                        query,
+                        engine,
+                        {
+                            status: MessageBlockStatus.STREAMING,
+                        },
+                    );
+                    await handleBlockTransition(searchStatusBlock, MessageBlockType.SEARCH_STATUS);
+                },
+
+                // 搜索结果完成
+                onSearchResultsComplete: async (
+                    query: string,
+                    results: Array<{
+                        title: string;
+                        url: string;
+                        snippet: string;
+                        domain: string;
+                    }>,
+                    engine: string,
+                    contentFetched?: boolean,
+                ) => {
+                    // 移除搜索状态块
+                    if (currentBlockType === MessageBlockType.SEARCH_STATUS && currentBlockId) {
+                        // 从 store 中移除搜索状态块
+                        runInAction(() => {
+                            this.rootStore.messageBlockStore.removeBlock(currentBlockId!);
+                            // 手动从消息的 blocks 数组中移除块引用
+                            const message =
+                                this.rootStore.messageStore.getMessageById(assistantMsgId);
+                            if (message && message.blocks) {
+                                message.blocks = message.blocks.filter(
+                                    (blockId) => blockId !== currentBlockId,
+                                );
+                            }
+                        });
+
+                        // 从数据库中删除搜索状态块
+                        await db.message_blocks.delete(currentBlockId);
+
+                        // 更新消息的 blocks 数组
+                        const updatedMessage =
+                            this.rootStore.messageStore.getMessageById(assistantMsgId);
+                        if (updatedMessage) {
+                            await this.saveUpdatesToDB(
+                                assistantMsgId,
+                                topicId,
+                                { blocks: updatedMessage.blocks },
+                                [],
+                            );
+                        }
+                    }
+
+                    // 创建搜索结果块
+                    const searchResultsBlock = createSearchResultsBlock(
+                        assistantMsgId,
+                        query,
+                        results,
+                        engine,
+                        {
+                            status: MessageBlockStatus.SUCCESS,
+                            contentFetched,
+                        },
+                    );
+                    await handleBlockTransition(
+                        searchResultsBlock,
+                        MessageBlockType.SEARCH_RESULTS,
+                    );
                 },
 
                 // 错误处理

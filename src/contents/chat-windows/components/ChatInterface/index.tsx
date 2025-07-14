@@ -44,7 +44,7 @@ const ChatInterface = observer(({ initialText }: { initialText?: string }) => {
 
     // 当话题变化时加载消息
     useEffect(() => {
-        logger.info('loadTopicMessages', selectedTopicId);
+        logger.debug('loadTopicMessages', selectedTopicId);
         if (selectedTopicId) {
             // 只有在没有正在流式处理的消息时才重新加载
             // 避免在流式过程中清理当前的流式块
@@ -93,7 +93,6 @@ const ChatInterface = observer(({ initialText }: { initialText?: string }) => {
     };
 
     const handleSendMessageClick = () => {
-        logger.info('handleSendMessageClick', inputMessage);
         if (!inputMessage.trim() || isLoading) return;
 
         if (!selectedRobot) {

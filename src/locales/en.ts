@@ -355,4 +355,13 @@ Please ensure your response is clear and specific, providing effective guidance 
     noProvidersConfigured: 'No providers configured. Please set up providers in API Settings first',
     modelSettingsInfo:
         'Configure different AI models for each interface. Your selections will be saved automatically.',
+
+    // Search related
+    searchResults: 'Search Results',
+    results: 'results',
+    searchQuery: 'Search Query',
+    contentFetched: 'Content Fetched',
+    searching: 'Searching',
+    using: 'Using',
+    clickToOpenAll: 'Click any result to open all links',
 };

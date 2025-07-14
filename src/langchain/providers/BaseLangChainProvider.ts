@@ -123,7 +123,10 @@ export default abstract class BaseLangChainProvider {
      * Enhanced completion method that handles tool usage
      * This method executes tools and returns the enhanced user input for the provider to use
      */
-    protected async prepareUserInputWithTools(userInput: string): Promise<string> {
+    protected async prepareUserInputWithTools(
+        userInput: string,
+        onChunk?: (chunk: any) => void,
+    ): Promise<string> {
         if (!this.hasTools()) {
             return userInput;
         }
@@ -134,6 +137,42 @@ export default abstract class BaseLangChainProvider {
         for (const tool of this.tools) {
             try {
                 logger.info(`Executing tool: ${tool.name}`);
+
+                // If this is a web search tool, get search results directly
+                if (tool.name === 'web_search' && onChunk && this.rootStore) {
+                    // Get enabled search engines for display
+                    const enabledEngines = this.rootStore.settingStore.enabledSearchEngines;
+                    const engineDisplay =
+                        enabledEngines.length > 0 ? enabledEngines[0] : 'web_search';
+
+                    // Emit search status first
+                    onChunk({
+                        type: 'search.in_progress',
+                        query: userInput,
+                        engine: engineDisplay,
+                    });
+
+                    const webSearchTool = tool as WebSearchTool;
+                    // Get search service from the tool
+                    const searchService = (webSearchTool as any).searchService;
+                    if (searchService) {
+                        try {
+                            const searchResponse = await searchService.performSearch(userInput);
+                            if (searchResponse.results && searchResponse.results.length > 0) {
+                                onChunk({
+                                    type: 'search_results.complete',
+                                    query: searchResponse.query,
+                                    results: searchResponse.results,
+                                    engine: searchResponse.engine,
+                                    contentFetched: false,
+                                });
+                            }
+                        } catch (searchError) {
+                            logger.error('Search failed:', searchError);
+                        }
+                    }
+                }
+
                 const result = await tool.call(userInput);
                 toolResults.push(`## ${tool.name} Results:\n${result}\n`);
             } catch (error) {
