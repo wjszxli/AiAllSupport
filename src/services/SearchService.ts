@@ -915,7 +915,6 @@ class SearchService {
      * 使用搜狗搜索（免费）
      */
     private async searchWithSogou(query: string): Promise<SearchResult[]> {
-        debugger;
         try {
             // 使用搜狗搜索
             return await this.scrapeSogouSearch(query);

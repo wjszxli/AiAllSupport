@@ -134,18 +134,6 @@ export class MessageService {
                 // 将 MobX 对象转换为纯 JavaScript 对象
                 const serializedBlock = JSON.parse(JSON.stringify(block));
 
-                // Log search results blocks specifically
-                if (block.type === 'search_results') {
-                    logger.info(`[saveBlockToDB] Saving search results block ${blockId}:`, {
-                        id: blockId,
-                        messageId: block.messageId,
-                        type: block.type,
-                        query: 'query' in block ? block.query : 'N/A',
-                        resultsCount: 'results' in block ? block.results?.length : 0,
-                        status: block.status,
-                    });
-                }
-
                 await db.message_blocks.put(serializedBlock);
                 logger.debug(`[saveBlockToDB] Successfully saved block ${blockId} to database`);
             } catch (error) {
@@ -177,22 +165,6 @@ export class MessageService {
                     const serializedBlocks = blocksToUpdate.map((block) =>
                         JSON.parse(JSON.stringify(block)),
                     );
-
-                    // Log search results blocks specifically
-                    const searchResultsBlocks = serializedBlocks.filter(
-                        (block) => block.type === 'search_results',
-                    );
-                    if (searchResultsBlocks.length > 0) {
-                        logger.info(
-                            `[saveUpdatesToDB] Saving ${searchResultsBlocks.length} search results blocks:`,
-                            searchResultsBlocks.map((b) => ({
-                                id: b.id,
-                                messageId: b.messageId,
-                                query: b.query,
-                                resultsCount: b.results?.length || 0,
-                            })),
-                        );
-                    }
 
                     await db.message_blocks.bulkPut(serializedBlocks);
                     logger.info(
@@ -878,46 +850,6 @@ export class MessageService {
                 logger.info(
                     `[loadTopicMessages] Found ${blocks.length} blocks for ${messageIds.length} messages`,
                 );
-
-                // Log search results blocks specifically
-                const searchResultsBlocks = blocks.filter(
-                    (block) => block.type === 'search_results',
-                );
-                logger.info(
-                    `[loadTopicMessages] Found ${searchResultsBlocks.length} search results blocks`,
-                );
-
-                if (searchResultsBlocks.length > 0) {
-                    logger.info(
-                        `[loadTopicMessages] Search results blocks:`,
-                        searchResultsBlocks.map((b) => ({
-                            id: b.id,
-                            messageId: b.messageId,
-                            type: b.type,
-                            query: 'query' in b ? b.query : 'N/A',
-                            resultsCount: 'results' in b ? b.results?.length : 0,
-                            engine: 'engine' in b ? b.engine : 'N/A',
-                            status: b.status,
-                        })),
-                    );
-
-                    // Verify search results blocks have complete data
-                    searchResultsBlocks.forEach((block) => {
-                        if (block.type === 'search_results') {
-                            const searchBlock = block as any;
-                            if (!searchBlock.results || !searchBlock.query) {
-                                logger.warn(
-                                    `[loadTopicMessages] Search results block ${block.id} missing data:`,
-                                    {
-                                        hasResults: !!searchBlock.results,
-                                        hasQuery: !!searchBlock.query,
-                                        hasEngine: !!searchBlock.engine,
-                                    },
-                                );
-                            }
-                        }
-                    });
-                }
 
                 const blocksByMessageId = new Map<string, string[]>();
                 blocks.forEach((block) => {
