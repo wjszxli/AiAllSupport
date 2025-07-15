@@ -181,7 +181,7 @@ export const SEARCH_ENGINE_NAMES = {
     [SEARCH_ENGINES.BIYING]: '必应(免费)',
     [SEARCH_ENGINES.SOGOU]: '搜狗(免费)',
     [SEARCH_ENGINES.GOOGLE]: 'Google(免费)',
-    [SEARCH_ENGINES.SEARXNG]: 'SearXNG(免费)',
+    [SEARCH_ENGINES.SEARXNG]: 'SearXNG(需配置)',
     [SEARCH_ENGINES.TAVILY]: 'Tavily(需密钥)',
     [SEARCH_ENGINES.EXA]: 'Exa(需密钥)',
     [SEARCH_ENGINES.BOCHA]: 'Bocha(需密钥)',

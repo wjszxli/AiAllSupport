@@ -22,7 +22,6 @@ import Robot from './components/Robot';
 import Topic from './components/Topic';
 import ChatBody from './components/ChatBody';
 import { FEEDBACK_SURVEY_URL } from '@/utils/constant';
-import '@/utils/debug'; // 导入调试工具
 
 const { Option } = Select;
 

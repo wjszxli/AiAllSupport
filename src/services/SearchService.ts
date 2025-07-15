@@ -119,8 +119,7 @@ class SearchService {
                         results = await this.searchWithSogou(query);
                         break;
                     case SEARCH_ENGINES.SEARXNG:
-                        // 替换为直接的iframe搜索
-                        results = await this.searchViaDirectIframe(query);
+                        results = await this.searchWithSearxng(query);
                         break;
                     default:
                         logger.warn(`Unknown search engine: ${engine}`);
@@ -606,6 +605,73 @@ class SearchService {
                 domain: this.extractDomain(result.url || ''),
             })) || []
         );
+    }
+
+    /**
+     * 使用SearXNG API搜索
+     */
+    private async searchWithSearxng(query: string): Promise<SearchResult[]> {
+        const settings = this.rootStore.settingStore;
+        const apiUrl = settings.searxngApiUrl;
+        const username = settings.searxngUsername;
+
+        if (!apiUrl) {
+            throw new Error('SearXNG API URL not configured');
+        }
+
+        try {
+            // 验证并构建搜索URL
+            let baseUrl = apiUrl.trim();
+            if (!baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+                baseUrl = 'https://' + baseUrl;
+            }
+
+            const searchUrl = new URL('/search', baseUrl);
+            searchUrl.searchParams.set('q', query);
+            searchUrl.searchParams.set('format', 'json');
+            searchUrl.searchParams.set('category', 'general');
+
+            // 构建请求头
+            const headers: Record<string, string> = {
+                'Content-Type': 'application/json',
+                'User-Agent': 'DeepSeekAllSupports-Extension/1.0',
+            };
+
+            // 如果配置了用户名，添加到请求头
+            if (username && username.trim()) {
+                headers['X-Username'] = username.trim();
+            }
+
+            const response = await fetch(searchUrl.toString(), {
+                method: 'GET',
+                headers,
+            });
+
+            if (!response.ok) {
+                throw new Error(`SearXNG search failed: ${response.status} ${response.statusText}`);
+            }
+
+            const data = await response.json();
+
+            // 解析SearXNG的响应格式
+            if (!data.results || !Array.isArray(data.results)) {
+                return [];
+            }
+
+            return data.results
+                .map((result: any) => ({
+                    title: result.title || '',
+                    url: result.url || '',
+                    snippet: result.content || result.snippet || '',
+                    domain: this.extractDomain(result.url || ''),
+                }))
+                .filter((result: SearchResult) => result.url && result.title);
+        } catch (error) {
+            logger.error('SearXNG search failed:', error);
+            // 如果SearXNG搜索失败，回退到直接iframe搜索
+            logger.info('Falling back to direct iframe search');
+            return await this.searchViaDirectIframe(query);
+        }
     }
 
     /**

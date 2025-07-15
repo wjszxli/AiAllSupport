@@ -30,6 +30,8 @@ export interface SettingsState {
     tavilyApiKey: string;
     exaApiKey: string;
     bochaApiKey: string;
+    searxngApiUrl: string;
+    searxngUsername: string;
     filteredDomains: string[];
 }
 
@@ -41,6 +43,8 @@ const ENABLED_SEARCH_ENGINES_KEY = 'settings.enabledSearchEngines';
 const TAVILY_API_KEY = 'settings.tavilyApiKey';
 const EXA_API_KEY = 'settings.exaApiKey';
 const BOCHA_API_KEY = 'settings.bochaApiKey';
+const SEARXNG_API_URL_KEY = 'settings.searxngApiUrl';
+const SEARXNG_USERNAME_KEY = 'settings.searxngUsername';
 const FILTERED_DOMAINS_KEY = 'settings.filteredDomains';
 
 class SettingStore {
@@ -54,6 +58,8 @@ class SettingStore {
     tavilyApiKey = '';
     exaApiKey = '';
     bochaApiKey = '';
+    searxngApiUrl = '';
+    searxngUsername = '';
     filteredDomains: string[] = [];
 
     // Callback system for tool refresh
@@ -122,6 +128,8 @@ class SettingStore {
                 tavilyApiKey,
                 exaApiKey,
                 bochaApiKey,
+                searxngApiUrl,
+                searxngUsername,
                 filteredDomains,
             ] = await Promise.all([
                 this.getChromeStorageValue(IS_CHAT_BOX_ICON_KEY, true),
@@ -134,6 +142,8 @@ class SettingStore {
                 this.getChromeStorageValue(TAVILY_API_KEY, ''),
                 this.getChromeStorageValue(EXA_API_KEY, ''),
                 this.getChromeStorageValue(BOCHA_API_KEY, ''),
+                this.getChromeStorageValue(SEARXNG_API_URL_KEY, ''),
+                this.getChromeStorageValue(SEARXNG_USERNAME_KEY, ''),
                 this.getChromeStorageValue(FILTERED_DOMAINS_KEY, FILTERED_DOMAINS),
             ]);
 
@@ -151,6 +161,8 @@ class SettingStore {
             this.tavilyApiKey = tavilyApiKey;
             this.exaApiKey = exaApiKey;
             this.bochaApiKey = bochaApiKey;
+            this.searxngApiUrl = searxngApiUrl;
+            this.searxngUsername = searxngUsername;
             if (Object.keys(filteredDomains).length > 0) {
                 this.filteredDomains = Object.keys(filteredDomains).map(
                     // @ts-ignore
@@ -177,6 +189,8 @@ class SettingStore {
                 this.setChromeStorageValue(TAVILY_API_KEY, this.tavilyApiKey),
                 this.setChromeStorageValue(EXA_API_KEY, this.exaApiKey),
                 this.setChromeStorageValue(BOCHA_API_KEY, this.bochaApiKey),
+                this.setChromeStorageValue(SEARXNG_API_URL_KEY, this.searxngApiUrl),
+                this.setChromeStorageValue(SEARXNG_USERNAME_KEY, this.searxngUsername),
                 this.setChromeStorageValue(FILTERED_DOMAINS_KEY, this.filteredDomains),
             ]);
 
@@ -196,6 +210,8 @@ class SettingStore {
             tavilyApiKey: this.tavilyApiKey,
             exaApiKey: this.exaApiKey,
             bochaApiKey: this.bochaApiKey,
+            searxngApiUrl: this.searxngApiUrl,
+            searxngUsername: this.searxngUsername,
             filteredDomains: this.filteredDomains,
         };
     }
@@ -262,6 +278,16 @@ class SettingStore {
         this.bochaApiKey = key;
         this.saveSettings();
         this.notifyToolRefreshCallbacks();
+    }
+
+    setSearxngApiUrl(url: string) {
+        this.searxngApiUrl = url;
+        this.saveSettings();
+    }
+
+    setSearxngUsername(username: string) {
+        this.searxngUsername = username;
+        this.saveSettings();
     }
 
     setFilteredDomains(domains: string[]) {
