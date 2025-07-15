@@ -133,12 +133,26 @@ export class MessageService {
             try {
                 // 将 MobX 对象转换为纯 JavaScript 对象
                 const serializedBlock = JSON.parse(JSON.stringify(block));
+
+                // Log search results blocks specifically
+                if (block.type === 'search_results') {
+                    logger.info(`[saveBlockToDB] Saving search results block ${blockId}:`, {
+                        id: blockId,
+                        messageId: block.messageId,
+                        type: block.type,
+                        query: 'query' in block ? block.query : 'N/A',
+                        resultsCount: 'results' in block ? block.results?.length : 0,
+                        status: block.status,
+                    });
+                }
+
                 await db.message_blocks.put(serializedBlock);
+                logger.debug(`[saveBlockToDB] Successfully saved block ${blockId} to database`);
             } catch (error) {
-                console.error(`[saveBlockToDB] Failed to save block ${blockId}:`, error);
+                logger.error(`[saveBlockToDB] Failed to save block ${blockId}:`, error);
             }
         } else {
-            console.warn(`[saveBlockToDB] Block ${blockId} not found in store`);
+            logger.warn(`[saveBlockToDB] Block ${blockId} not found in store`);
         }
     }
 
@@ -150,13 +164,40 @@ export class MessageService {
         blocksToUpdate: MessageBlock[],
     ) {
         try {
+            logger.info(`[saveUpdatesToDB] Saving updates for message ${messageId}:`, {
+                messageId,
+                topicId,
+                blocksCount: blocksToUpdate.length,
+                messageUpdatesKeys: Object.keys(messageUpdates),
+            });
+
             await db.transaction('rw', db.topics, db.message_blocks, async () => {
                 if (blocksToUpdate.length > 0) {
                     // 序列化 MobX 对象
                     const serializedBlocks = blocksToUpdate.map((block) =>
                         JSON.parse(JSON.stringify(block)),
                     );
+
+                    // Log search results blocks specifically
+                    const searchResultsBlocks = serializedBlocks.filter(
+                        (block) => block.type === 'search_results',
+                    );
+                    if (searchResultsBlocks.length > 0) {
+                        logger.info(
+                            `[saveUpdatesToDB] Saving ${searchResultsBlocks.length} search results blocks:`,
+                            searchResultsBlocks.map((b) => ({
+                                id: b.id,
+                                messageId: b.messageId,
+                                query: b.query,
+                                resultsCount: b.results?.length || 0,
+                            })),
+                        );
+                    }
+
                     await db.message_blocks.bulkPut(serializedBlocks);
+                    logger.info(
+                        `[saveUpdatesToDB] Successfully saved ${serializedBlocks.length} blocks to database`,
+                    );
                 }
 
                 if (Object.keys(messageUpdates).length > 0) {
@@ -170,12 +211,15 @@ export class MessageService {
                             );
                             if (messageIndex !== -1) {
                                 Object.assign(topic.messages[messageIndex], messageUpdates);
+                                logger.info(
+                                    `[saveUpdatesToDB] Updated message ${messageId} in topic ${topicId}`,
+                                );
                             }
                         });
                 }
             });
-        } catch {
-            console.error(`[saveUpdatesToDB] Failed for message ${messageId}:`);
+        } catch (error) {
+            logger.error(`[saveUpdatesToDB] Failed for message ${messageId}:`, error);
         }
     }
 
@@ -223,6 +267,13 @@ export class MessageService {
                 newBlock: MessageBlock,
                 blockType: MessageBlockType,
             ) => {
+                logger.info(`[handleBlockTransition] Processing block transition:`, {
+                    blockId: newBlock.id,
+                    blockType,
+                    messageId: newBlock.messageId,
+                    status: newBlock.status,
+                });
+
                 currentBlockId = newBlock.id;
                 currentBlockType = blockType;
 
@@ -247,6 +298,12 @@ export class MessageService {
                 // 保存到数据库
                 const updatedMessage = this.rootStore.messageStore.getMessageById(assistantMsgId);
                 if (updatedMessage) {
+                    logger.info(`[handleBlockTransition] Saving block and message to database:`, {
+                        blockId: newBlock.id,
+                        messageId: assistantMsgId,
+                        blocksCount: updatedMessage.blocks.length,
+                    });
+
                     await this.saveUpdatesToDB(
                         assistantMsgId,
                         topicId,
@@ -254,7 +311,7 @@ export class MessageService {
                         [newBlock],
                     );
                 } else {
-                    console.warn(
+                    logger.warn(
                         `[handleBlockTransition] Message ${assistantMsgId} not found in store`,
                     );
                 }
@@ -449,8 +506,21 @@ export class MessageService {
                     engine: string,
                     contentFetched?: boolean,
                 ) => {
+                    logger.info(
+                        `[onSearchResultsComplete] Processing search results for query: ${query}`,
+                        {
+                            resultsCount: results.length,
+                            engine,
+                            contentFetched,
+                        },
+                    );
+
                     // 移除搜索状态块
                     if (currentBlockType === MessageBlockType.SEARCH_STATUS && currentBlockId) {
+                        logger.info(
+                            `[onSearchResultsComplete] Removing search status block: ${currentBlockId}`,
+                        );
+
                         // 从 store 中移除搜索状态块
                         runInAction(() => {
                             this.rootStore.messageBlockStore.removeBlock(currentBlockId!);
@@ -491,10 +561,26 @@ export class MessageService {
                             contentFetched,
                         },
                     );
+
+                    logger.info(`[onSearchResultsComplete] Created search results block:`, {
+                        blockId: searchResultsBlock.id,
+                        messageId: searchResultsBlock.messageId,
+                        query: searchResultsBlock.query,
+                        resultsCount: searchResultsBlock.results.length,
+                        engine: searchResultsBlock.engine,
+                        status: searchResultsBlock.status,
+                    });
+
                     await handleBlockTransition(
                         searchResultsBlock,
                         MessageBlockType.SEARCH_RESULTS,
                     );
+
+                    // 确保搜索结果块立即保存到数据库
+                    logger.info(
+                        `[onSearchResultsComplete] Ensuring search results block is saved to database`,
+                    );
+                    await this.saveBlockToDB(searchResultsBlock.id);
                 },
 
                 // 错误处理
@@ -768,20 +854,70 @@ export class MessageService {
         });
 
         if (topicMessagesExist && !forceReload) {
+            logger.info(
+                `[loadTopicMessages] Messages already loaded for topic ${topicId}, skipping`,
+            );
             return;
         }
 
         try {
+            logger.info(`[loadTopicMessages] Loading messages for topic ${topicId}`);
             const topic = await db.topics.get(topicId);
             if (!topic) {
+                logger.info(`[loadTopicMessages] Topic ${topicId} not found, creating new topic`);
                 await db.topics.add({ id: topicId, messages: [] });
             }
 
             const messagesFromDB = topic?.messages || [];
+            logger.info(`[loadTopicMessages] Found ${messagesFromDB.length} messages in database`);
 
             if (messagesFromDB.length > 0) {
                 const messageIds = messagesFromDB.map((m) => m.id);
                 let blocks = await db.message_blocks.where('messageId').anyOf(messageIds).toArray();
+
+                logger.info(
+                    `[loadTopicMessages] Found ${blocks.length} blocks for ${messageIds.length} messages`,
+                );
+
+                // Log search results blocks specifically
+                const searchResultsBlocks = blocks.filter(
+                    (block) => block.type === 'search_results',
+                );
+                logger.info(
+                    `[loadTopicMessages] Found ${searchResultsBlocks.length} search results blocks`,
+                );
+
+                if (searchResultsBlocks.length > 0) {
+                    logger.info(
+                        `[loadTopicMessages] Search results blocks:`,
+                        searchResultsBlocks.map((b) => ({
+                            id: b.id,
+                            messageId: b.messageId,
+                            type: b.type,
+                            query: 'query' in b ? b.query : 'N/A',
+                            resultsCount: 'results' in b ? b.results?.length : 0,
+                            engine: 'engine' in b ? b.engine : 'N/A',
+                            status: b.status,
+                        })),
+                    );
+
+                    // Verify search results blocks have complete data
+                    searchResultsBlocks.forEach((block) => {
+                        if (block.type === 'search_results') {
+                            const searchBlock = block as any;
+                            if (!searchBlock.results || !searchBlock.query) {
+                                logger.warn(
+                                    `[loadTopicMessages] Search results block ${block.id} missing data:`,
+                                    {
+                                        hasResults: !!searchBlock.results,
+                                        hasQuery: !!searchBlock.query,
+                                        hasEngine: !!searchBlock.engine,
+                                    },
+                                );
+                            }
+                        }
+                    });
+                }
 
                 const blocksByMessageId = new Map<string, string[]>();
                 blocks.forEach((block) => {
@@ -798,6 +934,16 @@ export class MessageService {
                         blocks: messageBlocks,
                     };
                 });
+
+                logger.info(
+                    `[loadTopicMessages] Corrected messages with blocks:`,
+                    correctedMessages.map((m) => ({
+                        id: m.id,
+                        role: m.role,
+                        blocksCount: m.blocks?.length || 0,
+                        blocks: m.blocks,
+                    })),
+                );
 
                 runInAction(() => {
                     if (blocks && blocks.length > 0) {
@@ -828,39 +974,42 @@ export class MessageService {
                                 // 3. 如果内容长度相同，选择最新创建的
                                 let bestBlock = thinkingBlocks[0];
 
-                                for (let i = 1; i < thinkingBlocks.length; i++) {
-                                    const currentBlock = thinkingBlocks[i];
+                                for (const block of thinkingBlocks) {
+                                    const bestBlockContent =
+                                        'content' in bestBlock ? bestBlock.content || '' : '';
+                                    const currentBlockContent =
+                                        'content' in block ? block.content || '' : '';
 
                                     // 优先选择 SUCCESS 状态的块
                                     if (
-                                        currentBlock.status === MessageBlockStatus.SUCCESS &&
+                                        block.status === MessageBlockStatus.SUCCESS &&
                                         bestBlock.status !== MessageBlockStatus.SUCCESS
                                     ) {
-                                        bestBlock = currentBlock;
+                                        bestBlock = block;
                                         continue;
                                     }
 
-                                    // 如果状态相同，比较内容长度
-                                    if (currentBlock.status === bestBlock.status) {
-                                        const currentContent =
-                                            'content' in currentBlock
-                                                ? currentBlock.content || ''
-                                                : '';
-                                        const bestContent =
-                                            'content' in bestBlock ? bestBlock.content || '' : '';
-
-                                        if (currentContent.length > bestContent.length) {
-                                            bestBlock = currentBlock;
-                                        }
-                                        // 如果内容长度相同，根据创建时间选择最新的
-                                        else if (
-                                            currentContent.length === bestContent.length &&
-                                            currentBlock.createdAt > bestBlock.createdAt
+                                    // 如果都是 SUCCESS 或都不是，选择内容最长的
+                                    if (block.status === bestBlock.status) {
+                                        if (currentBlockContent.length > bestBlockContent.length) {
+                                            bestBlock = block;
+                                        } else if (
+                                            currentBlockContent.length === bestBlockContent.length
                                         ) {
-                                            bestBlock = currentBlock;
+                                            // 内容长度相同，选择最新创建的
+                                            if (
+                                                new Date(block.createdAt) >
+                                                new Date(bestBlock.createdAt)
+                                            ) {
+                                                bestBlock = block;
+                                            }
                                         }
                                     }
                                 }
+
+                                logger.info(
+                                    `[loadTopicMessages] Selected best thinking block ${bestBlock.id} for message ${messageId}`,
+                                );
 
                                 // 将非最佳块添加到待删除列表
                                 thinkingBlocks.forEach((block) => {
@@ -924,6 +1073,9 @@ export class MessageService {
                             return block;
                         });
 
+                        logger.info(
+                            `[loadTopicMessages] Upserting ${cleanedBlocks.length} blocks to store`,
+                        );
                         this.rootStore.messageBlockStore.upsertManyBlocks(cleanedBlocks);
 
                         // Update database with cleaned blocks if any were modified
@@ -944,7 +1096,7 @@ export class MessageService {
                             });
                         }
                     }
-                    logger.info('correctedMessages', correctedMessages);
+                    logger.info('[loadTopicMessages] Final corrected messages:', correctedMessages);
                     this.rootStore.messageStore.messagesReceived(topicId, correctedMessages);
                 });
             } else {

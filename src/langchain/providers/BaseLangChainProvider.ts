@@ -37,7 +37,7 @@ export default abstract class BaseLangChainProvider {
         if (settings.webSearchEnabled && settings.enabledSearchEngines.length > 0) {
             const webSearchTool = new WebSearchTool({
                 rootStore: this.rootStore,
-                maxResults: 5,
+                maxResults: 10, // 增加到10个结果
                 enableContentFetching: true,
             });
             this.tools.push(webSearchTool);

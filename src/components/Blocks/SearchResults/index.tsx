@@ -32,17 +32,14 @@ const SearchResultsView: React.FC<Props> = ({ searchBlock, forceExpanded = false
         setIsExpanded(!isExpanded);
     };
 
-    // 处理点击搜索结果项 - 打开所有链接
-    const handleResultClick = (e: React.MouseEvent) => {
+    // 处理点击单个搜索结果项 - 只打开被点击的链接
+    const handleResultClick = (e: React.MouseEvent, result: { url: string; title: string }) => {
         e.stopPropagation();
 
-        // 打开所有搜索结果的链接
-        results.forEach((result) => {
-            if (result.url) {
-                window.open(result.url, '_blank', 'noopener,noreferrer');
-                return;
-            }
-        });
+        // 只打开被点击的搜索结果链接
+        if (result.url) {
+            window.open(result.url, '_blank', 'noopener,noreferrer');
+        }
     };
 
     if (!results || results.length === 0) {
@@ -78,7 +75,7 @@ const SearchResultsView: React.FC<Props> = ({ searchBlock, forceExpanded = false
                             <div
                                 key={index}
                                 className="search-result-item"
-                                onClick={handleResultClick}
+                                onClick={(e) => handleResultClick(e, result)}
                             >
                                 <div className="search-result-title">
                                     <LinkOutlined className="search-result-link-icon" />

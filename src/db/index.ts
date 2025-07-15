@@ -12,7 +12,7 @@ export const db = new Dexie('AiDb') as Dexie & {
 
 db.version(1).stores({
     topics: '&id, messages',
-    message_blocks: 'id, messageId',
+    message_blocks: '&id, messageId',
 });
 
 // Add robots table in version 2
@@ -23,12 +23,19 @@ db.version(2).stores({
 db.version(3).stores({
     robots: '&id, name',
     topics: '&id, messages',
-    message_blocks: 'id, messageId',
+    message_blocks: '&id, messageId',
 });
 
 // Version 4 - Remove settings table as we now use Chrome storage for settings
 db.version(4).stores({
     robots: '&id, name',
     topics: '&id, messages',
-    message_blocks: 'id, messageId',
+    message_blocks: '&id, messageId',
+});
+
+// Version 5 - Ensure proper indexing for message blocks persistence
+db.version(5).stores({
+    robots: '&id, name',
+    topics: '&id, messages',
+    message_blocks: '&id, messageId, type',
 });
