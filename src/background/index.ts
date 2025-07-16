@@ -1,6 +1,7 @@
 import { initLogger, Logger } from '@/utils';
 import { MODIFY_HEADERS_RULE_ID, PROVIDERS_DATA } from '@/utils/constant';
 import storage from '@/utils/storage';
+import { performSearchInBackground } from './search';
 
 // 延迟创建Logger实例，避免初始化顺序问题
 let logger: Logger;
@@ -108,6 +109,25 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'setStorage') {
         storage.set(request.key, request.value).then(() => sendResponse({ success: true }));
         return true;
+    }
+
+    // 处理搜索请求
+    if (request.action === 'performSearch') {
+        // 使用异步处理，防止超时
+
+        logger.info(`收到搜索请求: ${request.engine} - ${request.query}`);
+        performSearchInBackground(request.query, request.engine)
+            .then((results) => {
+                logger.info(`搜索完成，返回 ${results.length} 个结果`);
+                sendResponse({ success: true, results });
+            })
+            .catch((error) => {
+                logger.error('搜索执行失败:', error);
+                const errorMessage = error instanceof Error ? error.message : '搜索失败';
+                sendResponse({ success: false, error: errorMessage });
+            });
+
+        return true; // 保持消息端口开放，等待异步响应
     }
 
     return false; // 没有匹配到任务

@@ -27,14 +27,11 @@ Examples of when to use:
 The tool will return search results with titles, URLs, and snippets from multiple sources.`;
 
     private searchService: ReturnType<typeof getSearchService>;
-    private maxResults: number;
-    private enableContentFetching: boolean;
+    public lastSearchResponse: any = null; // Store last search response for UI display
 
     constructor(options: WebSearchToolOptions) {
         super();
         this.searchService = getSearchService(options.rootStore);
-        this.maxResults = options.maxResults || 5;
-        this.enableContentFetching = options.enableContentFetching || false;
     }
 
     protected async _call(query: string): Promise<string> {
@@ -42,29 +39,19 @@ The tool will return search results with titles, URLs, and snippets from multipl
             logger.info(`Performing web search for: ${query}`);
 
             let searchResponse;
+            searchResponse = await this.searchService.performSearch(query);
 
-            if (this.enableContentFetching) {
-                // Use enhanced search with content fetching
-                searchResponse = await this.searchService.performSearchWithContent(
-                    query,
-                    this.maxResults,
-                );
+            // Store the search response for UI display
+            this.lastSearchResponse = searchResponse;
 
-                const formatted = this.searchService.formatEnhancedSearchResults(searchResponse);
-                logger.info(
-                    `Web search completed with content fetching: ${searchResponse.results.length} results`,
-                );
-                return formatted;
-            } else {
-                // Use regular search
-                searchResponse = await this.searchService.performSearch(query);
-
-                const formatted = this.searchService.formatSearchResults(searchResponse);
-                logger.info(`Web search completed: ${searchResponse.results.length} results`);
-                return formatted;
-            }
+            const formatted = this.searchService.formatSearchResults(searchResponse);
+            logger.info(`Web search completed: ${searchResponse.results.length} results`);
+            return formatted;
+            // }
         } catch (error) {
             logger.error('Web search failed:', error);
+            // Clear last search response on error
+            this.lastSearchResponse = null;
             return `Web search failed: ${
                 error instanceof Error ? error.message : 'Unknown error'
             }. Please try rephrasing your query or check if web search is properly configured.`;

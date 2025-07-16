@@ -1,5 +1,4 @@
 import { SEARCH_ENGINES } from '@/utils/constant';
-import { load } from 'cheerio';
 import type { RootStore } from '@/store';
 
 // 延迟创建Logger实例，避免循环依赖
@@ -84,16 +83,15 @@ class SearchService {
 
         const allResults: SearchResult[] = [];
         const usedEngines: string[] = [];
-        const minResults = 8; // 最少期望的搜索结果数量
         const maxResults = 20; // 最多搜索结果数量
 
-        // 第一阶段：尝试启用的搜索引擎（API调用）
+        logger.info(`performSearch: ${query}，engines ${settings.enabledSearchEngines}`);
+        // 尝试启用的搜索引擎
         for (const engine of settings.enabledSearchEngines) {
+            logger.info(
+                `Trying search with engine: ${engine}, current results: ${allResults.length}`,
+            );
             try {
-                logger.info(
-                    `Trying search with engine: ${engine}, current results: ${allResults.length}`,
-                );
-
                 let results: SearchResult[] = [];
 
                 switch (engine) {
@@ -156,261 +154,11 @@ class SearchService {
             }
         }
 
-        // 第二阶段：如果结果不够，尝试iframe搜索（更可靠）
-        if (allResults.length < minResults) {
-            logger.info(
-                `Only ${allResults.length} results found via API, trying iframe-based search methods`,
-            );
-
-            try {
-                // 尝试通过移动版搜索引擎
-                logger.info('Trying mobile search engines via iframe');
-                const mobileResults = await this.searchViaMobileVersions(query);
-                if (mobileResults.length > 0) {
-                    const existingUrls = new Set(allResults.map((r) => r.url));
-                    const newResults = mobileResults.filter(
-                        (result) => result.url && !existingUrls.has(result.url),
-                    );
-                    allResults.push(...newResults);
-                    usedEngines.push('Mobile Search');
-                    logger.info(
-                        `Mobile search added ${newResults.length} results, total: ${allResults.length}`,
-                    );
-                }
-            } catch (error) {
-                logger.warn('Mobile search via iframe failed:', error);
-            }
-
-            // 如果仍然结果不够，尝试搜索聚合网站
-            if (allResults.length < minResults) {
-                try {
-                    logger.info('Trying search aggregators via iframe');
-                    const aggregatorResults = await this.searchViaAggregators(query);
-                    if (aggregatorResults.length > 0) {
-                        const existingUrls = new Set(allResults.map((r) => r.url));
-                        const newResults = aggregatorResults.filter(
-                            (result) => result.url && !existingUrls.has(result.url),
-                        );
-                        allResults.push(...newResults);
-                        usedEngines.push('Search Aggregators');
-                        logger.info(
-                            `Search aggregators added ${newResults.length} results, total: ${allResults.length}`,
-                        );
-                    }
-                } catch (error) {
-                    logger.warn('Search aggregators via iframe failed:', error);
-                }
-            }
-
-            // 如果仍然结果不够，尝试更多的直接iframe搜索
-            if (allResults.length < minResults) {
-                try {
-                    logger.info('Trying additional direct iframe search methods');
-                    const directResults = await this.searchViaDirectIframe(query);
-                    if (directResults.length > 0) {
-                        const existingUrls = new Set(allResults.map((r) => r.url));
-                        const newResults = directResults.filter(
-                            (result) => result.url && !existingUrls.has(result.url),
-                        );
-                        allResults.push(...newResults);
-                        usedEngines.push('Direct Iframe Search');
-                        logger.info(
-                            `Direct iframe search added ${newResults.length} results, total: ${allResults.length}`,
-                        );
-                    }
-                } catch (error) {
-                    logger.warn('Direct iframe search failed:', error);
-                }
-            }
-        }
-
-        // 第三阶段：如果结果仍然不够，尝试未启用的免费搜索引擎作为补充
-        if (allResults.length < minResults) {
-            logger.info(
-                `Only ${allResults.length} results found, trying additional engines for supplementation`,
-            );
-
-            const additionalEngines = [
-                SEARCH_ENGINES.GOOGLE,
-                SEARCH_ENGINES.BAIDU,
-                SEARCH_ENGINES.BIYING,
-            ].filter((engine) => !settings.enabledSearchEngines.includes(engine));
-
-            for (const engine of additionalEngines.slice(0, 3)) {
-                // 最多尝试3个额外引擎
-                try {
-                    logger.info(`Trying additional engine: ${engine}`);
-
-                    let results: SearchResult[] = [];
-                    switch (engine) {
-                        case SEARCH_ENGINES.GOOGLE:
-                            results = await this.searchWithGoogle(query);
-                            break;
-                        case SEARCH_ENGINES.BAIDU:
-                            results = await this.searchWithBaidu(query);
-                            break;
-                        case SEARCH_ENGINES.BIYING:
-                            results = await this.searchWithBing(query);
-                            break;
-                    }
-
-                    if (results.length > 0) {
-                        const existingUrls = new Set(allResults.map((r) => r.url));
-                        const newResults = results.filter(
-                            (result) => result.url && !existingUrls.has(result.url),
-                        );
-
-                        allResults.push(...newResults);
-                        usedEngines.push(engine);
-
-                        logger.info(
-                            `Additional engine ${engine} added ${newResults.length} results, total: ${allResults.length}`,
-                        );
-
-                        if (allResults.length >= minResults) {
-                            break;
-                        }
-                    }
-                } catch (error) {
-                    logger.error(`Additional search failed with engine ${engine}:`, error);
-                }
-            }
-        }
-
-        // 第四阶段：如果所有方法都失败，生成智能搜索结果
-        if (allResults.length === 0) {
-            logger.info('All search methods failed, generating intelligent search results');
-
-            // 生成多样化的搜索结果
-            const intelligentResults: SearchResult[] = [
-                // 主要搜索引擎
-                {
-                    title: `Google搜索: ${query}`,
-                    url: `https://www.google.com/search?q=${encodeURIComponent(query)}&hl=zh-CN`,
-                    snippet: `在Google上搜索"${query}"的最新结果`,
-                    domain: 'google.com',
-                    source: 'Intelligent Fallback',
-                },
-                {
-                    title: `百度搜索: ${query}`,
-                    url: `https://www.baidu.com/s?wd=${encodeURIComponent(query)}`,
-                    snippet: `在百度上搜索"${query}"的中文结果`,
-                    domain: 'baidu.com',
-                    source: 'Intelligent Fallback',
-                },
-                {
-                    title: `必应搜索: ${query}`,
-                    url: `https://cn.bing.com/search?q=${encodeURIComponent(query)}&mkt=zh-CN`,
-                    snippet: `在必应上搜索"${query}"的综合结果`,
-                    domain: 'bing.com',
-                    source: 'Intelligent Fallback',
-                },
-                // 垂直搜索
-                {
-                    title: `维基百科: ${query}`,
-                    url: `https://zh.wikipedia.org/wiki/Special:Search/${encodeURIComponent(
-                        query,
-                    )}`,
-                    snippet: `在维基百科中查找"${query}"的百科信息`,
-                    domain: 'wikipedia.org',
-                    source: 'Intelligent Fallback',
-                },
-                {
-                    title: `知乎搜索: ${query}`,
-                    url: `https://www.zhihu.com/search?type=content&q=${encodeURIComponent(query)}`,
-                    snippet: `在知乎上搜索"${query}"的问答和文章`,
-                    domain: 'zhihu.com',
-                    source: 'Intelligent Fallback',
-                },
-                // 技术搜索（如果查询包含技术关键词）
-                ...(this.isTechnicalQuery(query)
-                    ? [
-                          {
-                              title: `Stack Overflow: ${query}`,
-                              url: `https://stackoverflow.com/search?q=${encodeURIComponent(
-                                  query,
-                              )}`,
-                              snippet: `在Stack Overflow上搜索"${query}"的编程相关问题`,
-                              domain: 'stackoverflow.com',
-                              source: 'Intelligent Fallback',
-                          },
-                          {
-                              title: `GitHub搜索: ${query}`,
-                              url: `https://github.com/search?q=${encodeURIComponent(
-                                  query,
-                              )}&type=repositories`,
-                              snippet: `在GitHub上搜索"${query}"的代码和项目`,
-                              domain: 'github.com',
-                              source: 'Intelligent Fallback',
-                          },
-                      ]
-                    : []),
-                // 学术搜索（如果查询像学术内容）
-                ...(this.isAcademicQuery(query)
-                    ? [
-                          {
-                              title: `Google学术: ${query}`,
-                              url: `https://scholar.google.com/scholar?q=${encodeURIComponent(
-                                  query,
-                              )}&hl=zh-CN`,
-                              snippet: `在Google学术中搜索"${query}"的学术论文`,
-                              domain: 'scholar.google.com',
-                              source: 'Intelligent Fallback',
-                          },
-                          {
-                              title: `百度学术: ${query}`,
-                              url: `https://xueshu.baidu.com/s?wd=${encodeURIComponent(query)}`,
-                              snippet: `在百度学术中搜索"${query}"的中文学术资料`,
-                              domain: 'xueshu.baidu.com',
-                              source: 'Intelligent Fallback',
-                          },
-                      ]
-                    : []),
-                // 新闻搜索（如果查询包含时事关键词）
-                ...(this.isNewsQuery(query)
-                    ? [
-                          {
-                              title: `Google新闻: ${query}`,
-                              url: `https://news.google.com/search?q=${encodeURIComponent(
-                                  query,
-                              )}&hl=zh-CN`,
-                              snippet: `在Google新闻中搜索"${query}"的最新资讯`,
-                              domain: 'news.google.com',
-                              source: 'Intelligent Fallback',
-                          },
-                          {
-                              title: `百度新闻: ${query}`,
-                              url: `https://news.baidu.com/ns?word=${encodeURIComponent(query)}`,
-                              snippet: `在百度新闻中搜索"${query}"的中文新闻`,
-                              domain: 'news.baidu.com',
-                              source: 'Intelligent Fallback',
-                          },
-                      ]
-                    : []),
-            ];
-
-            allResults.push(...intelligentResults);
-            usedEngines.push('Intelligent Fallback');
-
-            logger.info(`Generated ${intelligentResults.length} intelligent search results`);
-        }
-
-        // 检查是否有任何结果
-        if (allResults.length === 0) {
-            throw new Error('All search engines failed to return results');
-        }
-
         // 过滤域名黑名单
         const filteredResults = this.filterResultsByDomain(allResults);
 
         // 限制最终结果数量并按相关性排序（这里简单按顺序）
         const finalResults = filteredResults.slice(0, maxResults);
-
-        logger.info(
-            `Search completed: used engines [${usedEngines.join(', ')}], final results: ${
-                finalResults.length
-            }`,
-        );
 
         return {
             results: finalResults,
@@ -448,45 +196,6 @@ class SearchService {
             logger.error('Search with content failed:', error);
             throw error;
         }
-    }
-
-    /**
-     * 直接通过iframe搜索（替代SearXNG）
-     */
-    private async searchViaDirectIframe(query: string): Promise<SearchResult[]> {
-        const searchEngines = [
-            {
-                name: 'Google',
-                url: `https://www.google.com/search?q=${encodeURIComponent(query)}&hl=zh-CN`,
-                parser: (doc: Document) => this.parseGoogleMobilePage(doc),
-            },
-            {
-                name: 'Baidu',
-                url: `https://www.baidu.com/s?wd=${encodeURIComponent(query)}&ie=utf-8`,
-                parser: (doc: Document) => this.parseBaiduMobilePage(doc),
-            },
-            {
-                name: 'Bing',
-                url: `https://cn.bing.com/search?q=${encodeURIComponent(query)}&mkt=zh-CN`,
-                parser: (doc: Document) => this.parseBingMobilePage(doc),
-            },
-        ];
-
-        for (const engine of searchEngines) {
-            try {
-                logger.info(`Trying direct iframe search with ${engine.name}`);
-                const results = await this.searchViaIframe(engine.url, engine.parser);
-                if (results.length > 0) {
-                    logger.info(`${engine.name} iframe search returned ${results.length} results`);
-                    return results;
-                }
-            } catch (error) {
-                logger.warn(`${engine.name} iframe search failed:`, error);
-                continue;
-            }
-        }
-
-        return [];
     }
 
     /**
@@ -668,9 +377,7 @@ class SearchService {
                 .filter((result: SearchResult) => result.url && result.title);
         } catch (error) {
             logger.error('SearXNG search failed:', error);
-            // 如果SearXNG搜索失败，回退到直接iframe搜索
-            logger.info('Falling back to direct iframe search');
-            return await this.searchViaDirectIframe(query);
+            throw error;
         }
     }
 
@@ -679,100 +386,22 @@ class SearchService {
      */
     private async searchWithGoogle(query: string): Promise<SearchResult[]> {
         try {
-            // 方案1：使用Google Custom Search JSON API的公开搜索
-            // const searchUrl = `https://www.googleapis.com/customsearch/v1?key=AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw&cx=017576662512468239146:omuauf_lfve&q=${encodeURIComponent(
-            //     query,
-            // )}&num=10`;
-            const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(
-                query,
-            )}&sourceid=chrome&ie=UTF-8`;
-
+            // 优先尝试通过 background script 搜索（绕过跨域限制）
             try {
-                const response = await fetch(searchUrl, {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'application/json',
-                        'User-Agent':
-                            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                    },
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    const results =
-                        data.items?.map((item: any) => ({
-                            title: item.title || '',
-                            url: item.link || '',
-                            snippet: item.snippet || '',
-                            domain: this.extractDomain(item.link || ''),
-                        })) || [];
-
-                    if (results.length > 0) {
-                        logger.info('Google search successful with Custom Search API');
-                        return results;
-                    }
-                }
-            } catch (apiError) {
-                logger.warn('Google Custom Search API failed, trying alternative:', apiError);
-            }
-
-            // 方案2：使用SERP API
-            try {
-                const serpResponse = await fetch(
-                    `https://serpapi.com/search.json?engine=google&q=${encodeURIComponent(
-                        query,
-                    )}&api_key=demo&num=10`,
-                    {
-                        method: 'GET',
-                        headers: {
-                            Accept: 'application/json',
-                        },
-                    },
-                );
-
-                if (serpResponse.ok) {
-                    const serpData = await serpResponse.json();
-                    const serpResults =
-                        serpData.organic_results?.map((result: any) => ({
-                            title: result.title || '',
-                            url: result.link || '',
-                            snippet: result.snippet || '',
-                            domain: this.extractDomain(result.link || ''),
-                        })) || [];
-
-                    if (serpResults.length > 0) {
-                        logger.info('Google search successful with SERP API');
-                        return serpResults;
-                    }
-                }
-            } catch (serpError) {
-                logger.warn('SERP API failed, trying iframe search:', serpError);
-            }
-
-            // 方案3：使用iframe直接搜索Google
-            try {
-                logger.info('Trying iframe search with Google as fallback');
-                const iframeResults = await this.searchViaIframe(
-                    `https://www.google.com/search?q=${encodeURIComponent(query)}&hl=zh-CN`,
-                    (doc: Document) => this.parseGoogleMobilePage(doc),
-                );
-                if (iframeResults.length > 0) {
+                logger.info('Trying background script search for Google');
+                const backgroundResults = await this.searchViaBackground(query, 'google');
+                if (backgroundResults.length > 0) {
                     logger.info(
-                        `Google search successful via iframe with ${iframeResults.length} results`,
+                        `Google search successful via background with ${backgroundResults.length} results`,
                     );
-                    return iframeResults;
+                    return backgroundResults;
                 }
-            } catch (iframeError) {
-                logger.warn('Iframe Google search failed:', iframeError);
+            } catch (backgroundError) {
+                logger.warn('Background Google search failed:', backgroundError);
             }
 
-            // 方案4：网页抓取Google搜索结果
-            const scrapedResults = await this.scrapeGoogleSearch(query);
-            if (scrapedResults.length > 0) {
-                return scrapedResults;
-            }
-
-            // 方案5：生成多个相关的Google搜索结果
+            // 最终方案：生成相关的Google搜索结果链接
+            logger.info('Using static Google search results as final fallback');
             const staticResults = [
                 {
                     title: `Google搜索: ${query}`,
@@ -794,7 +423,6 @@ class SearchService {
                 },
             ];
 
-            logger.info('Google search using enhanced static results');
             return staticResults;
         } catch (error) {
             logger.error('Google search failed:', error);
@@ -807,121 +435,22 @@ class SearchService {
      */
     private async searchWithBaidu(query: string): Promise<SearchResult[]> {
         try {
-            // 备选方案1：优先使用iframe直接搜索百度（更稳定）
+            // 优先尝试通过 background script 搜索
             try {
-                logger.info('Trying iframe search with Baidu first (more reliable)');
-                const iframeResults = await this.searchViaIframe(
-                    `https://www.baidu.com/s?wd=${encodeURIComponent(query)}&ie=utf-8`,
-                    (doc: Document) => this.parseBaiduMobilePage(doc),
-                );
-                if (iframeResults.length > 0) {
+                logger.info('Trying background script search for Baidu');
+                const backgroundResults = await this.searchViaBackground(query, 'baidu');
+                if (backgroundResults.length > 0) {
                     logger.info(
-                        `Baidu search successful via iframe with ${iframeResults.length} results`,
+                        `Baidu search successful via background with ${backgroundResults.length} results`,
                     );
-                    return iframeResults;
+                    return backgroundResults;
                 }
-            } catch (iframeError) {
-                logger.warn('Iframe Baidu search failed:', iframeError);
+            } catch (backgroundError) {
+                logger.warn('Background Baidu search failed:', backgroundError);
             }
 
-            // 备选方案2：使用百度搜索API的第三方代理
-            try {
-                const proxyApis = [
-                    `https://api.allorigins.win/get?url=${encodeURIComponent(
-                        `https://www.baidu.com/s?wd=${encodeURIComponent(query)}&ie=utf-8&rn=10`,
-                    )}`,
-                    `https://thingproxy.freeboard.io/fetch/https://www.baidu.com/s?wd=${encodeURIComponent(
-                        query,
-                    )}&ie=utf-8&rn=10`,
-                ];
-
-                for (const proxyApi of proxyApis) {
-                    try {
-                        logger.info(`Trying Baidu search via proxy: ${proxyApi.split('/')[2]}`);
-
-                        const controller = new AbortController();
-                        const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-                        const response = await fetch(proxyApi, {
-                            method: 'GET',
-                            headers: {
-                                'Accept': 'application/json',
-                                'User-Agent':
-                                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                            },
-                            signal: controller.signal,
-                        });
-
-                        clearTimeout(timeoutId);
-
-                        if (response.ok) {
-                            let htmlContent = '';
-
-                            if (proxyApi.includes('allorigins.win')) {
-                                const data = await response.json();
-                                htmlContent = data.contents || '';
-                            } else {
-                                htmlContent = await response.text();
-                            }
-
-                            if (htmlContent) {
-                                const results = this.parseBaiduResults(htmlContent);
-                                if (results.length > 0) {
-                                    logger.info(
-                                        `Baidu search successful via proxy with ${results.length} results`,
-                                    );
-                                    return results;
-                                }
-                            }
-                        }
-                    } catch (proxyError) {
-                        logger.warn(`Baidu proxy ${proxyApi.split('/')[2]} failed:`, proxyError);
-                        continue;
-                    }
-                }
-            } catch (proxyError) {
-                logger.warn('All Baidu proxy attempts failed:', proxyError);
-            }
-
-            // 备选方案3：直接访问百度（保留原有逻辑作为最后尝试）
-            try {
-                logger.info('Trying direct Baidu access as last resort');
-                const suggestionUrl = `https://www.baidu.com/s?wd=${encodeURIComponent(
-                    query,
-                )}&ie=utf-8&rn=10`;
-
-                const response = await fetch(suggestionUrl, {
-                    method: 'GET',
-                    headers: {
-                        'User-Agent':
-                            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                        'Accept':
-                            'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                        'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
-                        'Cache-Control': 'no-cache',
-                        'Pragma': 'no-cache',
-                    },
-                });
-
-                if (response.ok) {
-                    const html = await response.text();
-                    const results = this.parseBaiduResults(html);
-
-                    if (results.length > 0) {
-                        logger.info(
-                            `Baidu direct search successful with ${results.length} results`,
-                        );
-                        return results;
-                    } else {
-                        logger.warn('Direct Baidu search returned no results or failed to parse');
-                    }
-                }
-            } catch (directError) {
-                logger.warn('Direct Baidu search failed:', directError);
-            }
-
-            // 备选方案4：生成相关的百度搜索结果链接
-            logger.info('Using enhanced static Baidu search results as final fallback');
+            // 备选方案：生成相关的百度搜索结果链接
+            logger.info('Using static Baidu search results as fallback');
             const staticResults = [
                 {
                     title: `百度搜索: ${query}`,
@@ -959,7 +488,7 @@ class SearchService {
 
             return staticResults;
         } catch (error) {
-            logger.error('All Baidu search methods failed:', error);
+            logger.error('Baidu search failed:', error);
             return [];
         }
     }
@@ -969,122 +498,22 @@ class SearchService {
      */
     private async searchWithBing(query: string): Promise<SearchResult[]> {
         try {
-            // 使用Bing搜索API
-            return await this.scrapeBingSearch(query);
-        } catch (error) {
-            logger.error('Bing search failed:', error);
-            return [];
-        }
-    }
-
-    /**
-     * 使用搜狗搜索（免费）
-     */
-    private async searchWithSogou(query: string): Promise<SearchResult[]> {
-        try {
-            // 使用搜狗搜索
-            return await this.scrapeSogouSearch(query);
-        } catch (error) {
-            logger.error('Sogou search failed:', error);
-            return [];
-        }
-    }
-
-    /**
-     * 网页抓取Google搜索结果
-     */
-    private async scrapeGoogleSearch(query: string): Promise<SearchResult[]> {
-        try {
-            // 使用无服务器函数或代理来抓取Google搜索结果
-            const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&num=10`;
-
-            // 尝试使用AllOrigins代理服务
-            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(searchUrl)}`;
-
-            const response = await fetch(proxyUrl, {
-                method: 'GET',
-                headers: {
-                    Accept: 'application/json',
-                },
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                const htmlContent = data.contents;
-
-                // 简单的HTML解析来提取搜索结果
-                const results = this.parseGoogleResults(htmlContent);
-                if (results.length > 0) {
-                    logger.info('Google search successful with web scraping');
-                    return results;
-                }
-            }
-
-            logger.warn('Google web scraping failed');
-            return [];
-        } catch (error) {
-            logger.error('Google web scraping failed:', error);
-            return [];
-        }
-    }
-
-    /**
-     * 网页抓取必应搜索结果
-     */
-    private async scrapeBingSearch(query: string): Promise<SearchResult[]> {
-        try {
-            // 使用Bing搜索API
-            const searchUrl = `https://api.bing.microsoft.com/v7.0/search?q=${encodeURIComponent(
-                query,
-            )}&count=10`;
-
+            // 优先尝试通过 background script 搜索
             try {
-                // 尝试使用免费的Bing API演示密钥
-                const response = await fetch(searchUrl, {
-                    method: 'GET',
-                    headers: {
-                        'Ocp-Apim-Subscription-Key': 'demo-key',
-                        'Accept': 'application/json',
-                    },
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    const results =
-                        data.webPages?.value?.map((item: any) => ({
-                            title: item.name || '',
-                            url: item.url || '',
-                            snippet: item.snippet || '',
-                            domain: this.extractDomain(item.url || ''),
-                        })) || [];
-
-                    if (results.length > 0) {
-                        logger.info('Bing search successful with API');
-                        return results;
-                    }
-                }
-            } catch (apiError) {
-                logger.warn('Bing API failed, trying SearXNG fallback:', apiError);
-            }
-
-            // 备选方案1：尝试使用iframe直接搜索必应
-            try {
-                logger.info('Trying iframe search with Bing as fallback');
-                const iframeResults = await this.searchViaIframe(
-                    `https://cn.bing.com/search?q=${encodeURIComponent(query)}&mkt=zh-CN`,
-                    (doc: Document) => this.parseBingMobilePage(doc),
-                );
-                if (iframeResults.length > 0) {
+                logger.info('Trying background script search for Bing');
+                const backgroundResults = await this.searchViaBackground(query, 'biying');
+                if (backgroundResults.length > 0) {
                     logger.info(
-                        `Bing search successful via iframe with ${iframeResults.length} results`,
+                        `Bing search successful via background with ${backgroundResults.length} results`,
                     );
-                    return iframeResults;
+                    return backgroundResults;
                 }
-            } catch (iframeError) {
-                logger.warn('Iframe Bing search failed:', iframeError);
+            } catch (backgroundError) {
+                logger.warn('Background Bing search failed:', backgroundError);
             }
 
-            // 备选方案2：生成多个相关的必应搜索结果
+            // 备选方案：生成相关的必应搜索结果链接
+            logger.info('Using static Bing search results as fallback');
             const staticResults = [
                 {
                     title: `必应搜索: ${query}`,
@@ -1106,7 +535,6 @@ class SearchService {
                 },
             ];
 
-            logger.info('Bing search using enhanced static results');
             return staticResults;
         } catch (error) {
             logger.error('Bing search failed:', error);
@@ -1115,28 +543,26 @@ class SearchService {
     }
 
     /**
-     * 网页抓取搜狗搜索结果
+     * 使用搜狗搜索（免费）
      */
-    private async scrapeSogouSearch(query: string): Promise<SearchResult[]> {
+    private async searchWithSogou(query: string): Promise<SearchResult[]> {
         try {
-            // 备选方案1：尝试使用iframe直接搜索搜狗
+            // 优先尝试通过 background script 搜索
             try {
-                logger.info('Trying iframe search with Sogou engine');
-                const iframeResults = await this.searchViaIframe(
-                    `https://www.sogou.com/web?query=${encodeURIComponent(query)}`,
-                    (doc: Document) => this.parseSogouPage(doc),
-                );
-                if (iframeResults.length > 0) {
+                logger.info('Trying background script search for Sogou');
+                const backgroundResults = await this.searchViaBackground(query, 'sogou');
+                if (backgroundResults.length > 0) {
                     logger.info(
-                        `Sogou search successful via iframe with ${iframeResults.length} results`,
+                        `Sogou search successful via background with ${backgroundResults.length} results`,
                     );
-                    return iframeResults;
+                    return backgroundResults;
                 }
-            } catch (iframeError) {
-                logger.warn('Iframe Sogou search failed:', iframeError);
+            } catch (backgroundError) {
+                logger.warn('Background Sogou search failed:', backgroundError);
             }
 
-            // 备选方案2：生成多个相关的搜狗搜索结果
+            // 备选方案：生成相关的搜狗搜索结果链接
+            logger.info('Using static Sogou search results as fallback');
             const staticResults = [
                 {
                     title: `搜狗搜索: ${query}`,
@@ -1160,7 +586,6 @@ class SearchService {
                 },
             ];
 
-            logger.info('Sogou search using enhanced static results');
             return staticResults;
         } catch (error) {
             logger.error('Sogou search failed:', error);
@@ -1169,582 +594,70 @@ class SearchService {
     }
 
     /**
-     * 解析Google搜索结果HTML
+     * 通过 background script 执行搜索（绕过跨域限制）
      */
-    private parseGoogleResults(html: string): SearchResult[] {
-        try {
-            const results: SearchResult[] = [];
-
-            // 简单的正则表达式来匹配Google搜索结果
-            // 这个正则表达式匹配Google搜索结果的基本结构
-            const titleRegex = /<h3[^>]*>([^<]+)<\/h3>/g;
-            const linkRegex = /<a[^>]*href="([^"]*)"[^>]*>/g;
-            const snippetRegex = /<span[^>]*>([^<]{50,200})</g;
-
-            let titleMatch;
-            let linkMatch;
-            let snippetMatch;
-
-            const titles = [];
-            const links = [];
-            const snippets = [];
-
-            while ((titleMatch = titleRegex.exec(html)) !== null) {
-                titles.push(titleMatch[1]);
-            }
-
-            while ((linkMatch = linkRegex.exec(html)) !== null) {
-                const url = linkMatch[1];
-                if (url.startsWith('http') && !url.includes('google.com')) {
-                    links.push(url);
-                }
-            }
-
-            while ((snippetMatch = snippetRegex.exec(html)) !== null) {
-                snippets.push(snippetMatch[1]);
-            }
-
-            // 组合结果
-            const maxResults = Math.min(titles.length, links.length, 10);
-            for (let i = 0; i < maxResults; i++) {
-                if (titles[i] && links[i]) {
-                    results.push({
-                        title: titles[i],
-                        url: links[i],
-                        snippet: snippets[i] || '',
-                        domain: this.extractDomain(links[i]),
-                    });
-                }
-            }
-
-            return results;
-        } catch (error) {
-            logger.error('Failed to parse Google results:', error);
-            return [];
-        }
-    }
-
-    /**
-     * 解析百度搜索结果HTML
-     */
-    private parseBaiduResults(html: string): SearchResult[] {
-        try {
-            const $ = load(html);
-            const results: SearchResult[] = [];
-
-            // 百度搜索结果的多种可能选择器
-            const resultSelectors = [
-                '.result',
-                '.c-container',
-                '.result-op',
-                '[tpl]',
-                '.xpath-log',
-            ];
-
-            let foundResults = false;
-
-            for (const selector of resultSelectors) {
-                $(selector).each((i, element) => {
-                    if (i >= 10) return false; // 限制最多10个结果
-
-                    const $element = $(element);
-
-                    // 尝试多种标题选择器
-                    const titleSelectors = [
-                        '.t',
-                        '.c-title',
-                        '.result-title',
-                        'h3',
-                        'a[target="_blank"]',
-                    ];
-                    let title = '';
-                    let link = '';
-
-                    for (const titleSelector of titleSelectors) {
-                        const titleElement = $element.find(titleSelector).first();
-                        if (titleElement.length > 0) {
-                            title = titleElement.text().trim();
-                            link =
-                                titleElement.attr('href') ||
-                                titleElement.find('a').attr('href') ||
-                                '';
-                            if (title && link) break;
-                        }
-                    }
-
-                    // 如果没有找到标题，尝试直接查找链接
-                    if (!title || !link) {
-                        const linkElement = $element.find('a[href]').first();
-                        if (linkElement.length > 0) {
-                            title = title || linkElement.text().trim();
-                            link = link || linkElement.attr('href') || '';
-                        }
-                    }
-
-                    // 获取摘要信息
-                    const snippetSelectors = [
-                        '.c-abstract',
-                        '.content-abstract',
-                        '.c-span9',
-                        '.c-span-last',
-                    ];
-                    let snippet = '';
-
-                    for (const snippetSelector of snippetSelectors) {
-                        const snippetElement = $element.find(snippetSelector);
-                        if (snippetElement.length > 0) {
-                            snippet = snippetElement.text().trim();
-                            if (snippet) break;
-                        }
-                    }
-
-                    // 清理百度的重定向链接
-                    if (link && link.includes('baidu.com/link?')) {
-                        // 尝试从重定向链接中提取真实URL
-                        const urlMatch = link.match(/url=([^&]+)/);
-                        if (urlMatch) {
-                            try {
-                                link = decodeURIComponent(urlMatch[1]);
-                            } catch (e) {
-                                // 解码失败，保持原链接
-                            }
-                        }
-                    }
-
-                    // 确保链接是完整的URL
-                    if (link && !link.startsWith('http')) {
-                        if (link.startsWith('//')) {
-                            link = 'https:' + link;
-                        } else if (link.startsWith('/')) {
-                            link = 'https://www.baidu.com' + link;
-                        }
-                    }
-
-                    // 只添加有效的结果
-                    if (title && link && link.startsWith('http')) {
-                        results.push({
-                            title: title,
-                            url: link,
-                            snippet: snippet || `百度搜索结果 - ${title}`,
-                            domain: this.extractDomain(link),
-                            source: 'Baidu',
-                        });
-                        foundResults = true;
-                    }
-
-                    return true; // 继续遍历
-                });
-
-                // 如果这个选择器找到了结果，就不再尝试其他选择器
-                if (foundResults && results.length > 0) {
-                    break;
-                }
-            }
-
-            logger.info(`Parsed ${results.length} Baidu results from HTML`);
-            return results;
-        } catch (error) {
-            logger.error('Failed to parse Baidu results:', error);
-            return [];
-        }
-    }
-
-    /**
-     * 解析搜狗页面结果
-     */
-    private parseSogouPage(doc: Document): SearchResult[] {
-        const results: SearchResult[] = [];
-        try {
-            const resultElements = doc.querySelectorAll('.result, .results .rb');
-
-            resultElements.forEach((element, index) => {
-                if (index >= 10) return;
-
-                const titleElement = element.querySelector('.title a, h3 a');
-                const snippetElement = element.querySelector('.ft, .str_info');
-
-                if (titleElement) {
-                    const title = titleElement.textContent?.trim() || '';
-                    const url = titleElement.getAttribute('href') || '';
-                    const snippet = snippetElement?.textContent?.trim() || '';
-
-                    if (title && url) {
-                        results.push({
-                            title,
-                            url: url.startsWith('//') ? 'https:' + url : url,
-                            snippet,
-                            domain: this.extractDomain(url),
-                            source: 'Sogou',
-                        });
-                    }
-                }
-            });
-        } catch (error) {
-            logger.error('Error parsing Sogou results:', error);
-        }
-        return results;
-    }
-
-    /**
-     * 通过隐藏iframe加载搜索页面并提取结果
-     */
-    private async searchViaIframe(
-        searchUrl: string,
-        parser: (doc: Document) => SearchResult[],
-    ): Promise<SearchResult[]> {
-        return new Promise((resolve) => {
+    private async searchViaBackground(query: string, engine: string): Promise<SearchResult[]> {
+        return new Promise((resolve, reject) => {
             try {
-                // 创建隐藏的iframe
-                const iframe = document.createElement('iframe');
-                iframe.style.display = 'none';
-                iframe.style.position = 'absolute';
-                iframe.style.left = '-9999px';
-                iframe.style.width = '1px';
-                iframe.style.height = '1px';
+                logger.info(`通过 background script 搜索: ${engine} - ${query}`);
 
-                let timeoutId: NodeJS.Timeout;
-                let resolved = false;
+                // 设置超时机制
+                const timeout = setTimeout(() => {
+                    logger.error('Background script 搜索超时 (30秒)');
+                    reject(new Error('搜索超时'));
+                }, 30000); // 30秒超时
 
-                const cleanup = () => {
-                    if (timeoutId) clearTimeout(timeoutId);
-                    if (iframe.parentNode) {
-                        iframe.parentNode.removeChild(iframe);
-                    }
-                };
+                chrome.runtime.sendMessage(
+                    {
+                        action: 'performSearch',
+                        query: query,
+                        engine: engine,
+                    },
+                    (response) => {
+                        clearTimeout(timeout);
 
-                const handleLoad = () => {
-                    if (resolved) return;
-
-                    try {
-                        const doc = iframe.contentDocument || iframe.contentWindow?.document;
-                        if (doc) {
-                            const results = parser(doc);
-                            resolved = true;
-                            cleanup();
-                            resolve(results);
-                        } else {
-                            logger.warn('Could not access iframe document');
-                            resolved = true;
-                            cleanup();
-                            resolve([]);
+                        if (chrome.runtime.lastError) {
+                            logger.error('Background script 通信错误:', chrome.runtime.lastError);
+                            // 将Chrome运行时错误转换为更友好的错误信息
+                            const errorMessage =
+                                chrome.runtime.lastError.message || 'Unknown error';
+                            if (
+                                errorMessage.includes('message port closed') ||
+                                errorMessage.includes('receiving end does not exist')
+                            ) {
+                                reject(
+                                    new Error('Background script 连接中断，可能是扩展刚刚重新加载'),
+                                );
+                            } else {
+                                reject(new Error(`Background script 通信失败: ${errorMessage}`));
+                            }
+                            return;
                         }
-                    } catch (error) {
-                        logger.warn('Error parsing iframe content:', error);
-                        resolved = true;
-                        cleanup();
-                        resolve([]);
-                    }
-                };
 
-                const handleError = () => {
-                    if (resolved) return;
-                    logger.warn('Iframe failed to load search page');
-                    resolved = true;
-                    cleanup();
-                    resolve([]);
-                };
+                        if (!response) {
+                            logger.error('Background script 返回空响应');
+                            reject(new Error('Background script 返回空响应'));
+                            return;
+                        }
 
-                // 设置超时
-                timeoutId = setTimeout(() => {
-                    if (resolved) return;
-                    logger.warn('Iframe search timeout');
-                    resolved = true;
-                    cleanup();
-                    resolve([]);
-                }, 15000); // 15秒超时
-
-                iframe.onload = handleLoad;
-                iframe.onerror = handleError;
-
-                // 添加到页面并加载
-                document.body.appendChild(iframe);
-                iframe.src = searchUrl;
+                        if (response.success) {
+                            logger.info(
+                                `Background script 搜索成功，返回 ${
+                                    response.results?.length || 0
+                                } 个结果`,
+                            );
+                            resolve(response.results || []);
+                        } else {
+                            logger.error('Background script 搜索失败:', response.error);
+                            reject(new Error(response.error || 'Background script 搜索失败'));
+                        }
+                    },
+                );
             } catch (error) {
-                logger.error('Error creating iframe for search:', error);
-                resolve([]);
+                logger.error('发送消息到 background script 失败:', error);
+                reject(error);
             }
         });
-    }
-
-    /**
-     * 通过搜索聚合网站获取结果
-     */
-    private async searchViaAggregators(query: string): Promise<SearchResult[]> {
-        const aggregators = [
-            {
-                name: 'Startpage',
-                url: `https://www.startpage.com/sp/search?query=${encodeURIComponent(query)}`,
-                parser: (doc: Document) => this.parseStartpagePage(doc),
-            },
-            {
-                name: 'Searx',
-                url: `https://searx.be/search?q=${encodeURIComponent(query)}&category_general=1`,
-                parser: (doc: Document) => this.parseSearxPage(doc),
-            },
-        ];
-
-        for (const aggregator of aggregators) {
-            try {
-                logger.info(`Trying search via ${aggregator.name}`);
-                const results = await this.searchViaIframe(aggregator.url, aggregator.parser);
-                if (results.length > 0) {
-                    logger.info(`${aggregator.name} returned ${results.length} results`);
-                    return results;
-                }
-            } catch (error) {
-                logger.warn(`${aggregator.name} search failed:`, error);
-                continue;
-            }
-        }
-
-        return [];
-    }
-
-    /**
-     * 解析Startpage页面结果
-     */
-    private parseStartpagePage(doc: Document): SearchResult[] {
-        const results: SearchResult[] = [];
-        try {
-            const resultElements = doc.querySelectorAll('.w-gl__result');
-
-            resultElements.forEach((element, index) => {
-                if (index >= 10) return;
-
-                const titleElement = element.querySelector('.w-gl__result-title a');
-                const snippetElement = element.querySelector('.w-gl__description');
-
-                if (titleElement) {
-                    const title = titleElement.textContent?.trim() || '';
-                    const url = titleElement.getAttribute('href') || '';
-                    const snippet = snippetElement?.textContent?.trim() || '';
-
-                    if (title && url) {
-                        results.push({
-                            title,
-                            url,
-                            snippet,
-                            domain: this.extractDomain(url),
-                            source: 'Startpage',
-                        });
-                    }
-                }
-            });
-        } catch (error) {
-            logger.error('Error parsing Startpage results:', error);
-        }
-        return results;
-    }
-
-    /**
-     * 解析Searx页面结果
-     */
-    private parseSearxPage(doc: Document): SearchResult[] {
-        const results: SearchResult[] = [];
-        try {
-            const resultElements = doc.querySelectorAll('.result');
-
-            resultElements.forEach((element, index) => {
-                if (index >= 10) return;
-
-                const titleElement = element.querySelector('.result_header a, h3 a');
-                const snippetElement = element.querySelector('.content, .result-content');
-
-                if (titleElement) {
-                    const title = titleElement.textContent?.trim() || '';
-                    const url = titleElement.getAttribute('href') || '';
-                    const snippet = snippetElement?.textContent?.trim() || '';
-
-                    if (title && url) {
-                        results.push({
-                            title,
-                            url: url.startsWith('//') ? 'https:' + url : url,
-                            snippet,
-                            domain: this.extractDomain(url),
-                            source: 'Searx',
-                        });
-                    }
-                }
-            });
-        } catch (error) {
-            logger.error('Error parsing Searx results:', error);
-        }
-        return results;
-    }
-
-    /**
-     * 使用搜索引擎的移动版本（通常限制较少）
-     */
-    private async searchViaMobileVersions(query: string): Promise<SearchResult[]> {
-        const mobileSearchEngines = [
-            {
-                name: 'Google Mobile',
-                url: `https://www.google.com/search?q=${encodeURIComponent(
-                    query,
-                )}&ie=UTF-8&source=android-browser&hl=zh-CN`,
-                parser: (doc: Document) => this.parseGoogleMobilePage(doc),
-            },
-            {
-                name: 'Baidu Mobile',
-                url: `https://m.baidu.com/s?word=${encodeURIComponent(query)}&sa=ib`,
-                parser: (doc: Document) => this.parseBaiduMobilePage(doc),
-            },
-            {
-                name: 'Bing Mobile',
-                url: `https://cn.bing.com/search?q=${encodeURIComponent(
-                    query,
-                )}&mkt=zh-CN&form=QBLH`,
-                parser: (doc: Document) => this.parseBingMobilePage(doc),
-            },
-        ];
-
-        for (const engine of mobileSearchEngines) {
-            try {
-                logger.info(`Trying search via ${engine.name}`);
-                const results = await this.searchViaIframe(engine.url, engine.parser);
-                if (results.length > 0) {
-                    logger.info(`${engine.name} returned ${results.length} results`);
-                    return results;
-                }
-            } catch (error) {
-                logger.warn(`${engine.name} search failed:`, error);
-                continue;
-            }
-        }
-
-        return [];
-    }
-
-    /**
-     * 解析Google移动版页面
-     */
-    private parseGoogleMobilePage(doc: Document): SearchResult[] {
-        const results: SearchResult[] = [];
-        try {
-            const resultElements = doc.querySelectorAll('.xpd, .mnr-c, .g, [data-hveid]');
-
-            resultElements.forEach((element, index) => {
-                if (index >= 10) return;
-
-                const titleElement = element.querySelector('h3 a, .LC20lb a');
-                const snippetElement = element.querySelector('.st, .VwiC3b');
-
-                if (titleElement) {
-                    const title = titleElement.textContent?.trim() || '';
-                    let url = titleElement.getAttribute('href') || '';
-                    const snippet = snippetElement?.textContent?.trim() || '';
-
-                    // 处理Google的重定向链接
-                    if (url.includes('/url?q=')) {
-                        const urlMatch = url.match(/[?&]q=([^&]+)/);
-                        if (urlMatch) {
-                            url = decodeURIComponent(urlMatch[1]);
-                        }
-                    }
-
-                    if (title && url && url.startsWith('http')) {
-                        results.push({
-                            title,
-                            url,
-                            snippet,
-                            domain: this.extractDomain(url),
-                            source: 'Google Mobile',
-                        });
-                    }
-                }
-            });
-        } catch (error) {
-            logger.error('Error parsing Google mobile results:', error);
-        }
-        return results;
-    }
-
-    /**
-     * 解析百度移动版页面
-     */
-    private parseBaiduMobilePage(doc: Document): SearchResult[] {
-        const results: SearchResult[] = [];
-        try {
-            const resultElements = doc.querySelectorAll('.result, .c-result');
-
-            resultElements.forEach((element, index) => {
-                if (index >= 10) return;
-
-                const titleElement = element.querySelector('.c-title a, .t a');
-                const snippetElement = element.querySelector('.c-abstract, .c-span9');
-
-                if (titleElement) {
-                    const title = titleElement.textContent?.trim() || '';
-                    let url = titleElement.getAttribute('href') || '';
-                    const snippet = snippetElement?.textContent?.trim() || '';
-
-                    // 处理百度的重定向链接
-                    if (url.includes('baidu.com/link?')) {
-                        const urlMatch = url.match(/url=([^&]+)/);
-                        if (urlMatch) {
-                            try {
-                                url = decodeURIComponent(urlMatch[1]);
-                            } catch (e) {
-                                // 解码失败，保持原链接
-                            }
-                        }
-                    }
-
-                    if (title && url && (url.startsWith('http') || url.startsWith('//'))) {
-                        if (url.startsWith('//')) {
-                            url = 'https:' + url;
-                        }
-
-                        results.push({
-                            title,
-                            url,
-                            snippet,
-                            domain: this.extractDomain(url),
-                            source: 'Baidu Mobile',
-                        });
-                    }
-                }
-            });
-        } catch (error) {
-            logger.error('Error parsing Baidu mobile results:', error);
-        }
-        return results;
-    }
-
-    /**
-     * 解析必应移动版页面
-     */
-    private parseBingMobilePage(doc: Document): SearchResult[] {
-        const results: SearchResult[] = [];
-        try {
-            const resultElements = doc.querySelectorAll('.b_algo');
-
-            resultElements.forEach((element, index) => {
-                if (index >= 10) return;
-
-                const titleElement = element.querySelector('h2 a');
-                const snippetElement = element.querySelector('.b_caption p, .b_descript');
-
-                if (titleElement) {
-                    const title = titleElement.textContent?.trim() || '';
-                    const url = titleElement.getAttribute('href') || '';
-                    const snippet = snippetElement?.textContent?.trim() || '';
-
-                    if (title && url) {
-                        results.push({
-                            title,
-                            url,
-                            snippet,
-                            domain: this.extractDomain(url),
-                            source: 'Bing Mobile',
-                        });
-                    }
-                }
-            });
-        } catch (error) {
-            logger.error('Error parsing Bing mobile results:', error);
-        }
-        return results;
     }
 
     /**
@@ -1804,15 +717,7 @@ class SearchService {
         try {
             logger.info(`Fetching content from URL: ${url}`);
 
-            // 直接通过iframe获取网页内容
-            const content = await this.fetchContentViaIframe(url);
-
-            if (content && content.length > 100) {
-                logger.info(`Successfully fetched content from ${url} via iframe`);
-                return content;
-            }
-
-            // 如果iframe方法失败，尝试直接fetch请求
+            // 尝试直接fetch请求
             try {
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 10000);
@@ -1848,85 +753,6 @@ class SearchService {
             logger.error(`Failed to fetch content from ${url}:`, error);
             return '';
         }
-    }
-
-    /**
-     * 通过iframe获取网页内容
-     */
-    private async fetchContentViaIframe(url: string): Promise<string> {
-        return new Promise((resolve) => {
-            try {
-                // 创建隐藏的iframe
-                const iframe = document.createElement('iframe');
-                iframe.style.display = 'none';
-                iframe.style.position = 'absolute';
-                iframe.style.left = '-9999px';
-                iframe.style.width = '1px';
-                iframe.style.height = '1px';
-
-                let timeoutId: NodeJS.Timeout;
-                let resolved = false;
-
-                const cleanup = () => {
-                    if (timeoutId) clearTimeout(timeoutId);
-                    if (iframe.parentNode) {
-                        iframe.parentNode.removeChild(iframe);
-                    }
-                };
-
-                const handleLoad = () => {
-                    if (resolved) return;
-
-                    try {
-                        const doc = iframe.contentDocument || iframe.contentWindow?.document;
-                        if (doc) {
-                            const html = doc.documentElement.outerHTML;
-                            const content = this.extractTextFromHtml(html);
-                            resolved = true;
-                            cleanup();
-                            resolve(content);
-                        } else {
-                            logger.warn('Could not access iframe document for content extraction');
-                            resolved = true;
-                            cleanup();
-                            resolve('');
-                        }
-                    } catch (error) {
-                        logger.warn('Error extracting content from iframe:', error);
-                        resolved = true;
-                        cleanup();
-                        resolve('');
-                    }
-                };
-
-                const handleError = () => {
-                    if (resolved) return;
-                    logger.warn('Iframe failed to load content page');
-                    resolved = true;
-                    cleanup();
-                    resolve('');
-                };
-
-                // 设置超时
-                timeoutId = setTimeout(() => {
-                    if (resolved) return;
-                    logger.warn('Iframe content fetch timeout');
-                    resolved = true;
-                    cleanup();
-                    resolve('');
-                }, 10000); // 10秒超时
-
-                iframe.onload = handleLoad;
-                iframe.onerror = handleError;
-
-                // 添加到页面并加载
-                document.body.appendChild(iframe);
-                iframe.src = url;
-            } catch (error) {
-                logger.error('Error creating iframe for content fetch:', error);
-                resolve('');
-            }
-        });
     }
 
     /**
@@ -2077,249 +903,6 @@ class SearchService {
         });
 
         return formatted;
-    }
-
-    /**
-     * 检测是否为技术相关查询
-     */
-    private isTechnicalQuery(query: string): boolean {
-        const technicalKeywords = [
-            'api',
-            'javascript',
-            'typescript',
-            'react',
-            'vue',
-            'angular',
-            'node',
-            'python',
-            'java',
-            'php',
-            'go',
-            'rust',
-            'cpp',
-            'html',
-            'css',
-            'sql',
-            'database',
-            'server',
-            'framework',
-            'library',
-            'package',
-            'install',
-            'debug',
-            'error',
-            'exception',
-            'algorithm',
-            'function',
-            'method',
-            'class',
-            'object',
-            'array',
-            'string',
-            'json',
-            'http',
-            'https',
-            'rest',
-            'graphql',
-            'websocket',
-            'docker',
-            'kubernetes',
-            'aws',
-            'azure',
-            'git',
-            'github',
-            'npm',
-            'yarn',
-            'webpack',
-            'babel',
-            'eslint',
-            'test',
-            'unit test',
-            'integration',
-            'deployment',
-            'ci/cd',
-            'devops',
-            'microservice',
-            '编程',
-            '代码',
-            '开发',
-            '算法',
-            '数据结构',
-            '架构',
-            '框架',
-            '库',
-            '接口',
-            '服务器',
-            '数据库',
-            '前端',
-            '后端',
-            '全栈',
-            '移动端',
-            '微服务',
-            '容器',
-        ];
-
-        const queryLower = query.toLowerCase();
-        return technicalKeywords.some((keyword) => queryLower.includes(keyword.toLowerCase()));
-    }
-
-    /**
-     * 检测是否为学术相关查询
-     */
-    private isAcademicQuery(query: string): boolean {
-        const academicKeywords = [
-            'research',
-            'paper',
-            'journal',
-            'publication',
-            'study',
-            'analysis',
-            'survey',
-            'review',
-            'conference',
-            'proceedings',
-            'thesis',
-            'dissertation',
-            'scholar',
-            'academic',
-            'university',
-            'college',
-            'professor',
-            'phd',
-            'master',
-            'bachelor',
-            'cite',
-            'citation',
-            'reference',
-            'bibliography',
-            'methodology',
-            'experiment',
-            'theory',
-            'hypothesis',
-            'conclusion',
-            'abstract',
-            'peer review',
-            'impact factor',
-            '研究',
-            '论文',
-            '学术',
-            '期刊',
-            '会议',
-            '学报',
-            '大学',
-            '学院',
-            '教授',
-            '博士',
-            '硕士',
-            '学士',
-            '学位',
-            '毕业论文',
-            '文献',
-            '引用',
-            '实验',
-            '理论',
-            '假设',
-            '结论',
-            '摘要',
-            '同行评议',
-            '影响因子',
-            '学科',
-            '专业',
-            '课程',
-            '教学',
-        ];
-
-        const queryLower = query.toLowerCase();
-        return academicKeywords.some((keyword) => queryLower.includes(keyword.toLowerCase()));
-    }
-
-    /**
-     * 检测是否为新闻相关查询
-     */
-    private isNewsQuery(query: string): boolean {
-        const newsKeywords = [
-            'news',
-            'latest',
-            'breaking',
-            'recent',
-            'today',
-            'yesterday',
-            'current',
-            'update',
-            'announcement',
-            'event',
-            'incident',
-            'happening',
-            'report',
-            'politics',
-            'economy',
-            'business',
-            'finance',
-            'stock',
-            'market',
-            'technology',
-            'sports',
-            'entertainment',
-            'celebrity',
-            'scandal',
-            'crisis',
-            'emergency',
-            'covid',
-            'pandemic',
-            'election',
-            'government',
-            'policy',
-            'law',
-            'legal',
-            '新闻',
-            '最新',
-            '今日',
-            '昨日',
-            '当前',
-            '时事',
-            '热点',
-            '突发',
-            '快讯',
-            '报道',
-            '事件',
-            '政治',
-            '经济',
-            '商业',
-            '金融',
-            '股市',
-            '科技',
-            '体育',
-            '娱乐',
-            '明星',
-            '丑闻',
-            '危机',
-            '紧急',
-            '疫情',
-            '选举',
-            '政府',
-            '政策',
-            '法律',
-            '法规',
-            '社会',
-            '民生',
-            '国际',
-            '国内',
-            '地方',
-            '头条',
-        ];
-
-        const queryLower = query.toLowerCase();
-
-        // 检查时间相关的词汇
-        const timeKeywords = ['2024', '2023', '今天', '昨天', '最近', '最新', '刚刚'];
-        const hasTimeKeyword = timeKeywords.some((keyword) => queryLower.includes(keyword));
-
-        // 检查新闻关键词
-        const hasNewsKeyword = newsKeywords.some((keyword) =>
-            queryLower.includes(keyword.toLowerCase()),
-        );
-
-        return hasNewsKeyword || hasTimeKeyword;
     }
 }
 

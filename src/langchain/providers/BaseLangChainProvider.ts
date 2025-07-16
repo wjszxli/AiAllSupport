@@ -9,6 +9,7 @@ import { AIMessage, HumanMessage, SystemMessage } from '@langchain/core/messages
 import WebSearchTool from '../tools/WebSearchTool';
 import WebPageContextTool from '../tools/WebPageContextTool';
 import type { RootStore } from '@/store';
+import { i18n } from '@/locales/i18n';
 
 const logger = new Logger('BaseLangChainProvider');
 
@@ -138,7 +139,7 @@ export default abstract class BaseLangChainProvider {
             try {
                 logger.info(`Executing tool: ${tool.name}`);
 
-                // If this is a web search tool, get search results directly
+                // If this is a web search tool, emit search status first
                 if (tool.name === 'web_search' && onChunk && this.rootStore) {
                     // Get enabled search engines for display
                     const enabledEngines = this.rootStore.settingStore.enabledSearchEngines;
@@ -151,29 +152,31 @@ export default abstract class BaseLangChainProvider {
                         query: userInput,
                         engine: engineDisplay,
                     });
+                }
 
+                // Execute the tool - this will perform the actual search
+                const result = await tool.call(userInput);
+
+                // For web search tool, also emit search results for UI display
+                if (tool.name === 'web_search' && onChunk && this.rootStore) {
                     const webSearchTool = tool as WebSearchTool;
-                    // Get search service from the tool
-                    const searchService = (webSearchTool as any).searchService;
-                    if (searchService) {
-                        try {
-                            const searchResponse = await searchService.performSearch(userInput);
-                            if (searchResponse.results && searchResponse.results.length > 0) {
-                                onChunk({
-                                    type: 'search_results.complete',
-                                    query: searchResponse.query,
-                                    results: searchResponse.results,
-                                    engine: searchResponse.engine,
-                                    contentFetched: false,
-                                });
-                            }
-                        } catch (searchError) {
-                            logger.error('Search failed:', searchError);
-                        }
+                    // Get the last search response from the tool
+                    const lastSearchResponse = (webSearchTool as any).lastSearchResponse;
+                    if (
+                        lastSearchResponse &&
+                        lastSearchResponse.results &&
+                        lastSearchResponse.results.length > 0
+                    ) {
+                        onChunk({
+                            type: 'search_results.complete',
+                            query: lastSearchResponse.query,
+                            results: lastSearchResponse.results,
+                            engine: lastSearchResponse.engine,
+                            contentFetched: false,
+                        });
                     }
                 }
 
-                const result = await tool.call(userInput);
                 toolResults.push(`## ${tool.name} Results:\n${result}\n`);
             } catch (error) {
                 logger.error(`Tool ${tool.name} failed:`, error);
@@ -199,13 +202,13 @@ export default abstract class BaseLangChainProvider {
     private buildEnhancedPrompt(userInput: string, toolResults: string[]): string {
         const toolContext = toolResults.join('\n');
 
-        return `You have access to additional context from various tools. Use this information to provide a comprehensive and accurate response.
+        // 使用多语言的REFERENCE_PROMPT模板
+        const referencePromptTemplate = i18n.translate('REFERENCE_PROMPT');
 
-${toolContext}
-
-User Question: ${userInput}
-
-Please provide a helpful response based on the available information. If you use information from the tools, please cite the sources appropriately.`;
+        // 替换模板中的占位符
+        return referencePromptTemplate
+            .replace('{question}', userInput)
+            .replace('{references}', toolContext);
     }
 
     async convertToLangChainMessages(messages: Message[]) {

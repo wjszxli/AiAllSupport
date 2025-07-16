@@ -192,7 +192,7 @@
 
 .markdown-content ul,
 .markdown-content ol {
-    padding-left: 20px;
+    /* padding-left: 20px; */
     margin: 8px 0;
 }
 
