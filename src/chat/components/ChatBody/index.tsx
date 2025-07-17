@@ -9,7 +9,6 @@ import {
     DeleteOutlined,
     ExpandOutlined,
     ShrinkOutlined,
-    SearchOutlined,
 } from '@ant-design/icons';
 
 import { t } from '@/locales/i18n';
@@ -21,6 +20,7 @@ import robotStore from '@/store/robot';
 import rootStore from '@/store';
 import { observer } from 'mobx-react-lite';
 import MessageList from '../../../components/MessageList';
+import SearchEngineSelector from '@/components/SearchEngineSelector';
 import { useMessageSender } from '@/chat/hooks/useMessageSender';
 import { getMessageService } from '@/services/MessageService';
 import { md } from '@/utils/markdownRenderer';
@@ -41,6 +41,18 @@ const ChatBody: React.FC<ChatBodyProps> = observer(({ userInput, setUserInput })
     const [isEditModalVisible, setIsEditModalVisible] = useState(false);
     const [isInputExpanded, setIsInputExpanded] = useState(false);
     const inputRef = useRef<any>(null);
+
+    // Get selected search engine from settings or use first enabled engine
+    const selectedSearchEngine = useMemo(() => {
+        const selected = rootStore.settingStore.selectedSearchEngine;
+        const enabled = rootStore.settingStore.enabledSearchEngines;
+
+        // If no engine is selected or selected engine is not enabled, use first enabled
+        if (!selected || !enabled.includes(selected)) {
+            return enabled[0] || '';
+        }
+        return selected;
+    }, [rootStore.settingStore.selectedSearchEngine, rootStore.settingStore.enabledSearchEngines]);
 
     // 获取当前机器人
     const selectedRobot = useMemo(() => robotStore.selectedRobot, [robotStore.selectedRobot]);
@@ -272,31 +284,18 @@ const ChatBody: React.FC<ChatBodyProps> = observer(({ userInput, setUserInput })
                         </div>
                         <div className="input-toolbar">
                             <div className="toolbar-left">
-                                {/* 搜索开关按钮 */}
-                                <Tooltip
-                                    title={
-                                        rootStore.settingStore.webSearchEnabled
-                                            ? '关闭网页搜索'
-                                            : '开启网页搜索'
-                                    }
-                                    styles={{ root: { zIndex: 10001 } }}
-                                >
-                                    <Button
-                                        type={
-                                            rootStore.settingStore.webSearchEnabled
-                                                ? 'primary'
-                                                : 'text'
-                                        }
-                                        size="small"
-                                        icon={<SearchOutlined />}
-                                        onClick={() => {
-                                            rootStore.settingStore.setWebSearchEnabled(
-                                                !rootStore.settingStore.webSearchEnabled,
-                                            );
-                                        }}
-                                        className="search-toggle-button"
-                                    />
-                                </Tooltip>
+                                {/* 搜索引擎选择器 */}
+                                <SearchEngineSelector
+                                    selectedEngine={selectedSearchEngine}
+                                    onEngineSelect={(engine) => {
+                                        rootStore.settingStore.setSelectedSearchEngine(engine);
+                                    }}
+                                    onToggleSearch={() => {
+                                        rootStore.settingStore.setWebSearchEnabled(
+                                            !rootStore.settingStore.webSearchEnabled,
+                                        );
+                                    }}
+                                />
 
                                 {/* 展开/收起按钮 */}
                                 <Tooltip

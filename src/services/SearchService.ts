@@ -66,7 +66,69 @@ class SearchService {
     }
 
     /**
-     * 执行搜索
+     * 执行搜索 - 使用指定搜索引擎
+     */
+    public async performSearchWithEngine(query: string, engine: string): Promise<SearchResponse> {
+        const settings = this.rootStore.settingStore;
+
+        // 检查搜索是否启用
+        if (!settings.webSearchEnabled) {
+            throw new Error('Web search is not enabled');
+        }
+
+        // 检查指定的搜索引擎是否启用
+        if (!settings.enabledSearchEngines.includes(engine)) {
+            throw new Error(`Search engine ${engine} is not enabled`);
+        }
+
+        logger.info(`performSearchWithEngine: ${query}, engine: ${engine}`);
+
+        try {
+            let results: SearchResult[] = [];
+
+            switch (engine) {
+                case SEARCH_ENGINES.TAVILY:
+                    results = await this.searchWithTavily(query);
+                    break;
+                case SEARCH_ENGINES.EXA:
+                    results = await this.searchWithExa(query);
+                    break;
+                case SEARCH_ENGINES.BOCHA:
+                    results = await this.searchWithBocha(query);
+                    break;
+                case SEARCH_ENGINES.GOOGLE:
+                    results = await this.searchWithGoogle(query);
+                    break;
+                case SEARCH_ENGINES.BAIDU:
+                    results = await this.searchWithBaidu(query);
+                    break;
+                case SEARCH_ENGINES.BIYING:
+                    results = await this.searchWithBing(query);
+                    break;
+                case SEARCH_ENGINES.SOGOU:
+                    results = await this.searchWithSogou(query);
+                    break;
+                case SEARCH_ENGINES.SEARXNG:
+                    results = await this.searchWithSearxng(query);
+                    break;
+                default:
+                    throw new Error(`Unknown search engine: ${engine}`);
+            }
+
+            const filteredResults = this.filterResultsByDomain(results);
+            return {
+                query,
+                results: filteredResults,
+                engine: engine,
+            };
+        } catch (error) {
+            logger.error(`Search failed with engine ${engine}:`, error);
+            throw error;
+        }
+    }
+
+    /**
+     * 执行搜索 - 使用所有启用的搜索引擎
      */
     public async performSearch(query: string): Promise<SearchResponse> {
         const settings = this.rootStore.settingStore;

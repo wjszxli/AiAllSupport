@@ -27,6 +27,7 @@ export interface SettingsState {
     // Search settings
     webSearchEnabled: boolean;
     enabledSearchEngines: string[];
+    selectedSearchEngine: string; // Currently selected search engine for new searches
     tavilyApiKey: string;
     exaApiKey: string;
     bochaApiKey: string;
@@ -40,6 +41,7 @@ const IS_CHAT_BOX_ICON_KEY = 'settings.isChatBoxIcon';
 const USE_WEBPAGE_CONTEXT_KEY = 'settings.useWebpageContext';
 const WEB_SEARCH_ENABLED_KEY = 'settings.webSearchEnabled';
 const ENABLED_SEARCH_ENGINES_KEY = 'settings.enabledSearchEngines';
+const SELECTED_SEARCH_ENGINE_KEY = 'settings.selectedSearchEngine';
 const TAVILY_API_KEY = 'settings.tavilyApiKey';
 const EXA_API_KEY = 'settings.exaApiKey';
 const BOCHA_API_KEY = 'settings.bochaApiKey';
@@ -55,6 +57,7 @@ class SettingStore {
     // Search settings
     webSearchEnabled = false;
     enabledSearchEngines: string[] = [];
+    selectedSearchEngine = '';
     tavilyApiKey = '';
     exaApiKey = '';
     bochaApiKey = '';
@@ -125,6 +128,7 @@ class SettingStore {
                 useWebpageContext,
                 webSearchEnabled,
                 enabledSearchEngines,
+                selectedSearchEngine,
                 tavilyApiKey,
                 exaApiKey,
                 bochaApiKey,
@@ -139,6 +143,7 @@ class SettingStore {
                     SEARCH_ENGINES.GOOGLE,
                     SEARCH_ENGINES.BAIDU,
                 ]),
+                this.getChromeStorageValue(SELECTED_SEARCH_ENGINE_KEY, SEARCH_ENGINES.GOOGLE),
                 this.getChromeStorageValue(TAVILY_API_KEY, ''),
                 this.getChromeStorageValue(EXA_API_KEY, ''),
                 this.getChromeStorageValue(BOCHA_API_KEY, ''),
@@ -156,6 +161,15 @@ class SettingStore {
                     // @ts-ignore
                     (key) => enabledSearchEngines[key],
                 );
+            }
+            this.selectedSearchEngine = selectedSearchEngine;
+
+            // Ensure selectedSearchEngine is one of the enabled engines
+            if (
+                this.enabledSearchEngines.length > 0 &&
+                !this.enabledSearchEngines.includes(this.selectedSearchEngine)
+            ) {
+                this.selectedSearchEngine = this.enabledSearchEngines[0];
             }
 
             this.tavilyApiKey = tavilyApiKey;
@@ -186,6 +200,7 @@ class SettingStore {
                 this.setChromeStorageValue(USE_WEBPAGE_CONTEXT_KEY, this.useWebpageContext),
                 this.setChromeStorageValue(WEB_SEARCH_ENABLED_KEY, this.webSearchEnabled),
                 this.setChromeStorageValue(ENABLED_SEARCH_ENGINES_KEY, this.enabledSearchEngines),
+                this.setChromeStorageValue(SELECTED_SEARCH_ENGINE_KEY, this.selectedSearchEngine),
                 this.setChromeStorageValue(TAVILY_API_KEY, this.tavilyApiKey),
                 this.setChromeStorageValue(EXA_API_KEY, this.exaApiKey),
                 this.setChromeStorageValue(BOCHA_API_KEY, this.bochaApiKey),
@@ -207,6 +222,7 @@ class SettingStore {
             useWebpageContext: this.useWebpageContext,
             webSearchEnabled: this.webSearchEnabled,
             enabledSearchEngines: this.enabledSearchEngines,
+            selectedSearchEngine: this.selectedSearchEngine,
             tavilyApiKey: this.tavilyApiKey,
             exaApiKey: this.exaApiKey,
             bochaApiKey: this.bochaApiKey,
@@ -226,6 +242,8 @@ class SettingStore {
             this.webSearchEnabled = settings.webSearchEnabled;
         if (settings.enabledSearchEngines !== undefined)
             this.enabledSearchEngines = settings.enabledSearchEngines;
+        if (settings.selectedSearchEngine !== undefined)
+            this.selectedSearchEngine = settings.selectedSearchEngine;
         if (settings.tavilyApiKey !== undefined) this.tavilyApiKey = settings.tavilyApiKey;
         if (settings.exaApiKey !== undefined) this.exaApiKey = settings.exaApiKey;
         if (settings.bochaApiKey !== undefined) this.bochaApiKey = settings.bochaApiKey;
@@ -258,6 +276,12 @@ class SettingStore {
 
     setEnabledSearchEngines(engines: string[]) {
         this.enabledSearchEngines = engines;
+        this.saveSettings();
+        this.notifyToolRefreshCallbacks();
+    }
+
+    setSelectedSearchEngine(engine: string) {
+        this.selectedSearchEngine = engine;
         this.saveSettings();
         this.notifyToolRefreshCallbacks();
     }

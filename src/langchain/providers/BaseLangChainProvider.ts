@@ -36,13 +36,22 @@ export default abstract class BaseLangChainProvider {
 
         // Add web search tool if enabled
         if (settings.webSearchEnabled && settings.enabledSearchEngines.length > 0) {
+            const selectedEngine = settings.selectedSearchEngine;
             const webSearchTool = new WebSearchTool({
                 rootStore: this.rootStore,
                 maxResults: 10, // 增加到10个结果
                 enableContentFetching: true,
+                searchEngine:
+                    selectedEngine && settings.enabledSearchEngines.includes(selectedEngine)
+                        ? selectedEngine
+                        : undefined, // Use specific engine if selected and enabled, otherwise use all engines
             });
             this.tools.push(webSearchTool);
-            logger.info('Web search tool added');
+            logger.info(
+                `Web search tool added${
+                    selectedEngine ? ` with engine: ${selectedEngine}` : ' with all enabled engines'
+                }`,
+            );
         }
 
         // Add webpage context tool if enabled
@@ -141,10 +150,15 @@ export default abstract class BaseLangChainProvider {
 
                 // If this is a web search tool, emit search status first
                 if (tool.name === 'web_search' && onChunk && this.rootStore) {
-                    // Get enabled search engines for display
+                    // Get the selected search engine or fall back to the first enabled engine
+                    const selectedEngine = this.rootStore.settingStore.selectedSearchEngine;
                     const enabledEngines = this.rootStore.settingStore.enabledSearchEngines;
                     const engineDisplay =
-                        enabledEngines.length > 0 ? enabledEngines[0] : 'web_search';
+                        selectedEngine && enabledEngines.includes(selectedEngine)
+                            ? selectedEngine
+                            : enabledEngines.length > 0
+                            ? enabledEngines[0]
+                            : 'web_search';
 
                     // Emit search status first
                     onChunk({

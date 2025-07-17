@@ -24,7 +24,9 @@ const SearchResultsView: React.FC<Props> = ({ searchBlock, forceExpanded = false
     const getEngineDisplayName = (engineStr: string) => {
         // 如果是多个引擎，用逗号分隔
         const engines = engineStr.split(', ');
-        return engines.map((eng) => SEARCH_ENGINE_NAMES[eng.trim()] || eng.trim()).join(', ');
+        return engines
+            .map((eng) => SEARCH_ENGINE_NAMES[eng.trim()]?.split('(')[0].trim() || eng.trim())
+            .join(', ');
     };
 
     // 处理展开/折叠切换

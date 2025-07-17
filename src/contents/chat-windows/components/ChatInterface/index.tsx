@@ -8,7 +8,6 @@ import {
     SendOutlined,
     StopOutlined,
     DeleteOutlined,
-    SearchOutlined,
     GlobalOutlined,
 } from '@ant-design/icons';
 
@@ -17,6 +16,7 @@ import { useMessageSender } from '@/chat/hooks/useMessageSender';
 import { ConfigModelType } from '@/types';
 import { Message } from '@/types/message';
 import MessageList from '@/components/MessageList';
+import SearchEngineSelector from '@/components/SearchEngineSelector';
 import getMessageService from '@/services/MessageService';
 import { observer } from 'mobx-react-lite';
 import { Logger } from '@/utils/logger';
@@ -30,6 +30,18 @@ const ChatInterface = observer(({ initialText }: { initialText?: string }) => {
     const [isInputExpanded, setIsInputExpanded] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const inputRef = useRef<any>(null);
+
+    // Get selected search engine from settings or use first enabled engine
+    const selectedSearchEngine = useMemo(() => {
+        const selected = rootStore.settingStore.selectedSearchEngine;
+        const enabled = rootStore.settingStore.enabledSearchEngines;
+
+        // If no engine is selected or selected engine is not enabled, use first enabled
+        if (!selected || !enabled.includes(selected)) {
+            return enabled[0] || '';
+        }
+        return selected;
+    }, [rootStore.settingStore.selectedSearchEngine, rootStore.settingStore.enabledSearchEngines]);
 
     const streamingMessageId = rootStore.messageStore.streamingMessageId;
     const { handleSendMessage } = useMessageSender();
@@ -206,28 +218,17 @@ const ChatInterface = observer(({ initialText }: { initialText?: string }) => {
                             className="message-input"
                         />
                         <div className="input-controls">
-                            <Tooltip
-                                title={
-                                    rootStore.settingStore.webSearchEnabled
-                                        ? '关闭网页搜索'
-                                        : '开启网页搜索'
-                                }
-                                styles={{ root: { zIndex: 10001 } }}
-                            >
-                                <Button
-                                    type={
-                                        rootStore.settingStore.webSearchEnabled ? 'primary' : 'text'
-                                    }
-                                    size="small"
-                                    icon={<SearchOutlined />}
-                                    onClick={() => {
-                                        rootStore.settingStore.setWebSearchEnabled(
-                                            !rootStore.settingStore.webSearchEnabled,
-                                        );
-                                    }}
-                                    className="search-toggle-button"
-                                />
-                            </Tooltip>
+                            <SearchEngineSelector
+                                selectedEngine={selectedSearchEngine}
+                                onEngineSelect={(engine) => {
+                                    rootStore.settingStore.setSelectedSearchEngine(engine);
+                                }}
+                                onToggleSearch={() => {
+                                    rootStore.settingStore.setWebSearchEnabled(
+                                        !rootStore.settingStore.webSearchEnabled,
+                                    );
+                                }}
+                            />
 
                             <Tooltip
                                 title={

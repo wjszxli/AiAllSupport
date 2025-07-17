@@ -17,7 +17,7 @@ const SearchStatusView: React.FC<Props> = ({ query, engine }) => {
     // 获取引擎显示名称
     const getEngineDisplayName = (engineKey?: string) => {
         if (!engineKey) return '';
-        return SEARCH_ENGINE_NAMES[engineKey] || engineKey;
+        return SEARCH_ENGINE_NAMES[engineKey]?.split('(')[0].trim() || engineKey;
     };
 
     return (

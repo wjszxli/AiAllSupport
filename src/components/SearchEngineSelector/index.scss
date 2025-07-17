@@ -1,0 +1,28 @@
+.search-engine-selector {
+    min-width: 100px !important;
+
+    .selected-engine-name {
+        max-width: 60px;
+        overflow: hidden;
+        font-size: 12px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+.search-engine-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-width: 120px;
+
+    span {
+        flex: 1;
+        margin-right: 8px;
+    }
+}
+
+.search-toggle-button {
+    min-width: auto !important;
+}

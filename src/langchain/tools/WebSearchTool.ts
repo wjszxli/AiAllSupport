@@ -9,6 +9,7 @@ interface WebSearchToolOptions {
     rootStore: RootStore;
     maxResults?: number;
     enableContentFetching?: boolean;
+    searchEngine?: string; // Specific search engine to use, if not provided, uses all enabled engines
 }
 
 export class WebSearchTool extends Tool {
@@ -27,19 +28,32 @@ Examples of when to use:
 The tool will return search results with titles, URLs, and snippets from multiple sources.`;
 
     private searchService: ReturnType<typeof getSearchService>;
+    private searchEngine?: string;
     public lastSearchResponse: any = null; // Store last search response for UI display
 
     constructor(options: WebSearchToolOptions) {
         super();
         this.searchService = getSearchService(options.rootStore);
+        this.searchEngine = options.searchEngine;
     }
 
     protected async _call(query: string): Promise<string> {
         try {
-            logger.info(`Performing web search for: ${query}`);
+            logger.info(
+                `Performing web search for: ${query}${
+                    this.searchEngine ? ` using ${this.searchEngine}` : ''
+                }`,
+            );
 
             let searchResponse;
-            searchResponse = await this.searchService.performSearch(query);
+            if (this.searchEngine) {
+                searchResponse = await this.searchService.performSearchWithEngine(
+                    query,
+                    this.searchEngine,
+                );
+            } else {
+                searchResponse = await this.searchService.performSearch(query);
+            }
 
             // Store the search response for UI display
             this.lastSearchResponse = searchResponse;

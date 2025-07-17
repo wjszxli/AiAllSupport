@@ -1,14 +1,4 @@
-import {
-    Button,
-    Form,
-    Input,
-    message as messageApi,
-    Switch,
-    Tag,
-    Tooltip,
-    Typography,
-    Select,
-} from 'antd';
+import { Button, Form, Input, Switch, Tag, Tooltip, Typography, Select } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 
@@ -92,11 +82,6 @@ const Search: React.FC<SearchProps> = observer(({ form }) => {
     };
 
     const handleSearchEnginesChange = (value: string[]) => {
-        if (value.length > 3) {
-            messageApi.warning(t('selectAtMostThreeSearchEngines'));
-            return;
-        }
-
         setSelectedEngines(value);
         settingStore.setEnabledSearchEngines(value);
         form.setFieldsValue({ searchEngines: value });
