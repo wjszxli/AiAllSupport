@@ -28,9 +28,37 @@ const MessageList: React.FC<MessageListProps> = observer(
         // 自动滚动到底部
         useEffect(() => {
             if (messagesWrapperRef.current) {
-                messagesWrapperRef.current.scrollTop = messagesWrapperRef.current.scrollHeight;
+                const scrollElement = messagesWrapperRef.current;
+
+                // 当有新消息或流式响应时，总是滚动到底部
+                if (messages.length > 0 || streamingMessageId) {
+                    requestAnimationFrame(() => {
+                        scrollElement.scrollTop = scrollElement.scrollHeight;
+                    });
+                }
             }
-        }, [messages]);
+        }, [messages, streamingMessageId]);
+
+        // 当消息内容更新时（流式响应中），持续滚动到底部
+        useEffect(() => {
+            if (streamingMessageId && messagesWrapperRef.current) {
+                const scrollElement = messagesWrapperRef.current;
+                const scrollToBottom = () => {
+                    scrollElement.scrollTop = scrollElement.scrollHeight;
+                };
+
+                // 使用 MutationObserver 监听内容变化
+                const observer = new MutationObserver(scrollToBottom);
+                observer.observe(scrollElement, {
+                    childList: true,
+                    subtree: true,
+                    characterData: true,
+                });
+
+                return () => observer.disconnect();
+            }
+            return () => {};
+        }, [streamingMessageId]);
 
         return (
             <div className="messages-container" ref={messagesWrapperRef}>
