@@ -207,7 +207,7 @@
 
 .markdown-content hr {
     height: 1px;
-    margin: 16px 0;
+    /* margin: 16px 0; */
     background-color: #dfe2e5;
     border: 0;
 }
