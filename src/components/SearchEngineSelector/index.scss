@@ -10,6 +10,15 @@
     }
 }
 
+// Ensure dropdown menu appears above other elements
+.ant-dropdown {
+    z-index: 9999 !important;
+}
+
+.ant-dropdown-menu {
+    z-index: 9999 !important;
+}
+
 .search-engine-item {
     display: flex;
     align-items: center;
