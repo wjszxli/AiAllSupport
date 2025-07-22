@@ -43,7 +43,8 @@
         "clean": "rimraf -rf ./extension ./dist ./*.zip ./*.crx",
         "reinstall": "rimraf -rf ./node_modules && pnpm",
         "prepare": "husky install",
-        "sync-translations": "ts-node scripts/syncTranslations.ts"
+        "sync-translations": "ts-node scripts/syncTranslations.ts",
+        "manifest:set": "node scripts/setManifest.js"
     },
     "dependencies": {
         "@ant-design/icons": "5.6.1",
