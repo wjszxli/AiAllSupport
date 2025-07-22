@@ -55,75 +55,19 @@ export const removeFloatingChatButton = async () => {
  */
 export async function extractWebsiteMetadata(): Promise<WebsiteMetadata> {
     try {
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        // 检查当前执行环境
+        const isContentScript = typeof window !== 'undefined' && window.location;
+        const isExtensionContext = typeof chrome !== 'undefined' && chrome.runtime && chrome.tabs;
 
-        if (!tab || !tab.id) {
-            throw new Error('No active tab found');
+        if (isContentScript) {
+            // 在 content script 环境中直接提取当前页面内容
+            return extractCurrentPageContent();
+        } else if (isExtensionContext) {
+            // 在扩展环境中使用 chrome API
+            return extractFromActiveTab();
+        } else {
+            throw new Error('Unsupported execution environment');
         }
-
-        const result = await chrome.scripting.executeScript({
-            target: { tabId: tab.id },
-            func: () => {
-                try {
-                    const extractContent = () => {
-                        const mainElements = document.querySelectorAll(
-                            'main, article, [role="main"]',
-                        );
-                        let contentText = '';
-
-                        if (mainElements.length > 0) {
-                            mainElements.forEach((element) => {
-                                contentText += `${(element as HTMLElement).textContent}`;
-                            });
-                        } else {
-                            contentText = document.body.textContent || '';
-                        }
-
-                        return contentText;
-                    };
-
-                    const content = extractContent().replace(/\n/g, '');
-                    const language = navigator.language || 'en-US';
-
-                    return {
-                        url: document.location.href,
-                        origin: document.location.origin,
-                        title: document.title,
-                        content: content.slice(0, 15000),
-                        type: 'html',
-                        selection: window.getSelection()?.toString() || '',
-                        language: language,
-                    };
-                } catch (error) {
-                    // We can't use our logger here because this code runs in the browser context
-                    console.error('Error extracting webpage content:', error);
-                    return {
-                        url: document.location.href,
-                        origin: document.location.origin,
-                        title: document.title || 'Unknown page',
-                        content: 'Failed to extract page content',
-                        type: 'html',
-                        selection: '',
-                        hash: '0',
-                    };
-                }
-            },
-        });
-
-        if (!result || !result[0] || !result[0].result) {
-            throw new Error('Failed to extract webpage content');
-        }
-
-        const extractedData = result[0].result;
-        const language = extractedData.language || 'en';
-
-        return {
-            system: {
-                language: language,
-            },
-            website: extractedData,
-            id: tab.id.toString(),
-        };
     } catch (error) {
         logger.error('Error extracting website metadata:', { error });
         return {
@@ -141,6 +85,146 @@ export async function extractWebsiteMetadata(): Promise<WebsiteMetadata> {
             id: '0',
         };
     }
+}
+
+/**
+ * 在 content script 环境中直接提取当前页面内容
+ */
+function extractCurrentPageContent(): WebsiteMetadata {
+    try {
+        const extractContent = () => {
+            const selectors = [
+                'main',
+                'article',
+                '[role="main"]',
+                '#main-content',
+                '.main-content',
+                '#main',
+                '.main',
+                '#content',
+                '.content',
+            ].join(', ');
+
+            const mainElements = document.querySelectorAll(selectors);
+            let contentText = '';
+
+            if (mainElements.length > 0) {
+                mainElements.forEach((element) => {
+                    contentText += `${(element as HTMLElement).innerText || ''} `;
+                });
+            } else {
+                contentText = document.body.innerText || '';
+            }
+
+            return contentText;
+        };
+
+        const content = extractContent().replace(/\s+/g, ' ').trim();
+        const language = navigator.language || 'en-US';
+
+        return {
+            system: {
+                language: language,
+            },
+            website: {
+                url: document.location.href,
+                origin: document.location.origin,
+                title: document.title,
+                content: content.slice(0, 15000),
+                type: 'html',
+                selection: window.getSelection()?.toString() || '',
+                language: language,
+            },
+            id: Date.now().toString(), // 使用时间戳作为 ID
+        };
+    } catch (error) {
+        console.error('Error extracting current page content:', error);
+        throw error;
+    }
+}
+
+/**
+ * 在扩展环境中使用 chrome API 提取活动标签页内容
+ */
+async function extractFromActiveTab(): Promise<WebsiteMetadata> {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+    if (!tab || !tab.id) {
+        throw new Error('No active tab found');
+    }
+
+    const result = await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: () => {
+            try {
+                const extractContent = () => {
+                    const selectors = [
+                        'main',
+                        'article',
+                        '[role="main"]',
+                        '#main-content',
+                        '.main-content',
+                        '#main',
+                        '.main',
+                        '#content',
+                        '.content',
+                    ].join(', ');
+
+                    const mainElements = document.querySelectorAll(selectors);
+                    let contentText = '';
+
+                    if (mainElements.length > 0) {
+                        mainElements.forEach((element) => {
+                            contentText += `${(element as HTMLElement).innerText || ''} `;
+                        });
+                    } else {
+                        contentText = document.body.innerText || '';
+                    }
+
+                    return contentText;
+                };
+
+                const content = extractContent().replace(/\s+/g, ' ').trim();
+                const language = navigator.language || 'en-US';
+
+                return {
+                    url: document.location.href,
+                    origin: document.location.origin,
+                    title: document.title,
+                    content: content.slice(0, 15000),
+                    type: 'html',
+                    selection: window.getSelection()?.toString() || '',
+                    language: language,
+                };
+            } catch (error) {
+                console.error('Error extracting webpage content:', error);
+                return {
+                    url: document.location.href,
+                    origin: document.location.origin,
+                    title: document.title || 'Unknown page',
+                    content: 'Failed to extract page content',
+                    type: 'html',
+                    selection: '',
+                    hash: '0',
+                };
+            }
+        },
+    });
+
+    if (!result || !result[0] || !result[0].result) {
+        throw new Error('Failed to extract webpage content');
+    }
+
+    const extractedData = result[0].result;
+    const language = extractedData.language || 'en';
+
+    return {
+        system: {
+            language: language,
+        },
+        website: extractedData,
+        id: tab.id.toString(),
+    };
 }
 
 export const getModelGroupOptions = (models: Model[] = []) => {
