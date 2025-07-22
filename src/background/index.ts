@@ -140,11 +140,11 @@ chrome.runtime.onInstalled.addListener((details) => {
         contexts: ['page', 'selection', 'image', 'link'],
     });
 
-    chrome.contextMenus.create({
-        id: 'summarizeCurrentPage',
-        title: '总结当前页面',
-        contexts: ['page', 'selection', 'image', 'link'],
-    });
+    // chrome.contextMenus.create({
+    //     id: 'summarizeCurrentPage',
+    //     title: '总结当前页面',
+    //     contexts: ['page', 'selection', 'image', 'link'],
+    // });
 
     chrome.sidePanel.setOptions({
         enabled: false,
