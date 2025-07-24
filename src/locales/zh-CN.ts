@@ -350,4 +350,19 @@ export const zhCN = {
     searching: '正在搜索',
     using: '使用',
     clickToOpenAll: '点击任意结果打开所有链接',
+
+    tourWelcome: '欢迎使用新手引导',
+    tourWelcomeDesc: '我将引导您完成插件的基本配置，让您快速上手使用。',
+    tourApiDesc:
+        '首先配置您的 AI 模型服务商，这是使用助手的基础。您可以添加多个服务商并设置优先级。',
+    tourModelDesc: '在这里选择和配置具体的 AI 模型，调整参数以获得最佳的对话体验。',
+    tourInterfaceDesc: '个性化您的界面，包括主题、语言、显示选项等，打造专属的使用体验。',
+    tourSearchDesc: '配置搜索引擎，让 AI 助手能够获取最新的网络信息来回答您的问题。',
+    tourComplete: '配置完成',
+    tourCompleteDesc: '恭喜！您已经完成了基本配置。现在可以开始使用 DeepSeek 助手了。',
+    tourFinished: '配置向导已完成！',
+    startTour: '开始配置向导',
+    guide: '向导',
+    apiKeyInput: 'API 密钥输入',
+    tourApiKeyDesc: `请在此处输入您的API密钥。您的密钥仅存储在本地，请放心填写。如果没有密钥，可以点击下方的"获取 API 密钥"链接。`,
 };

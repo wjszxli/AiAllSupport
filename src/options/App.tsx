@@ -6,9 +6,22 @@ import {
     RocketOutlined,
     SearchOutlined,
     AppstoreOutlined,
+    QuestionCircleOutlined,
 } from '@ant-design/icons';
-import { Card, Divider, Form, Layout, message, Select, Tabs, Typography } from 'antd';
-import React, { useEffect, useState } from 'react';
+import {
+    Card,
+    Divider,
+    Form,
+    Layout,
+    message,
+    Select,
+    Tabs,
+    Typography,
+    Tour,
+    Button,
+    TourProps,
+} from 'antd';
+import React, { useEffect, useState, useRef } from 'react';
 
 import type { LocaleType } from '@/locales';
 import { locales } from '@/locales';
@@ -17,7 +30,7 @@ import { FEEDBACK_SURVEY_URL, isFirefox, SHORTCUTS_URL } from '@/utils/constant'
 import storage from '@/utils/storage';
 
 import About from './components/About';
-import ApiSettings from './components/ApiSettings';
+import ApiSettings, { ApiSettingsRef } from './components/ApiSettings';
 import Footer from './components/Footer';
 import Interface from './components/Interface';
 import Search from './components/Search';
@@ -33,6 +46,14 @@ const App: React.FC = () => {
     const [form] = Form.useForm();
     const [currentLocale, setCurrentLocale] = useState<LocaleType>(getLocale());
     const [activeTab, setActiveTab] = useState('api');
+
+    // Tour 相关状态
+    const [tourOpen, setTourOpen] = useState(false);
+    const apiTabRef = useRef<HTMLDivElement>(null);
+    const modelTabRef = useRef<HTMLDivElement>(null);
+    const interfaceTabRef = useRef<HTMLDivElement>(null);
+    const searchTabRef = useRef<HTMLDivElement>(null);
+    const tourButtonRef = useRef<HTMLButtonElement>(null);
 
     useEffect(() => {
         const init = async () => {
@@ -114,7 +135,111 @@ const App: React.FC = () => {
         window.open(FEEDBACK_SURVEY_URL, '_blank');
     };
 
-    // Main render method
+    // 添加 ApiSettings 的 ref
+    const apiSettingsRef = useRef<ApiSettingsRef>(null);
+
+    // Tour 步骤配置
+    // 添加Tour当前步骤状态
+    const [tourCurrent, setTourCurrent] = useState(0);
+
+    // 修改Tour步骤配置
+    const tourSteps: TourProps['steps'] = [
+        {
+            title: t('tourWelcome'),
+            description: t('tourWelcomeDesc'),
+            target: () => tourButtonRef.current!,
+        },
+        {
+            title: t('apiSettings'),
+            description: t('tourApiDesc'),
+            target: () => apiTabRef.current!,
+            onNext: async () => {
+                if (apiSettingsRef.current) {
+                    await apiSettingsRef.current.openFirstProviderModal();
+                }
+                setTourCurrent(2);
+            },
+            onPrev: () => {
+                if (apiSettingsRef.current) {
+                    apiSettingsRef.current.handleCancel();
+                }
+                setTourCurrent(0);
+            },
+        },
+        {
+            title: t('apiKeyInput'),
+            description: t('tourApiKeyDesc'),
+            target: (): HTMLElement => {
+                const apiKeyInput = document.getElementById('tour-api-key-input');
+                return apiKeyInput || document.body;
+            },
+            onPrev: () => {
+                // 关闭弹窗并返回到API设置步骤
+                if (apiSettingsRef.current) {
+                    apiSettingsRef.current.handleCancel();
+                }
+                setTourCurrent(1); // 返回到API设置步骤
+            },
+        },
+        {
+            title: t('modelSettings'),
+            description: t('tourModelDesc'),
+            target: () => modelTabRef.current!,
+            onNext: () => setActiveTab('models'),
+        },
+        {
+            title: t('interface'),
+            description: t('tourInterfaceDesc'),
+            target: () => interfaceTabRef.current!,
+            onNext: () => setActiveTab('interface'),
+        },
+        {
+            title: t('search'),
+            description: t('tourSearchDesc'),
+            target: () => searchTabRef.current!,
+            onNext: () => setActiveTab('search'),
+        },
+        {
+            title: t('tourComplete'),
+            description: t('tourCompleteDesc'),
+            target: () => searchTabRef.current!,
+        },
+    ];
+
+    // 检查是否是首次使用
+    useEffect(() => {
+        const checkFirstTime = async () => {
+            try {
+                const hasSeenTour = await storage.get('hasSeenTour');
+                if (!hasSeenTour) {
+                    // 延迟显示 tour，确保页面完全加载
+                    setTimeout(() => {
+                        setTourOpen(true);
+                    }, 1000);
+                }
+            } catch (error) {
+                console.error('Failed to check tour status:', error);
+            }
+        };
+
+        checkFirstTime();
+    }, []);
+
+    const handleTourFinish = async () => {
+        setTourOpen(false);
+        try {
+            await storage.set('hasSeenTour', true);
+            message.success(t('tourFinished') || '配置向导已完成！');
+        } catch (error) {
+            console.error('Failed to save tour status:', error);
+        }
+    };
+
+    const startTour = () => {
+        setActiveTab('api'); // 重置到第一个标签页
+        setTourOpen(true);
+    };
+
     return (
         <Layout className="app">
             <Layout className="app-layout">
@@ -122,26 +247,38 @@ const App: React.FC = () => {
                     <Typography.Title level={2} className="app-title">
                         <RocketOutlined /> {t('appTitle')} - {t('settings')}
                     </Typography.Title>
-                    <Select
-                        value={currentLocale}
-                        onChange={handleLanguageChange}
-                        className="language-selector"
-                        suffixIcon={<GlobalOutlined />}
-                        style={{ width: '150px' }}
-                    >
-                        {(Object.keys(locales) as LocaleType[]).map((locale) => {
-                            const localeWithoutHyphen = locale.replace('-', '');
-                            const value =
-                                localeWithoutHyphen.charAt(0).toUpperCase() +
-                                localeWithoutHyphen.slice(1);
-                            const key = `language${value}` as keyof typeof locales[typeof locale];
-                            return (
-                                <Option key={locale} value={locale}>
-                                    {t(key as string)}
-                                </Option>
-                            );
-                        })}
-                    </Select>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        <Button
+                            ref={tourButtonRef}
+                            icon={<QuestionCircleOutlined />}
+                            onClick={startTour}
+                            type="text"
+                            title={t('startTour') || '开始配置向导'}
+                        >
+                            {t('guide') || '向导'}
+                        </Button>
+                        <Select
+                            value={currentLocale}
+                            onChange={handleLanguageChange}
+                            className="language-selector"
+                            suffixIcon={<GlobalOutlined />}
+                            style={{ width: '150px' }}
+                        >
+                            {(Object.keys(locales) as LocaleType[]).map((locale) => {
+                                const localeWithoutHyphen = locale.replace('-', '');
+                                const value =
+                                    localeWithoutHyphen.charAt(0).toUpperCase() +
+                                    localeWithoutHyphen.slice(1);
+                                const key =
+                                    `language${value}` as keyof typeof locales[typeof locale];
+                                return (
+                                    <Option key={locale} value={locale}>
+                                        {t(key as string)}
+                                    </Option>
+                                );
+                            })}
+                        </Select>
+                    </div>
                 </div>
                 <Divider />
                 <Content className="app-content">
@@ -154,17 +291,17 @@ const App: React.FC = () => {
                         >
                             <TabPane
                                 tab={
-                                    <span>
+                                    <span ref={apiTabRef}>
                                         <ApiOutlined /> {t('apiSettings')}
                                     </span>
                                 }
                                 key="api"
                             >
-                                <ApiSettings />
+                                <ApiSettings ref={apiSettingsRef} />
                             </TabPane>
                             <TabPane
                                 tab={
-                                    <span>
+                                    <span ref={modelTabRef}>
                                         <AppstoreOutlined /> {t('modelSettings')}
                                     </span>
                                 }
@@ -174,7 +311,7 @@ const App: React.FC = () => {
                             </TabPane>
                             <TabPane
                                 tab={
-                                    <span>
+                                    <span ref={interfaceTabRef}>
                                         <ControlOutlined /> {t('interface')}
                                     </span>
                                 }
@@ -182,10 +319,9 @@ const App: React.FC = () => {
                             >
                                 <Interface form={form} />
                             </TabPane>
-
                             <TabPane
                                 tab={
-                                    <span>
+                                    <span ref={searchTabRef}>
                                         <SearchOutlined /> {t('search')}
                                     </span>
                                 }
@@ -211,6 +347,24 @@ const App: React.FC = () => {
                 </Content>
                 <Footer onSetShortcuts={onSetShortcuts} openFeedbackSurvey={openFeedbackSurvey} />
             </Layout>
+
+            {/* Tour 组件 */}
+            <Tour
+                open={tourOpen}
+                onClose={() => setTourOpen(false)}
+                onFinish={handleTourFinish}
+                steps={tourSteps}
+                current={tourCurrent}
+                onChange={setTourCurrent}
+                indicatorsRender={(current, total) => (
+                    <span>
+                        {current + 1} / {total}
+                    </span>
+                )}
+                type="primary"
+                arrow={true}
+                placement="bottom"
+            />
         </Layout>
     );
 };

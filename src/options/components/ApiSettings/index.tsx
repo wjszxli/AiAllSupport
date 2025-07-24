@@ -1,5 +1,5 @@
 import { Avatar, Button, List, Input, Select, Tag, Tooltip } from 'antd';
-import React, { useState } from 'react';
+import React, { useState, forwardRef, useImperativeHandle } from 'react';
 import {
     DndContext,
     closestCenter,
@@ -109,7 +109,15 @@ const SortableItem: React.FC<SortableItemProps> = ({ provider, llmStore, openMod
     );
 };
 
-const ApiSettings: React.FC = observer(() => {
+// 添加接口定义
+export interface ApiSettingsRef {
+    openModal: (provider: Provider) => Promise<void>;
+    openFirstProviderModal: () => Promise<void>;
+    handleCancel: () => void;
+}
+
+// @ts-ignore
+const ApiSettings = forwardRef<ApiSettingsRef, {}>((props, ref) => {
     const { llmStore } = useStore();
 
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -167,6 +175,20 @@ const ApiSettings: React.FC = observer(() => {
         setSelectProviderId(provider.id);
         setIsModalOpen(true);
     };
+
+    // 打开第一个提供商的配置弹窗（用于引导）
+    const openFirstProviderModal = async () => {
+        const firstProvider = providers.find((p) => !p.isSystem) || providers[0];
+        if (firstProvider) {
+            await openModal(firstProvider);
+        }
+    };
+
+    useImperativeHandle(ref, () => ({
+        openModal,
+        openFirstProviderModal,
+        handleCancel,
+    }));
 
     const handleOk = async () => {
         setIsModalOpen(false);
@@ -262,4 +284,4 @@ const ApiSettings: React.FC = observer(() => {
     );
 });
 
-export default ApiSettings;
+export default observer(ApiSettings);

@@ -247,7 +247,10 @@ const ConfigModal: React.FC<ConfigModalProps> = ({
                             ]}
                             noStyle
                         >
-                            <Input.Password placeholder="您的密钥存储在您本地，请放心填写" />
+                            <Input.Password 
+                                id="tour-api-key-input"
+                                placeholder="您的密钥存储在您本地，请放心填写" 
+                            />
                         </Form.Item>
                         {apiKeyWebsite && (
                             <Button
@@ -293,58 +296,58 @@ const ConfigModal: React.FC<ConfigModalProps> = ({
                         onChange={onModelChange}
                     />
                 </Form.Item>
-            </Form>
-            <div>
-                {officialWebsite && (
-                    <Button
-                        icon={<GlobalOutlined />}
-                        type="link"
-                        href={officialWebsite}
-                        target="_blank"
-                        style={{ textAlign: 'left' }}
-                    >
-                        官网
-                    </Button>
-                )}
-                {docs && (
-                    <Button
-                        icon={<CodeOutlined />}
-                        type="link"
-                        href={docs}
-                        target="_blank"
-                        style={{ textAlign: 'left' }}
-                    >
-                        官方文档
-                    </Button>
-                )}
-                {modelsPage && (
-                    <Button
-                        icon={<GlobalOutlined />}
-                        type="link"
-                        href={modelsPage}
-                        target="_blank"
-                        style={{ textAlign: 'left' }}
-                    >
-                        模型列表
-                    </Button>
-                )}
-            </div>
+                <div>
+                    {officialWebsite && (
+                        <Button
+                            icon={<GlobalOutlined />}
+                            type="link"
+                            href={officialWebsite}
+                            target="_blank"
+                            style={{ textAlign: 'left' }}
+                        >
+                            官网
+                        </Button>
+                    )}
+                    {docs && (
+                        <Button
+                            icon={<CodeOutlined />}
+                            type="link"
+                            href={docs}
+                            target="_blank"
+                            style={{ textAlign: 'left' }}
+                        >
+                            官方文档
+                        </Button>
+                    )}
+                    {modelsPage && (
+                        <Button
+                            icon={<GlobalOutlined />}
+                            type="link"
+                            href={modelsPage}
+                            target="_blank"
+                            style={{ textAlign: 'left' }}
+                        >
+                            模型列表
+                        </Button>
+                    )}
+                </div>
 
-            {apiKeyValidated && (
-                <Card
-                    style={{
-                        marginBottom: 16,
-                        backgroundColor: '#f6ffed',
-                        border: '1px solid #b7eb8f',
-                    }}
-                    size="small"
-                >
-                    <Space>
-                        <CheckCircleOutlined style={{ color: '#52c41a' }} />
-                        <Text>API 连接测试成功</Text>
-                    </Space>
-                </Card>
-            )}
+                {apiKeyValidated && (
+                    <Card
+                        style={{
+                            marginBottom: 16,
+                            backgroundColor: '#f6ffed',
+                            border: '1px solid #b7eb8f',
+                        }}
+                        size="small"
+                    >
+                        <Space>
+                            <CheckCircleOutlined style={{ color: '#52c41a' }} />
+                            <Text>API 连接测试成功</Text>
+                        </Space>
+                    </Card>
+                )}
+            </Form>
         </Modal>
     );
 };
