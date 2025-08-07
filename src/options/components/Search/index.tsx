@@ -134,6 +134,7 @@ const Search: React.FC<SearchProps> = observer(({ form }) => {
                 <Switch
                     checked={form.getFieldValue('webSearchEnabled')}
                     onChange={handleWebSearchChange}
+                    id="tour-web-search"
                 />
             </Form.Item>
 
@@ -166,11 +167,12 @@ const Search: React.FC<SearchProps> = observer(({ form }) => {
                                 ]}
                             >
                                 <Select
+                                    id="tour-search-engines"
                                     mode="multiple"
                                     placeholder={t('selectAtLeastOneSearchEngine')}
                                     value={selectedEngines}
                                     onChange={handleSearchEnginesChange}
-                                    style={{ width: '100%' }}
+                                    // style={{ width: '100%' }}
                                     optionLabelProp="label"
                                 >
                                     <Select.OptGroup label="免费搜索引擎">

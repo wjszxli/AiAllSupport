@@ -207,7 +207,7 @@ Please answer in the same language as the user's question.`,
     add: 'Add',
     enableWebSearchMessage: 'Enable Web Search to configure search settings.',
     aboutDescription:
-        'A powerful browser extension that integrates DeepSeek and other AI models into your browsing experience.',
+        'A powerful browser extension that integrates Ai and other AI models into your browsing experience.',
 
     // Auto-save
     autoSaving: 'Saving...',
@@ -364,4 +364,59 @@ Please ensure your response is clear and specific, providing effective guidance 
     searching: 'Searching',
     using: 'Using',
     clickToOpenAll: 'Click any result to open all links',
+
+    // Tour related
+    tourWelcome: 'Welcome to the Setup Guide',
+    tourWelcomeDesc:
+        'I will guide you through the basic configuration of the plugin to help you get started quickly.',
+    tourApiDesc:
+        'First, configure your AI model service providers, which is the foundation for using the assistant. You can add multiple providers and set priorities.',
+    tourModelDesc:
+        'Here, select and configure specific AI models, adjusting parameters for the best conversation experience.',
+    tourInterfaceDesc:
+        'Personalize your interface, including themes, languages, display options, etc., to create your exclusive user experience.',
+    tourSearchDesc:
+        'Configure search engines to enable the AI assistant to obtain the latest web information to answer your questions.',
+    tourComplete: 'Configuration Complete',
+    tourCompleteDesc:
+        'Congratulations! You have completed the basic configuration. Now you can start using the Ai assistant.',
+    tourFinished: 'Setup guide completed!',
+    startTour: 'Start Setup Guide',
+    guide: 'Guide',
+    apiKeyInput: 'API Key Input',
+    tourApiKeyDesc:
+        'Please enter your API key here. Your key is stored locally only, so please feel free to enter it. If you don\'t have a key, you can click the "Get API Key" link below.',
+    tourGetApiKey: 'Get API Key',
+    tourGetApiKeyDesc:
+        'Click the "Get API Key" button to obtain your API key, then paste it into the input box above.',
+    tourSaveConfig: 'Save Configuration',
+    tourSaveConfigDesc:
+        'After filling in the API key, click the "Save" button to save your configuration.',
+    tourChatModel: 'Configure Chat Interface Model',
+    tourChatModelDesc:
+        'Select the AI model to use in the chat interface. This will be the model used when you interact with AI on the main chat page.',
+    tourPopupModel: 'Configure Popup Interface Model',
+    tourPopupModelDesc:
+        'Select the AI model to use in the popup interface. This model will be used when you select text on a webpage and use quick functions.',
+    tourSidebarModel: 'Configure Sidebar Model',
+    tourSidebarModelDesc:
+        'Select the AI model to use in the sidebar. This will be the model used when you interact with AI in the browser sidebar.',
+    tourNext: 'Next',
+    tourPrev: 'Previous',
+    tourFinish: 'Finish',
+    tourSelectionToolbar: 'Configure Selection Toolbar',
+    tourSelectionToolbarDesc:
+        'When enabled, you will see quick action buttons when selecting text on web pages, allowing for easy translation, summarization, and other operations.',
+    tourWebpageContext: 'Configure Webpage Context',
+    tourWebpageContextDesc:
+        'When enabled, the AI can access the current webpage content as context to provide more accurate and relevant responses.',
+    tourWebSearch: 'Configure Web Search',
+    tourWebSearchDesc:
+        'When enabled, the AI can search for the latest web information to answer your questions, providing more accurate and timely responses.',
+    tourSearchEngines: 'Select Search Engines',
+    tourSearchEnginesDesc:
+        'Choose the search engines you want to use. It is recommended to select multiple search engines for more comprehensive search results.',
+    tourStarAuthor: 'Star the Author',
+    tourStarAuthorDesc:
+        'If you find this tool useful, please give the author a star on GitHub to support the development of open source projects!',
 };

@@ -37,7 +37,10 @@ const Interface: React.FC<InterfaceProps> = observer(({ form }) => {
                 initialValue={settingStore.isChatBoxIcon}
                 tooltip={t('showIconTooltip')}
             >
-                <Switch onChange={(checked) => onIsIconChange(checked)} />
+                <Switch
+                    onChange={(checked) => onIsIconChange(checked)}
+                    id="tour-selection-toolbar"
+                />
             </Form.Item>
 
             <Form.Item
@@ -52,6 +55,7 @@ const Interface: React.FC<InterfaceProps> = observer(({ form }) => {
                     onChange={(checked) => {
                         settingStore.setUseWebpageContext(checked);
                     }}
+                    id="tour-webpage-context"
                 />
             </Form.Item>
         </Form>

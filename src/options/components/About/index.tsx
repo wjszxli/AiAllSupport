@@ -19,7 +19,12 @@ const About: React.FC<AboutProps> = ({ onSetShortcuts, openFeedbackSurvey }) => 
                 <Typography.Link onClick={onSetShortcuts} className="link-item">
                     <SettingOutlined /> {t('setShortcuts')}
                 </Typography.Link>
-                <Typography.Link href={GIT_URL} target="_blank" className="link-item">
+                <Typography.Link
+                    href={GIT_URL}
+                    target="_blank"
+                    className="link-item"
+                    id="tour-star-author"
+                >
                     <GithubOutlined /> {t('starAuthor')}
                 </Typography.Link>
                 <Typography.Link onClick={openFeedbackSurvey} className="link-item">

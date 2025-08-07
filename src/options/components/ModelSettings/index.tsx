@@ -18,7 +18,12 @@ import AddRobotModal from '@/components/AddRobotModal';
 const { TabPane } = Tabs;
 const { Title, Text } = Typography;
 
-const ModelSettings: React.FC = observer(() => {
+interface ModelSettingsProps {
+    activeKey?: string;
+    onTabChange?: (key: string) => void;
+}
+
+const ModelSettings: React.FC<ModelSettingsProps> = observer(({ activeKey, onTabChange }) => {
     const { llmStore } = useStore();
     const [selectedModels, setSelectedModels] = useState<Record<ConfigModelType, string>>({
         [ConfigModelType.CHAT]: '',
@@ -239,14 +244,15 @@ const ModelSettings: React.FC = observer(() => {
     return (
         <div className="model-settings">
             <Tabs
-                defaultActiveKey={ConfigModelType.CHAT}
+                activeKey={activeKey || ConfigModelType.CHAT}
+                onChange={onTabChange}
                 size="large"
                 tabBarStyle={{ marginBottom: 24 }}
             >
                 {tabConfigs.map((tab) => (
                     <TabPane
                         tab={
-                            <span className="tab-item">
+                            <span className="tab-item" id={`tour-${tab.type}-tab`}>
                                 {getModelIcon(tab.type)}
                                 {tab.label}
                             </span>
@@ -263,6 +269,7 @@ const ModelSettings: React.FC = observer(() => {
                                 {t(`${tab.type}ModelDescription`)}
                             </Text>
                             <Select
+                                id={`tour-${tab.type}-model-select`}
                                 placeholder={t('selectModelFirst')}
                                 className="model-select"
                                 size="large"
