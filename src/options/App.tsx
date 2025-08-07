@@ -3,7 +3,6 @@ import {
     ControlOutlined,
     GlobalOutlined,
     InfoCircleOutlined,
-    RocketOutlined,
     SearchOutlined,
     AppstoreOutlined,
     QuestionCircleOutlined,
@@ -28,6 +27,7 @@ import { locales } from '@/locales';
 import { getLocale, setLocale, t } from '@/locales/i18n';
 import { FEEDBACK_SURVEY_URL, isFirefox, SHORTCUTS_URL } from '@/utils/constant';
 import storage from '@/utils/storage';
+import RocketIcon from '@/components/RocketIcon';
 
 import About from './components/About';
 import ApiSettings, { ApiSettingsRef } from './components/ApiSettings';
@@ -245,7 +245,7 @@ const App: React.FC = () => {
             <Layout className="app-layout">
                 <div className="app-header">
                     <Typography.Title level={2} className="app-title">
-                        <RocketOutlined /> {t('appTitle')} - {t('settings')}
+                        <RocketIcon size={20} /> {t('appTitle')} - {t('settings')}
                     </Typography.Title>
                     <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                         <Button

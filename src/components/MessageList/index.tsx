@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Empty, Typography, Button } from 'antd';
-import { RocketOutlined, BulbOutlined, ReloadOutlined } from '@ant-design/icons';
+import { BulbOutlined, ReloadOutlined } from '@ant-design/icons';
+import RocketIcon from '@/components/RocketIcon';
 import { Message } from '@/types/message';
 import { t } from '@/locales/i18n';
 import MessageGroup from '@/components/MessageGroup';
@@ -65,9 +66,7 @@ const MessageList: React.FC<MessageListProps> = observer(
                 {groupedMessages.length === 0 ? (
                     <div className="welcome-container">
                         <Empty
-                            image={
-                                <RocketOutlined style={{ fontSize: '64px', color: '#1890ff' }} />
-                            }
+                            image={<RocketIcon size={64} style={{ color: '#1890ff' }} />}
                             description={
                                 <Typography.Text strong>{t('welcomeMessage')}</Typography.Text>
                             }

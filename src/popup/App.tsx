@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 import {
     SettingOutlined,
     GithubOutlined,
-    RocketOutlined,
     GlobalOutlined,
     MessageOutlined,
 } from '@ant-design/icons';
@@ -13,6 +12,7 @@ import type { LocaleType } from '@/locales';
 import { locales } from '@/locales';
 import { GIT_URL } from '@/utils/constant';
 import storage from '@/utils/storage';
+import RocketIcon from '@/components/RocketIcon';
 
 import './App.scss';
 
@@ -90,7 +90,7 @@ const App: React.FC = () => {
             <Card className="app-container">
                 <div className="app-header">
                     <Typography.Title level={2} className="app-title">
-                        <RocketOutlined /> {t('appTitle')}
+                        <RocketIcon size={16} /> {t('appTitle')}
                     </Typography.Title>
                     <Select
                         value={currentLocale}

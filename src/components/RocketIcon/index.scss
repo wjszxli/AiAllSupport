@@ -1,0 +1,23 @@
+.rocket-icon {
+    transition: all 0.2s ease-in-out;
+
+    &:hover {
+        transform: scale(1.1);
+    }
+
+    // 确保图标在不同场景下的对齐
+    &.inline {
+        vertical-align: baseline;
+    }
+
+    &.center {
+        vertical-align: middle;
+    }
+
+    // 适配不同主题
+    &.anticon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+}

@@ -3,7 +3,6 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
     GlobalOutlined,
     SettingOutlined,
-    RocketOutlined,
     CommentOutlined,
     MessageOutlined,
     MenuFoldOutlined,
@@ -22,6 +21,7 @@ import Robot from './components/Robot';
 import Topic from './components/Topic';
 import ChatBody from './components/ChatBody';
 import { FEEDBACK_SURVEY_URL } from '@/utils/constant';
+import RocketIcon from '@/components/RocketIcon';
 
 const { Option } = Select;
 
@@ -229,7 +229,7 @@ const App: React.FC = () => {
             <div className="chat-container">
                 <div className="chat-header">
                     <div className="chat-title">
-                        <RocketOutlined /> {t('appTitle')}
+                        <RocketIcon size={16} /> {t('appTitle')}
                     </div>
                     <div className="header-actions">
                         <Tooltip title={t('feedback')}>
