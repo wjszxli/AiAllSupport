@@ -329,3 +329,22 @@ export const requiresApiKey = (
     // 默认需要API Key，除非明确设置为false
     return providerConfig?.requiresApiKey !== false;
 };
+
+export const mapLegacyNameToId = (name: string): string | null => {
+    switch (name) {
+        case 'DeepSeek':
+            return 'deepseek';
+        case 'SiliconFlow':
+            return 'silicon';
+        case 'Ollama':
+            return 'ollama';
+        case 'Aliyun':
+            return 'dashscope';
+        case 'Baidu':
+            return 'baidu-cloud';
+        case 'Tencent':
+            return 'tencent-cloud-ti';
+        default:
+            return null;
+    }
+};

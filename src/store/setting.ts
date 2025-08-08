@@ -120,8 +120,103 @@ class SettingStore {
         });
     }
 
+    /**
+     * Migrate legacy storage keys to the new namespaced settings keys.
+     * This is safe to run multiple times and will only write when the new key is missing.
+     */
+    private async migrateLegacySettingsIfNeeded(): Promise<void> {
+        try {
+            const legacyKeys = [
+                'isIcon',
+                'enabledSearchEngines',
+                'useWebpageContext',
+                'webSearchEnabled',
+            ] as const;
+
+            const [legacyValues] = await Promise.all([
+                new Promise<Record<string, any>>((resolve) => {
+                    chrome.storage.local.get(legacyKeys as unknown as string[], (result) =>
+                        resolve(result || {}),
+                    );
+                }),
+            ]);
+
+            const writes: Record<string, any> = {};
+
+            if (legacyValues.isIcon !== undefined) {
+                writes[IS_CHAT_BOX_ICON_KEY] = Boolean(legacyValues.isIcon);
+                chrome.storage.local.remove(['isIcon']);
+            }
+
+            if (legacyValues.useWebpageContext !== undefined) {
+                writes[USE_WEBPAGE_CONTEXT_KEY] = Boolean(legacyValues.useWebpageContext);
+                chrome.storage.local.remove(['useWebpageContext']);
+            }
+
+            if (legacyValues.webSearchEnabled !== undefined) {
+                writes[WEB_SEARCH_ENABLED_KEY] = Boolean(legacyValues.webSearchEnabled);
+                chrome.storage.local.remove(['webSearchEnabled']);
+            }
+
+            if (legacyValues.enabledSearchEngines !== undefined) {
+                const legacyEngines: any = legacyValues.enabledSearchEngines;
+                const legacyAsArray: string[] = Array.isArray(legacyEngines)
+                    ? legacyEngines
+                    : typeof legacyEngines === 'object' && legacyEngines !== null
+                    ? Object.values(legacyEngines)
+                    : [];
+
+                const supportedEngines = [
+                    SEARCH_ENGINES.BAIDU,
+                    SEARCH_ENGINES.GOOGLE,
+                    SEARCH_ENGINES.BIYING,
+                    SEARCH_ENGINES.SOGOU,
+                    SEARCH_ENGINES.SEARXNG,
+                    SEARCH_ENGINES.TAVILY,
+                    SEARCH_ENGINES.EXA,
+                    SEARCH_ENGINES.BOCHA,
+                ];
+
+                const normalized = legacyAsArray.filter((e) => supportedEngines.includes(e));
+                // If legacy only contained unsupported engines, fall back to defaults
+                writes[ENABLED_SEARCH_ENGINES_KEY] =
+                    normalized.length > 0
+                        ? normalized
+                        : [SEARCH_ENGINES.GOOGLE, SEARCH_ENGINES.BAIDU];
+            }
+
+            if (Object.keys(writes).length > 0) {
+                await new Promise<void>((resolve) => {
+                    chrome.storage.local.set(writes, () => resolve());
+                });
+
+                // Best-effort cleanup of legacy keys we migrated
+                const keysToRemove: string[] = [];
+                if (writes[IS_CHAT_BOX_ICON_KEY] !== undefined) keysToRemove.push('isIcon');
+                if (writes[USE_WEBPAGE_CONTEXT_KEY] !== undefined)
+                    keysToRemove.push('useWebpageContext');
+                if (writes[WEB_SEARCH_ENABLED_KEY] !== undefined)
+                    keysToRemove.push('webSearchEnabled');
+                if (writes[ENABLED_SEARCH_ENGINES_KEY] !== undefined)
+                    keysToRemove.push('enabledSearchEngines');
+
+                if (keysToRemove.length > 0) {
+                    await new Promise<void>((resolve) => {
+                        chrome.storage.local.remove(keysToRemove, () => resolve());
+                    });
+                }
+
+                logger.info('Legacy settings migrated to new namespaced keys');
+            }
+        } catch (error) {
+            logger.error('Failed to migrate legacy settings:', error);
+        }
+    }
+
     async loadSettings() {
         try {
+            // Migrate legacy keys before loading
+            await this.migrateLegacySettingsIfNeeded();
             // Load individual settings from Chrome storage
             const [
                 isChatBoxIcon,

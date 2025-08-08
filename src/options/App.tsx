@@ -47,6 +47,15 @@ const App: React.FC = () => {
     const [currentLocale, setCurrentLocale] = useState<LocaleType>(getLocale());
     const [activeTab, setActiveTab] = useState('api');
     const [modelActiveTab, setModelActiveTab] = useState('chat');
+    const [isMigrating, setIsMigrating] = useState<boolean>(false);
+    const legacyKeys = useRef<string[]>([
+        'providers',
+        'selectedProvider',
+        'isIcon',
+        'enabledSearchEngines',
+        'useWebpageContext',
+        'webSearchEnabled',
+    ]);
 
     // Tour 相关状态
     const [tourOpen, setTourOpen] = useState(false);
@@ -56,21 +65,47 @@ const App: React.FC = () => {
     const searchTabRef = useRef<HTMLDivElement>(null);
     const tourButtonRef = useRef<HTMLButtonElement>(null);
 
-    useEffect(() => {
-        const init = async () => {
-            try {
-                const savedLocale = await storage.getLocale();
-                if (savedLocale && Object.keys(locales).includes(savedLocale)) {
-                    await setLocale(savedLocale as LocaleType);
-                    setCurrentLocale(savedLocale as LocaleType);
-                }
-            } catch (error) {
-                console.error('Failed to initialize locale:', error);
-            }
-        };
+    // useEffect(() => {
+    //     const init = async () => {
+    //         try {
+    //             const savedLocale = await storage.getLocale();
+    //             if (savedLocale && Object.keys(locales).includes(savedLocale)) {
+    //                 await setLocale(savedLocale as LocaleType);
+    //                 setCurrentLocale(savedLocale as LocaleType);
+    //             }
+    //             // Check for legacy keys presence to display migration modal asap
+    //             chrome.storage.local.get(legacyKeys.current, (res) => {
+    //                 const needsMigration = Object.keys(res).some((k) => res[k] !== undefined);
+    //                 if (needsMigration) setIsMigrating(true);
+    //             });
+    //         } catch (error) {
+    //             console.error('Failed to initialize locale:', error);
+    //         }
+    //     };
 
-        init();
-    }, []);
+    //     init();
+    // }, []);
+
+    // Listen to migration events from stores
+    // useEffect(() => {
+    //     const onStart = () => setIsMigrating(true);
+    //     const onEnd = () => setIsMigrating(false);
+    //     window.addEventListener('legacyMigrationStart', onStart as EventListener);
+    //     window.addEventListener('legacyMigrationEnd', onEnd as EventListener);
+    //     // Also listen to storage changes to auto-hide when legacy keys are removed
+    //     const onStorageChanged = () => {
+    //         chrome.storage.local.get(legacyKeys.current, (res) => {
+    //             const anyLeft = Object.keys(res).some((k) => res[k] !== undefined);
+    //             setIsMigrating(anyLeft);
+    //         });
+    //     };
+    //     chrome.storage.onChanged.addListener(onStorageChanged);
+    //     return () => {
+    //         window.removeEventListener('legacyMigrationStart', onStart as EventListener);
+    //         window.removeEventListener('legacyMigrationEnd', onEnd as EventListener);
+    //         chrome.storage.onChanged.removeListener(onStorageChanged);
+    //     };
+    // }, []);
 
     useEffect(() => {
         const handleLocaleChange = (event: CustomEvent<{ locale: LocaleType }>) => {
@@ -604,6 +639,45 @@ const App: React.FC = () => {
                 </Content>
                 <Footer onSetShortcuts={onSetShortcuts} openFeedbackSurvey={openFeedbackSurvey} />
             </Layout>
+
+            {/* Migration Modal */}
+            {isMigrating && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        inset: 0,
+                        background: 'rgba(0,0,0,0.35)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 9999,
+                    }}
+                >
+                    <div
+                        style={{
+                            background: '#fff',
+                            padding: 24,
+                            borderRadius: 8,
+                            boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
+                            minWidth: 260,
+                            textAlign: 'center',
+                            fontSize: 16,
+                        }}
+                    >
+                        <div style={{ marginBottom: 12 }}>正在数据迁移中...</div>
+                        <Button
+                            onClick={() => {
+                                // 用户选择不迁移：直接清理旧数据键，结束迁移提示
+                                chrome.storage.local.remove(legacyKeys.current, () => {
+                                    setIsMigrating(false);
+                                });
+                            }}
+                        >
+                            跳过迁移
+                        </Button>
+                    </div>
+                </div>
+            )}
 
             {/* Tour 组件 */}
             <Tour

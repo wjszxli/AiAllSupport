@@ -1,5 +1,5 @@
 import { Avatar, Button, List, Input, Select, Tag, Tooltip } from 'antd';
-import React, { useState, forwardRef, useImperativeHandle } from 'react';
+import React, { useState, forwardRef, useImperativeHandle, useEffect, useRef } from 'react';
 import {
     DndContext,
     closestCenter,
@@ -33,7 +33,7 @@ interface SortableItemProps {
 }
 
 // 创建可排序的列表项组件
-const SortableItem: React.FC<SortableItemProps> = ({ provider, llmStore, openModal }) => {
+const SortableItem: React.FC<SortableItemProps> = observer(({ provider, llmStore, openModal }) => {
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
         id: provider.id,
     });
@@ -54,7 +54,13 @@ const SortableItem: React.FC<SortableItemProps> = ({ provider, llmStore, openMod
     const isSidebarProvider = sidebarModel && sidebarModel.provider === provider.id;
 
     return (
-        <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+        <div
+            ref={setNodeRef}
+            style={style}
+            {...attributes}
+            {...listeners}
+            data-provider-id={provider.id}
+        >
             <List.Item
                 key={provider.id}
                 style={{
@@ -107,7 +113,7 @@ const SortableItem: React.FC<SortableItemProps> = ({ provider, llmStore, openMod
             </List.Item>
         </div>
     );
-};
+});
 
 // 添加接口定义
 export interface ApiSettingsRef {
@@ -125,6 +131,7 @@ const ApiSettings = forwardRef<ApiSettingsRef, {}>((props, ref) => {
     const [providerSearch, setProviderSearch] = useState<string>('');
     const [providers, setProviders] = useState<Provider[]>(llmStore.providers);
     const [selectProviderId, setSelectProviderId] = useState<string>('');
+    const listContainerRef = useRef<HTMLDivElement | null>(null);
 
     // 设置拖拽传感器
     const sensors = useSensors(
@@ -170,6 +177,29 @@ const ApiSettings = forwardRef<ApiSettingsRef, {}>((props, ref) => {
         }
         return result;
     }, [providers, selectedGroups, providerSearch]);
+
+    // 同步 store 中的 providers 到本地状态，确保迁移后 UI 能及时更新
+    useEffect(() => {
+        setProviders(llmStore.providers);
+    }, [llmStore.providers]);
+
+    // 当选中的模型变化时，滚动列表使其对应的提供商出现在列表顶部
+    useEffect(() => {
+        const container = listContainerRef.current;
+        if (!container) return;
+        const selectedProviderId = llmStore.getModelForType(ConfigModelType.CHAT)?.provider;
+        if (!selectedProviderId) return;
+        // 仅当过滤后的列表包含该提供商时才滚动
+        if (!filteredProviders.some((p) => p.id === selectedProviderId)) return;
+        const el = container.querySelector<HTMLElement>(
+            `[data-provider-id="${selectedProviderId}"]`,
+        );
+        if (!el) return;
+        // 将目标元素滚动到容器顶部
+        const containerTop = container.getBoundingClientRect().top;
+        const elTop = el.getBoundingClientRect().top;
+        container.scrollTop += elTop - containerTop;
+    }, [llmStore.chatModel, llmStore.popupModel, llmStore.sidebarModel, filteredProviders]);
 
     const openModal = async (provider: Provider) => {
         setSelectProviderId(provider.id);
@@ -248,6 +278,7 @@ const ApiSettings = forwardRef<ApiSettingsRef, {}>((props, ref) => {
                     borderRadius: '4px',
                     padding: '0 4px',
                 }}
+                ref={listContainerRef}
             >
                 <DndContext
                     sensors={sensors}

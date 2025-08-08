@@ -9,7 +9,10 @@ import { ConfigModelType } from '@/types';
 import { SYSTEM_MODELS } from '../config/models';
 import { INITIAL_PROVIDERS } from '../config/providers';
 import robotStore from './robot';
+import { Logger } from '@/utils/logger';
+import { mapLegacyNameToId } from '@/utils';
 
+const logger = new Logger('llmStore');
 class LlmStore {
     providers: Provider[] = INITIAL_PROVIDERS;
     chatModel: Model;
@@ -18,6 +21,10 @@ class LlmStore {
     chatRobot: Robot | null = null;
     popupRobot: Robot | null = null;
     sidebarRobot: Robot | null = null;
+    // Migration state
+    isMigratingProviders = false;
+    isMigratingSelection = false;
+    migrationCompleted = false;
 
     constructor() {
         makeAutoObservable(this);
@@ -25,6 +32,11 @@ class LlmStore {
         this.chatModel = SYSTEM_MODELS.silicon[0];
         this.popupModel = SYSTEM_MODELS.silicon[0];
         this.sidebarModel = SYSTEM_MODELS.silicon[0];
+
+        // Run legacy migrations (providers and selections) independently
+        this.runLegacyMigrationsIfNeeded().catch((e) => {
+            console.warn('[llmStore] Legacy migrations failed:', e);
+        });
 
         // 持久化数据存储
         makePersistable(this, {
@@ -40,6 +52,178 @@ class LlmStore {
             ],
             storage: chromeStorageAdapter as any,
         });
+    }
+
+    private async runLegacyMigrationsIfNeeded(): Promise<void> {
+        // Detect legacy presence first
+        const needProviders = await this.checkLegacyProvidersNeeded();
+        const needSelection = await this.checkLegacySelectionNeeded();
+        if (!needProviders && !needSelection) {
+            return;
+        }
+        try {
+            // Notify UI that migration is starting
+            window.dispatchEvent(new CustomEvent('legacyMigrationStart'));
+        } catch {}
+
+        try {
+            if (needProviders) {
+                this.isMigratingProviders = true;
+                await this.migrateLegacyProviders();
+            }
+        } finally {
+            this.isMigratingProviders = false;
+        }
+
+        try {
+            if (needSelection) {
+                this.isMigratingSelection = true;
+                await this.migrateLegacySelectedProvider();
+            }
+        } finally {
+            this.isMigratingSelection = false;
+        }
+
+        this.migrationCompleted = true;
+        try {
+            window.dispatchEvent(new CustomEvent('legacyMigrationEnd'));
+        } catch {}
+    }
+
+    private async checkLegacyProvidersNeeded(): Promise<boolean> {
+        return new Promise<boolean>((resolve) => {
+            chrome.storage.local.get(['providers'], (result) => {
+                resolve(!!(result && result.providers));
+            });
+        });
+    }
+
+    private async checkLegacySelectionNeeded(): Promise<boolean> {
+        return new Promise<boolean>((resolve) => {
+            chrome.storage.local.get(['selectedProvider'], (result) => {
+                resolve(!!(result && result.selectedProvider));
+            });
+        });
+    }
+
+    // Migrate legacy providers config (apiKey, apiHost, enabled)
+    private async migrateLegacyProviders(): Promise<void> {
+        try {
+            logger.info('migrateLegacyProviders');
+
+            // Load legacy provider config
+            const legacyKeys = ['providers', 'selectedProvider'] as const;
+            const legacy = await new Promise<Record<string, any>>((resolve) => {
+                chrome.storage.local.get(legacyKeys as unknown as string[], (result) =>
+                    resolve(result || {}),
+                );
+            });
+
+            logger.info('legacy.providers', legacy?.providers);
+
+            const legacyProviders = legacy.providers as
+                | Record<
+                      string,
+                      {
+                          apiKey?: string | null;
+                          apiHost?: string;
+                          selected?: boolean;
+                          selectedModel?: string | null;
+                      }
+                  >
+                | undefined;
+            if (!legacyProviders || Object.keys(legacyProviders).length === 0) {
+                return; // Nothing to migrate
+            }
+
+            // Start from system defaults
+            const migratedProviders = INITIAL_PROVIDERS.map((p) => ({ ...p }));
+
+            // Apply legacy values
+            Object.entries(legacyProviders).forEach(([legacyName, cfg]) => {
+                const id = mapLegacyNameToId(legacyName);
+                if (!id) return;
+                const provider = migratedProviders.find((p) => p.id === id);
+                if (!provider) return;
+
+                if (typeof cfg.apiKey !== 'undefined' && cfg.apiKey !== null) {
+                    provider.apiKey = cfg.apiKey;
+                }
+                if (typeof cfg.apiHost === 'string' && cfg.apiHost.trim()) {
+                    provider.apiHost = cfg.apiHost.trim();
+                }
+                if (typeof cfg.selected === 'boolean') {
+                    provider.enabled = cfg.selected;
+                } else if (cfg.apiKey) {
+                    // If no explicit selected flag, enable when apiKey exists
+                    provider.enabled = true;
+                }
+                logger.info('provider', provider);
+            });
+
+            // Apply providers to store
+            this.providers = migratedProviders;
+
+            // Best-effort: remove legacy provider keys (providers only)
+            chrome.storage.local.remove(['providers']);
+            console.info('[llmStore] Legacy providers migrated.');
+        } catch (error) {
+            console.warn('[llmStore] migrateLegacyProviders error:', error);
+        }
+    }
+
+    // Migrate legacy selectedProvider/selectedModel into chat/popup/sidebar models
+    private async migrateLegacySelectedProvider(): Promise<void> {
+        try {
+            logger.info('migrateLegacySelectedProvider');
+
+            const legacyKeys = ['selectedProvider'] as const;
+            const legacy = await new Promise<Record<string, any>>((resolve) => {
+                chrome.storage.local.get(legacyKeys as unknown as string[], (result) =>
+                    resolve(result || {}),
+                );
+            });
+
+            const legacySelectedProvider = legacy.selectedProvider as string | undefined;
+
+            if (!legacySelectedProvider) {
+                logger.info('no legacySelectedProvider');
+                chrome.storage.local.remove(['selectedProvider']);
+                return;
+            }
+
+            let chosenModel = this.chatModel;
+            const legacySelectedModel = this.providers.find(
+                (p) => p.id === mapLegacyNameToId(legacySelectedProvider),
+            );
+
+            logger.info('legacySelectedModel', legacySelectedModel);
+
+            if (!legacySelectedModel) {
+                logger.info('no legacySelectedModel');
+                return;
+            }
+
+            if (!legacySelectedModel.apiKey) {
+                logger.info('no apiKey');
+                return;
+            }
+
+            if (legacySelectedModel.models.length > 0) {
+                chosenModel = legacySelectedModel.models[0];
+            }
+
+            // Apply to three UI contexts
+            this.chatModel = chosenModel;
+            this.popupModel = chosenModel;
+            this.sidebarModel = chosenModel;
+
+            // Remove only selectedProvider key
+            chrome.storage.local.remove(['selectedProvider']);
+            console.info('[llmStore] Legacy selectedProvider migrated.');
+        } catch (error) {
+            console.warn('[llmStore] migrateLegacySelectedProvider error:', error);
+        }
     }
 
     // 转换为动作方法
