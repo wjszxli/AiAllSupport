@@ -131,6 +131,9 @@ class SettingStore {
                 'enabledSearchEngines',
                 'useWebpageContext',
                 'webSearchEnabled',
+                'tavilyApiKey',
+                'filteredDomains',
+                FILTERED_DOMAINS_KEY,
             ] as const;
 
             const [legacyValues] = await Promise.all([
@@ -156,6 +159,73 @@ class SettingStore {
             if (legacyValues.webSearchEnabled !== undefined) {
                 writes[WEB_SEARCH_ENABLED_KEY] = Boolean(legacyValues.webSearchEnabled);
                 chrome.storage.local.remove(['webSearchEnabled']);
+            }
+
+            if (legacyValues.tavilyApiKey !== undefined) {
+                writes[TAVILY_API_KEY] = legacyValues.tavilyApiKey;
+                chrome.storage.local.remove(['tavilyApiKey']);
+            }
+
+            // filteredDomains 迁移规则：
+            // - 如果新 key 已有内容，同时存在老的 filteredDomains，则合并，老的优先（顺序以老的在前），去重
+            // - 如果只有老的 filteredDomains，则直接按新结构写入
+            if (
+                legacyValues.filteredDomains !== undefined ||
+                legacyValues[FILTERED_DOMAINS_KEY] !== undefined
+            ) {
+                const normalizeToArray = (val: any): string[] => {
+                    if (Array.isArray(val)) {
+                        return val
+                            .map((v) => (typeof v === 'string' ? v.trim() : ''))
+                            .filter(Boolean);
+                    }
+                    if (val && typeof val === 'object') {
+                        return Object.values(val)
+                            .map((v) => (typeof v === 'string' ? v.trim() : ''))
+                            .filter(Boolean);
+                    }
+                    if (typeof val === 'string') {
+                        // 兼容字符串以逗号/换行分隔
+                        return val
+                            .split(/[,\n]/)
+                            .map((v) => v.trim())
+                            .filter(Boolean);
+                    }
+                    return [];
+                };
+
+                const legacyOld = normalizeToArray(legacyValues.filteredDomains);
+                const existingNew = normalizeToArray(legacyValues[FILTERED_DOMAINS_KEY]);
+
+                if (legacyOld.length > 0) {
+                    const merged: string[] = [];
+                    const seen = new Set<string>();
+                    // 老的优先，保持顺序
+                    for (const d of legacyOld) {
+                        const key = d;
+                        if (!seen.has(key)) {
+                            seen.add(key);
+                            merged.push(d);
+                        }
+                    }
+                    // 追加新的中不存在的
+                    for (const d of existingNew) {
+                        const key = d;
+                        if (!seen.has(key)) {
+                            seen.add(key);
+                            merged.push(d);
+                        }
+                    }
+                    writes[FILTERED_DOMAINS_KEY] = merged;
+                } else if (existingNew.length > 0) {
+                    // 无老数据且新里有内容：保持现有新数据
+                    writes[FILTERED_DOMAINS_KEY] = existingNew;
+                }
+
+                // 清理老 key（如果存在）
+                if (legacyValues.filteredDomains !== undefined) {
+                    chrome.storage.local.remove(['filteredDomains']);
+                }
             }
 
             if (legacyValues.enabledSearchEngines !== undefined) {
