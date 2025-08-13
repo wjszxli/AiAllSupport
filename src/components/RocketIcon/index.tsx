@@ -19,6 +19,7 @@ const RocketIcon: React.FC<RocketIconProps> = ({ size = 16, className = '', styl
         } else if (numSize <= 32) {
             return '/icons/icon32.png';
         } else if (numSize <= 48) {
+            23;
             return '/icons/icon48.png';
         } else {
             return '/icons/icon128.png';

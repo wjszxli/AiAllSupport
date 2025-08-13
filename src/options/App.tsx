@@ -200,13 +200,8 @@ const App: React.FC = () => {
             },
             onNext: () => {
                 // 触发保存并关闭弹窗，然后切换到模型设置页面
-                const saveButton =
-                    (document.querySelector('.ant-modal-footer .ant-btn-primary') as HTMLElement) ||
-                    (Array.from(document.querySelectorAll('.ant-modal-footer button')).find((btn) =>
-                        btn.textContent?.includes('保存'),
-                    ) as HTMLElement);
-                if (saveButton) {
-                    saveButton.click();
+                if (apiSettingsRef.current) {
+                    apiSettingsRef.current.handleCancel();
                 }
                 // 延迟切换到模型设置页面，等待弹窗关闭
                 setTimeout(() => {

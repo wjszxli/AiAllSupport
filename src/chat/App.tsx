@@ -229,7 +229,7 @@ const App: React.FC = () => {
             <div className="chat-container">
                 <div className="chat-header">
                     <div className="chat-title">
-                        <RocketIcon size={16} /> {t('appTitle')}
+                        <RocketIcon size={16} style={{ marginRight: 5 }} /> {t('appTitle')}
                     </div>
                     <div className="header-actions">
                         <Tooltip title={t('feedback')}>
