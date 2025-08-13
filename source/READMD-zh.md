@@ -4,9 +4,10 @@
 
 不过，直接调用各大厂商的 API 需要一定的开发能力，涉及接口调用、API Key 管理等操作，使用门槛较高。因此，我们开源了一款 DeepSeek 全平台支持插件 —— 一款免费、开源的浏览器扩展。它支持 DeepSeek 及多个云服务提供商（包括 DeepSeek 官方、硅基流动、腾讯云、百度云、阿里云等），让用户无需编写代码，即可一键集成 DeepSeek AI，轻松体验强大 AI 能力。
 
-**📌 GitHub 项目地址：[DeepSeekAllSupports](https://github.com/wjszxli/DeepSeekAllSupports)**
+**📌 GitHub 项目地址：[AiAllSupport](https://github.com/wjszxli/AiAllSupport)**
 
 ## 开源插件支持服务商
+
 该插件兼容多个 DeepSeek API 提供商，包括：
 
 > - [DeepSeek](https://deepseek.com) 官方 API
@@ -39,42 +40,41 @@
 - **Markdown 渲染**: 支持代码块、列表、数学公式（MathJax）等格式，增强阅读体验。
 - **代码高亮**: 支持多种编程语言语法高亮。
 
-
 ## 接下来还将支持
+
 - **一键总结页面**: 支持一键总结页面，生成页面的总结、摘要、思维导图等
 - **一键翻译**: 支持将选中的内容一键翻译
 - **一键多模型**: 支持将多个模型共同回答同一个问题
 - **代码审查**: 支持在 gitlab、github 等平台进行代码审查
 
-
-
-
 ## 安装指南
 
 ## Chrome 商店（审核中）
 
-审核通过后，可直接在 Chrome 扩展商店搜索 “DeepSeekAllSupports” 进行安装。
+审核通过后，可直接在 Chrome 扩展商店搜索 “AiAllSupport” 进行安装。
 
 ## 手动安装（zip 包）
 
 1. **下载插件压缩包**
-    - 访问 [GitHub Releases](https://github.com/wjszxli/DeepSeekAllSupports/releases)。
-    - 下载最新版本的 DeepSeekAllSupports.v1.0.zip，解压至本地文件夹（如 D:\DeepSeekAllSupports）。
-    - 请确保解压后的文件夹结构正确（参考下图）。
 
-    ![目录结构](https://files.mdnice.com/user/14956/906ec0b4-93e9-4f91-a5c5-3c3851f30ac0.png)
+   - 访问 [GitHub Releases](https://github.com/wjszxli/AiAllSupport/releases)。
+   - 下载最新版本的 AiAllSupport.v1.0.zip，解压至本地文件夹（如 D:\AiAllSupport）。
+   - 请确保解压后的文件夹结构正确（参考下图）。
+
+   ![目录结构](https://files.mdnice.com/user/14956/906ec0b4-93e9-4f91-a5c5-3c3851f30ac0.png)
 
 2. **在 Chrome 浏览器中加载插件**
-    - 访问 chrome://extensions/，启用**开发者模式**。
-    - 点击 “**加载已解压的扩展程序**”，选择解压后的插件文件夹。
-    - 安装完成后，即可在浏览器中启用插件。
+   - 访问 chrome://extensions/，启用**开发者模式**。
+   - 点击 “**加载已解压的扩展程序**”，选择解压后的插件文件夹。
+   - 安装完成后，即可在浏览器中启用插件。
 
 ## 源码安装
 
 如果你希望自行编译插件，可以按照以下步骤进行：
+
 ```bash
 # 克隆项目
-git clone https://github.com/wjszxli/DeepSeekAllSupports.git
+git clone https://github.com/wjszxli/AiAllSupport.git
 
 # 安装依赖
 pnpm install
@@ -82,26 +82,25 @@ pnpm install
 # 构建项目
 pnpm run build
 ```
-然后按照 ZIP 包安装方式，在浏览器中手动加载 extension 目录中的扩展程序。
 
+然后按照 ZIP 包安装方式，在浏览器中手动加载 extension 目录中的扩展程序。
 
 ## 如何使用
 
 ### 确保插件已启用
 
 1. Chrome 插件有个开关，如何关闭会无法使用插件
-   - 在 Chrome 地址栏输入 chrome://extensions/，查找 DeepSeekAllSupports。
+
+   - 在 Chrome 地址栏输入 chrome://extensions/，查找 AiAllSupport。
    - 确保插件处于 启用 状态，否则请手动开启， 参考下图。
 
    ![image](https://files.mdnice.com/user/14956/8254890c-6115-4444-a09b-7759693d3ce3.png)
 
 ### 选择 API 提供商 & 配置 API Key
 
-1. **固定插件**：点击 Chrome 右上角 扩展程序按钮，找到 DeepSeekAllSupports 并固定到工具栏。
-
+1. **固定插件**：点击 Chrome 右上角 扩展程序按钮，找到 AiAllSupport 并固定到工具栏。
 
    ![image](https://files.mdnice.com/user/14956/38511b25-f47a-4d27-aac2-88b945f52a82.png)
-
 
 2. **选择服务商**：点击插件图标，在弹出的界面选择 API 提供商。
 3. **获取 API Key**：
@@ -110,24 +109,22 @@ pnpm run build
 
    ![image](https://files.mdnice.com/user/14956/54c3ee05-3a7c-42be-84c6-e7930468be4d.png)
 
-
    ![image](https://files.mdnice.com/user/14956/cc5bb0d6-9eba-4aad-b304-9afc25807fa6.png)
 
    - 在 API Key 页面点击 “创建 API Key”，填写必要信息后生成 API Key
 
    ![image](https://files.mdnice.com/user/14956/49bf383f-fcec-4a4a-ba38-d78b7c9a849b.png)
-   
+
 4. **填入 API Key**：复制 API Key 并粘贴到插件的 API Key 输入框 中，点击 “保存配置”。
-![image](https://files.mdnice.com/user/14956/09fe006a-e53b-4baf-b0e7-887a588aee18.png)
+   ![image](https://files.mdnice.com/user/14956/09fe006a-e53b-4baf-b0e7-887a588aee18.png)
 5. 测试 API 连接：保存 API Key 后，插件会自动进行 API 连接测试，成功后即可使用。
 
-
    ![image](https://files.mdnice.com/user/14956/0808b080-157b-4631-a888-1b5627b8bc66.png)
-   
+
    ![image](https://files.mdnice.com/user/14956/0c313ca4-5dbd-4141-874c-19614d18403d.png)
-   
 
 ### 体验 AI 功能
+
 - **网页选中文本**：选中任意网页文本，点击 DeepSeek 图标，即可调起 AI 对话窗口。
 
 ![image](https://files.mdnice.com/user/14956/4201fc0e-3541-43fa-87b6-5a88cd4ffb64.png)
@@ -141,6 +138,7 @@ pnpm run build
 ![output](https://files.mdnice.com/user/14956/cbdf62b7-d3b2-4245-b801-49ccf267a946.gif)
 
 ### 🔍 体验 R1 模型
+
 选择 DeepSeek R1 模型，可观察 AI 的推理过程，直观感受其思维逻辑。
 
 ![image](https://files.mdnice.com/user/14956/9219618d-ac17-4b86-8d83-54e1185c44f3.png)
@@ -148,8 +146,8 @@ pnpm run build
 
 ## 总结
 
-DeepSeekAllSupports 是一款高效、便捷的 AI 插件，支持多个 DeepSeek API 提供商，让用户无需复杂的技术操作即可快速接入 AI 服务。无论是网页内容分析、多轮对话，还是代码高亮、Markdown 渲染，该插件都能提供一流的体验。
+AiAllSupport 是一款高效、便捷的 AI 插件，支持多个 DeepSeek API 提供商，让用户无需复杂的技术操作即可快速接入 AI 服务。无论是网页内容分析、多轮对话，还是代码高亮、Markdown 渲染，该插件都能提供一流的体验。
 
 **🚀 立即体验 DeepSeek 极速 AI，探索更多可能性！**
 
-**📌 GitHub 项目地址：[DeepSeekAllSupports](https://github.com/wjszxli/DeepSeekAllSupports)**
+**📌 GitHub 项目地址：[AiAllSupport](https://github.com/wjszxli/AiAllSupport)**

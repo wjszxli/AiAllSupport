@@ -405,7 +405,7 @@ class SearchService {
             // 构建请求头
             const headers: Record<string, string> = {
                 'Content-Type': 'application/json',
-                'User-Agent': 'DeepSeekAllSupports-Extension/1.0',
+                'User-Agent': 'AiAllSupport-Extension/1.0',
             };
 
             // 如果配置了用户名，添加到请求头

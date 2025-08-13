@@ -1,14 +1,14 @@
-# DeepSeekAllSupports - DeepSeek 网页助手
+# AiAllSupport - DeepSeek 网页助手
 
 <div align="center">
 
-<img src="public/icons/icon128.png" alt="DeepSeekAllSupports" width="128" />
+<img src="public/icons/icon128.png" alt="AiAllSupport" width="128" />
 
 </div>
 
 ## 📖 简介
 
-DeepSeekAllSupports 是一款免费开源的浏览器扩展，支持 [DeepSeek](https://deepseek.com) 及其多平台服务，包括 DeepSeek 官方、硅基流动、腾讯云、百度云、阿里云、本地大模型等。无论您使用哪家服务商，DeepSeekAllSupports 都能帮助您 无缝集成，轻松调用 DeepSeek 强大的 AI 能力，为您的工作和研究提供高效支持。
+AiAllSupport 是一款免费开源的浏览器扩展，支持 [DeepSeek](https://deepseek.com) 及其多平台服务，包括 DeepSeek 官方、硅基流动、腾讯云、百度云、阿里云、本地大模型等。无论您使用哪家服务商，AiAllSupport 都能帮助您 无缝集成，轻松调用 DeepSeek 强大的 AI 能力，为您的工作和研究提供高效支持。
 
 ## 开源插件支持服务商
 
@@ -50,17 +50,25 @@ DeepSeekAllSupports 是一款免费开源的浏览器扩展，支持 [DeepSeek](
 
 ## 即将支持
 
-
 ## 接下来还将支持
+
 ### ✅ 一键总结页面
+
 支持一键总结页面，生成页面的总结、摘要、思维导图等
+
 ### ✅ 一键翻译
+
 支持右键一键翻译文章和文本### ✅ 一键多模型
 支持将多个模型共同回答同一个问题
+
 ### ✅ 代码审查
+
 支持在 gitlab、github 等平台进行代码审查
+
 ### ✅ 问题并发能力
+
 一个问题可以问多个服务商和多个大模型，来综合进行比对，并且每个服务商和模型单独窗口，可以随意拖拽和关闭任何其中一个
+
 ### ✅ 更多功能 期待你的建议，欢迎联系我
 
 ## 如何安装
@@ -89,7 +97,7 @@ DeepSeekAllSupports 是一款免费开源的浏览器扩展，支持 [DeepSeek](
 
 ## 联系我
 
-- 项目问题: [GitHub Issues](https://github.com/wjszxli/DeepSeekAllSupports/issues)
+- 项目问题: [GitHub Issues](https://github.com/wjszxli/AiAllSupport/issues)
 - 邮件联系: [wjszxli@gmail.com]
 
 ---

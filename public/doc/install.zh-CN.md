@@ -2,14 +2,14 @@
 
 ## Chrome 商店
 
-点击 [这里](https://chromewebstore.google.com/detail/deepseekallsupports/llogfbeeebfjkbmajodnjpljpfnaaplm?authuser=0&hl=zh-CN) 直接安装或者在 [Chrome 扩展商店](https://chromewebstore.google.com/?hl=zh-CN&authuser=0)搜索 “DeepSeekAllSupports” 进行安装。
+点击 [这里](https://chromewebstore.google.com/detail/AiAllSupport/llogfbeeebfjkbmajodnjpljpfnaaplm?authuser=0&hl=zh-CN) 直接安装或者在 [Chrome 扩展商店](https://chromewebstore.google.com/?hl=zh-CN&authuser=0)搜索 “AiAllSupport” 进行安装。
 
 ## 手动安装（zip 包）
 
 1. **下载插件压缩包**
 
-   - 访问 [GitHub Releases](https://github.com/wjszxli/DeepSeekAllSupports/releases)。
-   - 下载最新版本的 DeepSeekAllSupports.v1.0.zip，解压至本地文件夹（如 D:\DeepSeekAllSupports）。
+   - 访问 [GitHub Releases](https://github.com/wjszxli/AiAllSupport/releases)。
+   - 下载最新版本的 AiAllSupport.v1.0.zip，解压至本地文件夹（如 D:\AiAllSupport）。
    - 请确保解压后的文件夹结构正确（参考下图）。
 
    ![目录结构](https://files.mdnice.com/user/14956/906ec0b4-93e9-4f91-a5c5-3c3851f30ac0.png)
@@ -25,7 +25,7 @@
 
 ```bash
 # 克隆项目
-git clone https://github.com/wjszxli/DeepSeekAllSupports.git
+git clone https://github.com/wjszxli/AiAllSupport.git
 
 # 安装依赖
 pnpm install

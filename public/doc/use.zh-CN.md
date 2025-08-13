@@ -4,14 +4,14 @@
 
 1. Chrome 插件有个开关，如何关闭会无法使用插件
 
-   - 在 Chrome 地址栏输入 chrome://extensions/，查找 DeepSeekAllSupports。
+   - 在 Chrome 地址栏输入 chrome://extensions/，查找 AiAllSupport。
    - 确保插件处于 启用 状态，否则请手动开启， 参考下图。
 
    ![image](https://files.mdnice.com/user/14956/8254890c-6115-4444-a09b-7759693d3ce3.png)
 
 ### 选择 API 提供商 & 配置 API Key
 
-1. **固定插件**：点击 Chrome 右上角 扩展程序按钮，找到 DeepSeekAllSupports 并固定到工具栏。
+1. **固定插件**：点击 Chrome 右上角 扩展程序按钮，找到 AiAllSupport 并固定到工具栏。
 
    ![image](https://files.mdnice.com/user/14956/38511b25-f47a-4d27-aac2-88b945f52a82.png)
 
@@ -120,6 +120,6 @@ ollama run deepseek-r1:7b
 
 ## 总结
 
-DeepSeekAllSupports 是一款高效、便捷的 AI 插件，支持多个 DeepSeek API 提供商，让用户无需复杂的技术操作即可快速接入 AI 服务。无论是网页内容分析、多轮对话，还是代码高亮、Markdown 渲染，该插件都能提供一流的体验。
+AiAllSupport 是一款高效、便捷的 AI 插件，支持多个 DeepSeek API 提供商，让用户无需复杂的技术操作即可快速接入 AI 服务。无论是网页内容分析、多轮对话，还是代码高亮、Markdown 渲染，该插件都能提供一流的体验。
 
 **🚀 立即体验 DeepSeek 极速 AI，探索更多可能性！**

@@ -1,19 +1,19 @@
 {
-    "name": "DeepSeekAllSupports",
-    "displayName": "DeepSeekAllSupports",
+    "name": "AiAllSupport",
+    "displayName": "AiAllSupport",
     "version": "1.0.11",
     "browserslist": "Chrome >= 96",
     "private": true,
     "description": "support all servers in deepseek",
     "author": "wangjunsheng",
     "license": "MIT",
-    "homepage": "https://github.com/wjszxli/DeepSeekAllSupports#readme",
+    "homepage": "https://github.com/wjszxli/AiAllSupport#readme",
     "repository": {
         "type": "git",
-        "url": "git+ssh://git@github.com/wjszxli/DeepSeekAllSupports.git"
+        "url": "git+ssh://git@github.com/wjszxli/AiAllSupport.git"
     },
     "bugs": {
-        "url": "https://github.com/wjszxli/DeepSeekAllSupports/issues"
+        "url": "https://github.com/wjszxli/AiAllSupport/issues"
     },
     "engines": {
         "node": "^18.12.1"

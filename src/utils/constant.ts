@@ -135,7 +135,7 @@ export const CHAT_BOX_ID = 'custom-chat-box';
 export const CHAT_BUTTON_ID = 'custom-chat-button';
 export const FLOATING_CHAT_BUTTON_ID = 'floating-chat-button';
 
-export const GIT_URL = 'https://github.com/wjszxli/DeepSeekAllSupports';
+export const GIT_URL = 'https://github.com/wjszxli/AiAllSupport';
 
 export const MODIFY_HEADERS_RULE_ID = 1001;
 

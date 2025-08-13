@@ -4,14 +4,14 @@
 
 1. Chrome extensions have an on/off switch, and the plugin will not work if it is turned off.
 
-   - Type `chrome://extensions/` in the Chrome address bar and search for **DeepSeekAllSupports**.
+   - Type `chrome://extensions/` in the Chrome address bar and search for **AiAllSupport**.
    - Make sure the extension is **enabled**; otherwise, enable it manually. See the image below for reference.
 
    ![image](https://files.mdnice.com/user/14956/8254890c-6115-4444-a09b-7759693d3ce3.png)
 
 ### Select an API Provider & Configure API Key
 
-1. **Pin the Extension**: Click the Chrome **Extensions** button in the top right corner, find **DeepSeekAllSupports**, and pin it to the toolbar.
+1. **Pin the Extension**: Click the Chrome **Extensions** button in the top right corner, find **AiAllSupport**, and pin it to the toolbar.
 
    ![image](https://files.mdnice.com/user/14956/38511b25-f47a-4d27-aac2-88b945f52a82.png)
 
@@ -76,7 +76,9 @@ sudo usermod -aG ollama $USER  # Add user permissions
 sudo systemctl start ollama    # Start the service
 
 ```
+
 #### Service Verification
+
 ```bash
 Ollama -v
 # Output: ollama version is 0.5.11
@@ -85,6 +87,7 @@ Ollama -v
 If the above output appears, the installation was successful. You can visit http://localhost:11434/ in your browser to verify.
 
 #### Install a Model
+
 ```bash
 # Install a model, e.g., deepseek-r1:7b. For more options, check: https://ollama.com/search
 ollama run deepseek-r1:7b
@@ -97,10 +100,12 @@ Select **Ollama (Local)** as the provider and choose the model you installed.
 ### Keyboard Shortcuts & Custom Shortcuts
 
 **Open Chat Window Globally**
+
 - Mac: Command + Shift + Y
 - Windows: Ctrl + Shift + Y
 
 **Close Chat Window**
+
 - Default shortcut: Press Esc (top-right of the keyboard).
 - Alternatively, click the “X” button in the top right of the chat window.
 
@@ -109,13 +114,13 @@ Select **Ollama (Local)** as the provider and choose the model you installed.
 You can configure shortcuts by clicking on Settings → Shortcut Keys.
 
 ### Adjustable Chat Window
-	1.	Hover the mouse over the bottom-right corner to resize the window.
-	2.	Hover over the top of the window to drag and reposition it.
-	3.	Click the 📍 (pin icon) in the top-left to pin/unpin the window.
+
+    1.	Hover the mouse over the bottom-right corner to resize the window.
+    2.	Hover over the top of the window to drag and reposition it.
+    3.	Click the 📍 (pin icon) in the top-left to pin/unpin the window.
 
 ### Summary
 
-DeepSeekAllSupports is an efficient and user-friendly AI extension that supports multiple DeepSeek API providers, enabling users to integrate AI services effortlessly without complex configurations. Whether it’s web content analysis, multi-turn conversations, code highlighting, or Markdown rendering, this extension delivers an exceptional experience.
+AiAllSupport is an efficient and user-friendly AI extension that supports multiple DeepSeek API providers, enabling users to integrate AI services effortlessly without complex configurations. Whether it’s web content analysis, multi-turn conversations, code highlighting, or Markdown rendering, this extension delivers an exceptional experience.
 
 🚀 Try DeepSeek’s AI Now and Unlock More Possibilities!
-
