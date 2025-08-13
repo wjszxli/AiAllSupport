@@ -1,4 +1,4 @@
-# AiAllSupport - DeepSeek Web Assistant
+# AiAllSupport - Ai Web Assistant
 
 <div align="center">
 <img src="public/icons/icon128.png" alt="AiAllSupport" width="128" />
@@ -8,7 +8,7 @@
 
 ## 📖 Introduction
 
-**AiAllSupport** is a free and open-source browser extension that supports [DeepSeek](https://deepseek.com) and its multi-platform services, including DeepSeek official, SiliconFlow, Tencent Cloud, Baidu Cloud, Alibaba Cloud, and local AI models. No matter which provider you use, AiAllSupport helps you seamlessly integrate and easily access DeepSeek’s powerful AI capabilities, providing efficient support for your work and research.
+**AiAllSupport** is a free and open-source browser extension that supports Ai and its multi-platform services, including DeepSeek official, SiliconFlow, Tencent Cloud, Baidu Cloud, Alibaba Cloud, and local AI models. No matter which provider you use, AiAllSupport helps you seamlessly integrate and easily access DeepSeek’s powerful AI capabilities, providing efficient support for your work and research.
 
 ## Supported API Providers
 

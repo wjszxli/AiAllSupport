@@ -4,7 +4,7 @@
     "version": "1.0.11",
     "browserslist": "Chrome >= 96",
     "private": true,
-    "description": "support all servers in deepseek",
+    "description": "support all servers in Ai",
     "author": "wangjunsheng",
     "license": "MIT",
     "homepage": "https://github.com/wjszxli/AiAllSupport#readme",

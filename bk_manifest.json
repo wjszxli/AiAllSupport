@@ -1,7 +1,7 @@
 {
     "name": "AiAllSupport",
     "version": "1.0.1",
-    "description": "suport all servers in deepseek",
+    "description": "suport all servers in Ai",
     "manifest_version": 3,
     "minimum_chrome_version": "96",
     "permissions": ["storage", "declarativeNetRequest", "contextMenus", "commands"],

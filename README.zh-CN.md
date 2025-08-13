@@ -1,4 +1,4 @@
-# AiAllSupport - DeepSeek 网页助手
+# AiAllSupport - Ai 网页助手
 
 <div align="center">
 
