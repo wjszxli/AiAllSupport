@@ -1,10 +1,10 @@
 {
     "name": "DeepSeekAllSupports",
     "displayName": "DeepSeekAllSupports",
-    "version": "1.0.9",
+    "version": "1.0.11",
     "browserslist": "Chrome >= 96",
     "private": true,
-    "description": "suport all servers in deepseek",
+    "description": "support all servers in deepseek",
     "author": "wangjunsheng",
     "license": "MIT",
     "homepage": "https://github.com/wjszxli/DeepSeekAllSupports#readme",
@@ -44,7 +44,7 @@
         "reinstall": "rimraf -rf ./node_modules && pnpm",
         "prepare": "husky install",
         "sync-translations": "ts-node scripts/syncTranslations.ts",
-        "manifest:set": "node scripts/setManifest.js"
+        "manifest:set": "node scripts/setManifest.js --name \"AllAi：ChatGPT 侧边栏、小窗 + GTP-4o，Claude 3.5，DeepSeek & AI 工具\" --description \"support all servers in Ai\""
     },
     "dependencies": {
         "@ant-design/icons": "5.6.1",
