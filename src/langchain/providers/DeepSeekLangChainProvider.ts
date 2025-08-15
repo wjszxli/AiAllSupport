@@ -9,6 +9,7 @@ import { takeRight } from 'lodash';
 import { Message } from '@/types/message';
 import { ChunkType } from '@/types/chunk';
 import { Logger } from '@/utils/logger';
+import { PROVIDER_CONFIG } from '@/config/providers';
 
 const logger = new Logger('DeepSeekLangChainProvider');
 
@@ -21,14 +22,34 @@ export default class DeepSeekLangChainProvider extends BaseLangChainProvider {
     }
 
     initialize(stream = true): ChatDeepSeek {
+        // Check if this provider has a custom API configuration
+        const providerConfig = PROVIDER_CONFIG[this.provider.id as keyof typeof PROVIDER_CONFIG];
+        const customApiUrl = providerConfig?.api?.url;
+
+        // Determine the base URL to use
+        let baseURL = this.provider.apiHost;
+        if (customApiUrl && !baseURL) {
+            // If no custom apiHost is set but provider config has a custom URL, use that
+            baseURL = customApiUrl;
+        }
+
+        // Handle different provider URL patterns
+        let finalBaseURL = baseURL;
+        if (baseURL) {
+            if (this.provider.id === 'tencent-cloud-ti') {
+                // 腾讯云需要特殊处理
+                finalBaseURL = `${baseURL}/v1/chat/completions`;
+            }
+        }
+
         return new ChatDeepSeek({
             model: this.provider.selectedModel?.id || 'deepseek-chat',
             temperature: 0.7,
             streaming: stream,
             apiKey: this.provider.apiKey,
-            ...(this.provider.apiHost && {
+            ...(finalBaseURL && {
                 configuration: {
-                    baseURL: this.provider.apiHost,
+                    baseURL: finalBaseURL,
                 },
             }),
         });
