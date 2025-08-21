@@ -16,9 +16,14 @@ const Interface: React.FC<InterfaceProps> = observer(({ form }) => {
         settingStore.setIsChatBoxIcon(checked);
     };
 
+    const onFloatingButtonChange = (checked: boolean) => {
+        settingStore.setShowFloatingButton(checked);
+    };
+
     const initData = async () => {
         form.setFieldsValue({
             isIcon: settingStore.isChatBoxIcon,
+            showFloatingButton: settingStore.showFloatingButton,
             useWebpageContext: settingStore.useWebpageContext,
         });
     };
@@ -40,6 +45,20 @@ const Interface: React.FC<InterfaceProps> = observer(({ form }) => {
                 <Switch
                     onChange={(checked) => onIsIconChange(checked)}
                     id="tour-selection-toolbar"
+                />
+            </Form.Item>
+
+            <Form.Item
+                className="form-item"
+                label={t('showFloatingButton')}
+                name="showFloatingButton"
+                valuePropName="checked"
+                initialValue={settingStore.showFloatingButton}
+                tooltip={t('showFloatingButtonTooltip')}
+            >
+                <Switch
+                    onChange={(checked) => onFloatingButtonChange(checked)}
+                    id="tour-floating-button"
                 />
             </Form.Item>
 

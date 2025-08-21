@@ -60,6 +60,7 @@ export const en = {
     modelSelection: 'Model Selection',
     selectModel: 'Please select a model',
     showIcon: 'Show icon when text is selected',
+    showFloatingButton: 'Show floating chat button',
     setShortcuts: 'Set Shortcuts',
     starAuthor: 'Star the Author | Contact',
     configSaved: 'Configuration saved',
@@ -76,6 +77,8 @@ export const en = {
     includeWebpage: 'Include webpage context in questions',
     includeWebpageTooltip:
         'Enable this feature to allow AI to use the content of the current webpage for answers',
+    showFloatingButtonTooltip:
+        'Enable this feature to show a floating chat button in the bottom-right corner for quick conversations',
     askWebpage: 'Ask about this webpage...',
     sendMessage: 'Send a message...',
     interfaceSettings: 'Interface Settings',

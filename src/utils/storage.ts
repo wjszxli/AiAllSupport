@@ -111,10 +111,21 @@ const storageUtils = {
 
     // Settings-related methods now use settingStore
     setIsChatBoxIcon: async (isIcon: boolean): Promise<void> => {
+        await settingStore.waitForLoad();
         settingStore.setIsChatBoxIcon(isIcon);
     },
     getIsChatBoxIcon: async () => {
+        await settingStore.waitForLoad();
         return settingStore.isChatBoxIcon;
+    },
+
+    setShowFloatingButton: async (enabled: boolean): Promise<void> => {
+        await settingStore.waitForLoad();
+        settingStore.setShowFloatingButton(enabled);
+    },
+    getShowFloatingButton: async () => {
+        await settingStore.waitForLoad();
+        return settingStore.showFloatingButton;
     },
 
     getLocale: async (): Promise<string | null> => {
@@ -137,28 +148,34 @@ const storageUtils = {
     },
 
     setWebSearchEnabled: async (enabled: boolean): Promise<void> => {
+        await settingStore.waitForLoad();
         settingStore.setWebSearchEnabled(enabled);
     },
 
     getWebSearchEnabled: async (): Promise<boolean> => {
+        await settingStore.waitForLoad();
         return settingStore.webSearchEnabled;
     },
 
     setUseWebpageContext: async (enabled: boolean): Promise<void> => {
+        await settingStore.waitForLoad();
         settingStore.setUseWebpageContext(enabled);
     },
 
     getUseWebpageContext: async (): Promise<boolean> => {
+        await settingStore.waitForLoad();
         return settingStore.useWebpageContext;
     },
 
     // 获取启用的搜索引擎列表
     getEnabledSearchEngines: async (): Promise<string[]> => {
+        await settingStore.waitForLoad();
         return settingStore.enabledSearchEngines;
     },
 
     // 设置启用的搜索引擎列表
     setEnabledSearchEngines: async (engines: string[]): Promise<void> => {
+        await settingStore.waitForLoad();
         settingStore.setEnabledSearchEngines(engines);
     },
 

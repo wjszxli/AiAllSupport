@@ -23,6 +23,7 @@ export interface SettingsState {
     // Interface settings
     isChatBoxIcon: boolean;
     useWebpageContext: boolean;
+    showFloatingButton: boolean;
 
     // Search settings
     webSearchEnabled: boolean;
@@ -39,6 +40,7 @@ export interface SettingsState {
 // Setting keys for Chrome storage
 const IS_CHAT_BOX_ICON_KEY = 'settings.isChatBoxIcon';
 const USE_WEBPAGE_CONTEXT_KEY = 'settings.useWebpageContext';
+const SHOW_FLOATING_BUTTON_KEY = 'settings.showFloatingButton';
 const WEB_SEARCH_ENABLED_KEY = 'settings.webSearchEnabled';
 const ENABLED_SEARCH_ENGINES_KEY = 'settings.enabledSearchEngines';
 const SELECTED_SEARCH_ENGINE_KEY = 'settings.selectedSearchEngine';
@@ -53,6 +55,7 @@ class SettingStore {
     // Interface settings
     isChatBoxIcon = true;
     useWebpageContext = true;
+    showFloatingButton = true;
 
     // Search settings
     webSearchEnabled = false;
@@ -68,9 +71,24 @@ class SettingStore {
     // Callback system for tool refresh
     private toolRefreshCallbacks: (() => void)[] = [];
 
+    // Loading state
+    private _isLoaded = false;
+    private _loadingPromise: Promise<void> | null = null;
+
     constructor() {
         makeAutoObservable(this);
-        this.loadSettings();
+        this._loadingPromise = this.loadSettings();
+    }
+
+    // Wait for settings to be loaded
+    async waitForLoad(): Promise<void> {
+        if (this._loadingPromise) {
+            await this._loadingPromise;
+        }
+    }
+
+    get isLoaded(): boolean {
+        return this._isLoaded;
     }
 
     /**
@@ -291,6 +309,7 @@ class SettingStore {
             const [
                 isChatBoxIcon,
                 useWebpageContext,
+                showFloatingButton,
                 webSearchEnabled,
                 enabledSearchEngines,
                 selectedSearchEngine,
@@ -303,6 +322,7 @@ class SettingStore {
             ] = await Promise.all([
                 this.getChromeStorageValue(IS_CHAT_BOX_ICON_KEY, true),
                 this.getChromeStorageValue(USE_WEBPAGE_CONTEXT_KEY, true),
+                this.getChromeStorageValue(SHOW_FLOATING_BUTTON_KEY, true),
                 this.getChromeStorageValue(WEB_SEARCH_ENABLED_KEY, false),
                 this.getChromeStorageValue(ENABLED_SEARCH_ENGINES_KEY, [
                     SEARCH_ENGINES.GOOGLE,
@@ -320,6 +340,7 @@ class SettingStore {
             // Apply settings
             this.isChatBoxIcon = isChatBoxIcon;
             this.useWebpageContext = useWebpageContext;
+            this.showFloatingButton = showFloatingButton;
             this.webSearchEnabled = webSearchEnabled;
             if (Object.keys(enabledSearchEngines).length > 0) {
                 this.enabledSearchEngines = Object.keys(enabledSearchEngines).map(
@@ -354,6 +375,9 @@ class SettingStore {
             logger.error('Failed to load settings:', error);
             // Save default settings if loading fails
             this.saveSettings();
+        } finally {
+            this._isLoaded = true;
+            this._loadingPromise = null;
         }
     }
 
@@ -363,6 +387,7 @@ class SettingStore {
             await Promise.all([
                 this.setChromeStorageValue(IS_CHAT_BOX_ICON_KEY, this.isChatBoxIcon),
                 this.setChromeStorageValue(USE_WEBPAGE_CONTEXT_KEY, this.useWebpageContext),
+                this.setChromeStorageValue(SHOW_FLOATING_BUTTON_KEY, this.showFloatingButton),
                 this.setChromeStorageValue(WEB_SEARCH_ENABLED_KEY, this.webSearchEnabled),
                 this.setChromeStorageValue(ENABLED_SEARCH_ENGINES_KEY, this.enabledSearchEngines),
                 this.setChromeStorageValue(SELECTED_SEARCH_ENGINE_KEY, this.selectedSearchEngine),
@@ -385,6 +410,7 @@ class SettingStore {
         return {
             isChatBoxIcon: this.isChatBoxIcon,
             useWebpageContext: this.useWebpageContext,
+            showFloatingButton: this.showFloatingButton,
             webSearchEnabled: this.webSearchEnabled,
             enabledSearchEngines: this.enabledSearchEngines,
             selectedSearchEngine: this.selectedSearchEngine,
@@ -403,6 +429,8 @@ class SettingStore {
         if (settings.isChatBoxIcon !== undefined) this.isChatBoxIcon = settings.isChatBoxIcon;
         if (settings.useWebpageContext !== undefined)
             this.useWebpageContext = settings.useWebpageContext;
+        if (settings.showFloatingButton !== undefined)
+            this.showFloatingButton = settings.showFloatingButton;
         if (settings.webSearchEnabled !== undefined)
             this.webSearchEnabled = settings.webSearchEnabled;
         if (settings.enabledSearchEngines !== undefined)
@@ -424,6 +452,27 @@ class SettingStore {
     setIsChatBoxIcon(value: boolean) {
         this.isChatBoxIcon = value;
         this.saveSettings();
+    }
+
+    setShowFloatingButton(value: boolean) {
+        this.showFloatingButton = value;
+        this.saveSettings();
+
+        // Notify content scripts about the change
+        chrome.tabs.query({}, (tabs) => {
+            tabs.forEach((tab) => {
+                if (tab.id) {
+                    chrome.tabs
+                        .sendMessage(tab.id, {
+                            action: 'floatingButtonSettingsChanged',
+                            enabled: value,
+                        })
+                        .catch(() => {
+                            // Ignore errors for tabs that don't have content scripts
+                        });
+                }
+            });
+        });
     }
 
     setUseWebpageContext(value: boolean) {

@@ -346,9 +346,9 @@ const injectFloatingChatButton = () => {
 // 初始化浮动聊天按钮
 const initializeFloatingButton = async () => {
     try {
-        // 检查是否启用了聊天按钮功能
-        const isIcon = await storage.getIsChatBoxIcon();
-        if (isIcon) {
+        // 检查是否启用了浮动按钮功能
+        const showFloatingButton = await storage.getShowFloatingButton();
+        if (showFloatingButton) {
             injectFloatingChatButton();
         }
     } catch (error) {

@@ -48,6 +48,8 @@
 
 - **Multi-turn Conversations**: Engage in continuous dialogue with AI for a smooth experience.
 
+- **Floating Chat Button**: A floating chat button appears in the bottom-right corner of webpages, allowing you to quickly start AI conversations. If you don't need this feature, you can disable "Show floating chat button" in the extension settings under the "Interface" tab.
+
 - **Real-time AI Responses**: Supports streaming responses for better interaction efficiency.
 
   ![output](https://files.mdnice.com/user/14956/cbdf62b7-d3b2-4245-b801-49ccf267a946.gif)
