@@ -268,9 +268,7 @@ class SettingStore {
                 const normalized = legacyAsArray.filter((e) => supportedEngines.includes(e));
                 // If legacy only contained unsupported engines, fall back to defaults
                 writes[ENABLED_SEARCH_ENGINES_KEY] =
-                    normalized.length > 0
-                        ? normalized
-                        : [SEARCH_ENGINES.GOOGLE, SEARCH_ENGINES.BAIDU];
+                    normalized.length > 0 ? normalized : [SEARCH_ENGINES.BAIDU];
             }
 
             if (Object.keys(writes).length > 0) {
@@ -324,11 +322,8 @@ class SettingStore {
                 this.getChromeStorageValue(USE_WEBPAGE_CONTEXT_KEY, true),
                 this.getChromeStorageValue(SHOW_FLOATING_BUTTON_KEY, true),
                 this.getChromeStorageValue(WEB_SEARCH_ENABLED_KEY, false),
-                this.getChromeStorageValue(ENABLED_SEARCH_ENGINES_KEY, [
-                    SEARCH_ENGINES.GOOGLE,
-                    SEARCH_ENGINES.BAIDU,
-                ]),
-                this.getChromeStorageValue(SELECTED_SEARCH_ENGINE_KEY, SEARCH_ENGINES.GOOGLE),
+                this.getChromeStorageValue(ENABLED_SEARCH_ENGINES_KEY, [SEARCH_ENGINES.BAIDU]),
+                this.getChromeStorageValue(SELECTED_SEARCH_ENGINE_KEY, SEARCH_ENGINES.BAIDU),
                 this.getChromeStorageValue(TAVILY_API_KEY, ''),
                 this.getChromeStorageValue(EXA_API_KEY, ''),
                 this.getChromeStorageValue(BOCHA_API_KEY, ''),
