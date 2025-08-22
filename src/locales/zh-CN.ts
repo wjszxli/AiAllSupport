@@ -26,6 +26,15 @@ export const zhCN = {
     expand: '展开',
     collapse: '折叠',
 
+    // Page summary
+    pageSummary: '页面总结',
+    summarizePage: '总结页面',
+    summarizeCurrentPage: '总结当前页面',
+    generateSummary: '生成总结',
+    refreshSummary: '刷新总结',
+    copySummary: '复制总结',
+    regenerateSummary: '重新生成',
+
     // Topic management
     newTopic: '新建话题',
     searchTopics: '搜索话题...',
@@ -233,14 +242,6 @@ export const zhCN = {
     clearChat: '清除聊天',
     startChat: '开始聊天',
     ai: 'AI',
-    summarizePage: `
-请对以下网页进行结构化总结，包括以下三个部分：
-1. 总结：用简明的语言总结网页的核心内容，突出主要信息或主题。
-2. 摘要：详细介绍网页的主要内容，包括背景、关键点、流程、技术细节（如果适用）或相关信息。
-3. 观点：概括网页的核心价值点，如主要结论、重要影响、创新点、启示或建议等。
-请注意，您的回答应该清晰、具体，为读者提供有效的指导，同时考虑个人兴趣和目标。此外，请提供实用的例子和资源，帮助读者更好地理解和应用学习策略。
-	网页内容：{content}
-    `,
 
     // Logging related translations
     options_tab_logging: '日志系统',

@@ -6,6 +6,7 @@ import {
     SearchOutlined,
     AppstoreOutlined,
     QuestionCircleOutlined,
+    FileTextOutlined,
 } from '@ant-design/icons';
 import {
     Card,
@@ -473,6 +474,29 @@ const App: React.FC = () => {
         setTourCurrent(0);
     };
 
+    // 总结当前页面
+    const handleSummarizePage = async () => {
+        try {
+            // 获取当前活动的标签页
+            const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+            const activeTab = tabs[0];
+
+            if (activeTab?.id) {
+                // 向内容脚本发送总结请求
+                await chrome.tabs.sendMessage(activeTab.id, {
+                    action: 'summarizeCurrentPage',
+                });
+
+                message.success('正在打开页面总结...');
+            } else {
+                message.error('无法获取当前页面信息');
+            }
+        } catch (error) {
+            console.error('Failed to summarize page:', error);
+            message.error('打开页面总结失败');
+        }
+    };
+
     return (
         <Layout className="app">
             <Layout className="app-layout">
@@ -481,6 +505,14 @@ const App: React.FC = () => {
                         <RocketIcon size={20} /> {t('appTitle')} - {t('settings')}
                     </Typography.Title>
                     <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        <Button
+                            icon={<FileTextOutlined />}
+                            onClick={handleSummarizePage}
+                            type="text"
+                            title={t('summarizePage') || '总结当前页面'}
+                        >
+                            {t('summarizePage') || '总结页面'}
+                        </Button>
                         <Button
                             ref={tourButtonRef}
                             icon={<QuestionCircleOutlined />}

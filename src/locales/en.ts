@@ -30,6 +30,15 @@ export const en = {
     expand: 'Expand',
     collapse: 'Collapse',
 
+    // Page summary
+    pageSummary: 'Page Summary',
+    summarizePage: 'Summarize Page',
+    summarizeCurrentPage: 'Summarize Current Page',
+    generateSummary: 'Generate Summary',
+    refreshSummary: 'Refresh Summary',
+    copySummary: 'Copy Summary',
+    regenerateSummary: 'Regenerate',
+
     // Topic management
     newTopic: 'New Topic',
     searchTopics: 'Search topics...',
@@ -271,14 +280,6 @@ Please answer in the same language as the user's question.`,
     startChat: 'Start Chat',
     defaultTopicName: 'New Conversation',
     ai: 'AI',
-    summarizePage: `
-Please provide a structured summary of the following webpage, including these three sections:
-1. Summary: Concisely summarize the core content of the webpage, highlighting the main information or themes.
-2. Details: Elaborate on the main content of the webpage, including background, key points, processes, technical details (if applicable), or relevant information.
-3. Insights: Outline the core value points of the webpage, such as main conclusions, important impacts, innovations, implications, or recommendations.
-Please ensure your response is clear and specific, providing effective guidance for readers while considering personal interests and goals. Additionally, provide practical examples and resources to help readers better understand and apply learning strategies.
-    Webpage content: {content}
-    `,
 
     // HTTP Error messages
     errorDefault: 'An unknown error occurred. Please try again later.',

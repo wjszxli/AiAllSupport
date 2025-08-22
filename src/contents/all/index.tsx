@@ -11,6 +11,7 @@ import { initLogger, Logger } from '@/utils/logger';
 import ChatWindow from '@/contents/chat-windows';
 import { IframeSidePanelManager } from './components/IframeSidePanel/index';
 import FloatingChatButton from './components/FloatingChatButton';
+import { SidebarSummaryManager } from './components/SidebarSummaryManager';
 import './styles/animations.css';
 import './styles/highlight.css';
 
@@ -140,8 +141,9 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     // 处理总结当前页面请求
     if (message.action === 'summarizeCurrentPage') {
         try {
-            // 显示 iframe 侧边栏并触发总结功能
-            IframeSidePanelManager.showWithSummarize();
+            logger.debug('Opening sidebar summary');
+            // 显示侧边栏总结
+            SidebarSummaryManager.show();
             sendResponse({ success: true });
         } catch (error: unknown) {
             console.error('Failed to summarize current page:', error);
